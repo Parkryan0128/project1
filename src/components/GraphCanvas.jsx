@@ -1,10 +1,13 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
 function GraphCanvas() {
     const canvasRef = useRef(null);
+    const [equation, setEquation] = useState('y = x^2');
+
+
     useEffect(() => {
         drawGraph(canvasRef.current);
-    }, []);
+    }, [equation]);
 
     return (
         <div>
