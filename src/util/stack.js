@@ -37,6 +37,11 @@ export class Stack {
     size() {
         return this.items.length;
     }
+
+    // returns the list
+    getItems() {
+        return this.items;
+    }
 }
 
 // test

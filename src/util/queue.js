@@ -40,6 +40,11 @@ export class Queue {
         return this.items.length
     }
 
+    // returns the list
+    getItems() {
+        return this.items
+    }
+
 }
 
 
