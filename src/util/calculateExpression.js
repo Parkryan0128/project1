@@ -35,4 +35,3 @@ export function exp(a, power) {
 export function root(a, n) {
     return Number(a) ** (1/n)
 }
-

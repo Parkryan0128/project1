@@ -19,59 +19,131 @@ function precedence(operator) {
 }
 
 // helper function to apply each operation, given an operator
-function applyOperator(operator, a, b) {
+function applyOperator(operator, a, b=NaN) {
     switch (operator) {
         case '+': return math.sum(a,b);
         case '-': return math.subtract(a,b);
         case '*': return math.multiply(a,b);
         case '/': return math.divide(a,b);
         case '^': return math.exp(a,b);
-        case '.': return math.root(a,b); // need to determine which symnbol to use
+        case 'sqrt': return math.root(a,b); // need to determine which symnbol to use
+        case 'sin': return Math.sin(a)
+        case 'cos': return Math.cos(a)
+        case 'tan': return Math.tan(a)
+        case 'abs': return Math.abs(a)
     }
 }
 
-// converts a given infix to postfix expression
-function infixToPostfix(str) {
-    let stack = new Stack()
-    let queue = new Queue()
+// // converts a given infix to postfix expression
+// function infixToPostfix(str) {
+//     let stack = new Stack()
+//     let queue = new Queue()
 
+//     // str.replace(/^[\(\[]+|[\)\]]+$/g, "")
 
-    for (let letter of str) {
-        // checking if str is a number
-        if (isNumber(letter)) {
-            queue.enqueue(Number(letter))  // adding it to the queue
+//     // const regex = /(\d+|[a-zA-Z]+|\(|\))/g;
+//     // let result = str.match(regex)
 
-        // checking if str is a start of a parenthesis
-        } else if (letter == '(') {
-            stack.push(letter) // adding it to the stack
+//     // result = result.filter(item => {
+//     //     if ()
+//     // })
+//     // console.log(result)
 
-        // checking if str is  a end of a parenthesis,
-        // if so, pop from the stack and enqueue to the queue
-        // until '(' is found
-        } else if (letter == ')') {
-            while (!stack.isEmpty() && stack.peek() !== '(') {
-                queue.enqueue(stack.pop())
-            }
-            stack.pop() // remove the '('
+//     // Regular expression to match numbers, functions (like sqrt), and parentheses
 
-        // str is an operator
-        // if the precedence of the first item in the stack is greater than
-        // the precedence of str, then pop from the stack and enqueue to the queue
-        } else {
-            while (!stack.isEmpty() && precedence(stack.peek()) > precedence(letter)) {
-                queue.enqueue(stack.pop())
-            }
-            stack.push(letter)
-        } 
-    }
+//     // for (let i of result){
+//     //     if (regex.test(result[i]) && result[i+1] in ["(", ")"]) {
+//     //         result[i].replace(/^[\(\[]+|[\)\]]+$/g, "")
+//     //     }
+//     // }
+//     // console.log(result)
+
+//     for (let i of result) {
+//         // checking if str is a number
+//         if (isNumber(result[i])) {
+//             queue.enqueue(Number(result[i]))  // adding it to the queue
+
+//         // checking if str is a start of a parenthesis
+//         } else if (result[i] == '(') {
+//             stack.push(result[i]) // adding it to the stack
+
+//         // checking if str is  a end of a parenthesis,
+//         // if so, pop from the stack and enqueue to the queue
+//         // until '(' is found
+//         } else if (result[i] == ')') {
+//             while (!stack.isEmpty() && stack.peek() !== '(') {
+//                 queue.enqueue(stack.pop())
+//             }
+//             stack.pop() // remove the '('
+
+//         // str is an operator
+//         // if the precedence of the first item in the stack is greater than
+//         // the precedence of str, then pop from the stack and enqueue to the queue
+//         } else {
+//             while (!stack.isEmpty() && precedence(stack.peek()) > precedence(result[i])) {
+//                 queue.enqueue(stack.pop())
+//             }
+//             stack.push(result[i])
+//         } 
+//     }
     
-    // enqueue all the items in the stack
-    while (!stack.isEmpty()) {
-        queue.enqueue(stack.pop())
-    }
+//     // enqueue all the items in the stack
+//     while (!stack.isEmpty()) {
+//         queue.enqueue(stack.pop())
+//     }
 
-    return queue.getItems()
-}
+//     return queue.getItems()
+// }
+
+
+// // converts a given infix to postfix expression
+// function infixToPostfix(str) {
+//     let stack = new Stack()
+//     let queue = new Queue()
+
+//     // Regular expression to match numbers, functions (like sqrt), and parentheses
+//     const regex = /(\d+|[a-zA-Z]+|\(|\))/g;
+//     const result = str.match(regex)
+
+
+//     for (let letter of str) {
+//         // checking if str is a number
+//         if (isNumber(letter)) {
+//             queue.enqueue(Number(letter))  // adding it to the queue
+
+//         // checking if str is a start of a parenthesis
+//         } else if (letter == '(') {
+//             stack.push(letter) // adding it to the stack
+
+//         // checking if str is  a end of a parenthesis,
+//         // if so, pop from the stack and enqueue to the queue
+//         // until '(' is found
+//         } else if (letter == ')') {
+//             while (!stack.isEmpty() && stack.peek() !== '(') {
+//                 queue.enqueue(stack.pop())
+//             }
+//             stack.pop() // remove the '('
+
+//         // str is an operator
+//         // if the precedence of the first item in the stack is greater than
+//         // the precedence of str, then pop from the stack and enqueue to the queue
+//         } else {
+//             while (!stack.isEmpty() && precedence(stack.peek()) > precedence(letter)) {
+//                 queue.enqueue(stack.pop())
+//             }
+//             stack.push(letter)
+//         } 
+//     }
+    
+//     // enqueue all the items in the stack
+//     while (!stack.isEmpty()) {
+//         queue.enqueue(stack.pop())
+//     }
+
+//     return queue.getItems()
+// }
+
+
 
 // evaluates the given postfix expression
 export function evalutePostfix(expression) {
@@ -81,7 +153,7 @@ export function evalutePostfix(expression) {
     for (let i in postfix) {
         if (typeof postfix[i] == 'number') {
             stack.push(postfix[i])
-            
+
         } else {
             const b = stack.pop()
             const a = stack.pop()
@@ -90,3 +162,21 @@ export function evalutePostfix(expression) {
     }
     return stack.pop()
 }
+
+
+function groupExpression(expression) {
+    // Regular expression to match numbers, functions (like sqrt), and parentheses
+    const regex = /(\d+|[a-zA-Z]+|\(|\))/g;
+    
+    // Use the regex to extract matches from the expression string
+    const result = expression.match(regex);
+    
+    // Filter out the "+" signs (or other operators if needed) if you don't want them in the result
+    return result.filter(item => item !== '+');
+  }
+  
+//   const expression = "3+sqrt(4)";
+//   const grouped = groupExpression(expression);
+//   console.log(grouped);  // Output: ["3", "sqrt", "4"]
+
+// console.log(infixToPostfix("3+sqrt(4)"))
