@@ -2,11 +2,14 @@ import React, { useRef, useEffect, useState } from 'react';
 
 function GraphCanvas() {
     const canvasRef = useRef(null);
-    const [equation, setEquation] = useState('y = x^2');
+    const [equation, setEquation] = useState('y = Math.sqrt(x)');
 
     useEffect(() => {
-        drawGraph(canvasRef.current);
+        drawGraph(canvasRef.current, equation);
     }, [equation]);
+
+    const rhsTest = equation.split('=')[1].trim();
+    let testFunc = new Function('x', `return ${rhsTest}`)
 
     return (
         <div>
@@ -21,7 +24,7 @@ function GraphCanvas() {
     );
 }
 
-const drawGraph = (canvas) => {
+const drawGraph = (canvas, equation) => {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
@@ -72,24 +75,42 @@ const drawGraph = (canvas) => {
     ctx.lineWidth = 2; // Thickness of the axes
     ctx.stroke();
 
-
     const xMin = -originX / scale; // e.g., -800/50 = -16 units
     const xMax = originX / scale; // 50 = 16 units
-    const step = 0.1; // Step size for x-values
+    const step = 0.05; // Step size for x-values
 
     let firstPoint = true;
 
-    for (let x = xMin; x <= xMax; x += step) {
-        const y = x * x * x; // y = x^2
-        // Convert mathematical coordinates to canvas coordinates
-        const canvasX = originX + x * scale;
-        const canvasY = originY - y * scale; // Invert y-axis
+    const rhsTest = equation.split('=')[1].trim();
+    let yFunction = new Function('x', `return ${rhsTest}`);
 
-        if (firstPoint) {
-            ctx.moveTo(canvasX, canvasY);
-            firstPoint = false;
-        } else {
-            ctx.lineTo(canvasX, canvasY);
+
+    for (let x = xMin; x <= xMax; x += step) {
+        let y;
+        try {
+            y = yFunction(x);
+            if (typeof y !== 'number' || !isFinite(y)) {
+              throw new Error('Non-finite y value');
+            }
+          } catch (err) {
+            // Skip this x if y cannot be computed
+            console.warn(`Skipping x = ${x}: ${err.message}`);
+            firstPoint = true;
+            continue;
+          }
+
+        if (y) {
+            // let y = yFunction(x)
+            // Convert mathematical coordinates to canvas coordinates
+            const canvasX = originX + x * scale;
+            const canvasY = originY - y * scale; // Invert y-axis
+    
+            if (firstPoint) {
+                ctx.moveTo(canvasX, canvasY);
+                firstPoint = false;
+            } else {
+                ctx.lineTo(canvasX, canvasY);
+            }
         }
     }
 
