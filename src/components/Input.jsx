@@ -4,37 +4,37 @@ import { useState } from 'react'
 
 
 function Input() {
-    let [expression, displayInput] = useState(" ");
+    let [expression, setExpression] = useState(" ");
     let [isFocused, setIsFocused] = useState(false);
     let [showGraph, setShowGraph] = useState(true);
-    let [isAlive, setIsAlive] = useState(true);
+    let [index, setIndex] = useState("1");
 
     let hasValue = expression.trim() !== '';
 
     return (
         <div
-            className={`Input ${isFocused ? 'focused' : ''}`}>
+            className={`input ${isFocused ? 'focused' : ''}`}>
             <div
-                className={`OnOff ${isFocused ? 'focused' : ''}`}>
-                1
+                className={`onOff ${isFocused ? 'focused' : ''}`}>
+                {index}
                 <button
-                    className={`OnOffButton 
-                        ${hasValue ? '' : 'noValue'} 
+                    className={`onOffButton
+                        ${hasValue ? '' : 'noValue'}
                         ${showGraph ? '' : 'showGraphFalse'}`}
                     onClick={() => setShowGraph(!showGraph)}>
                 </button>
             </div>
             {expression}
             <input
-                className="UserInput"
+                className="userInput"
                 value={expression}
-                onChange={(e) => displayInput(e.target.value)}
+                onChange={(e) => setExpression(e.target.value)}
                 onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}>
-            </input>
-            <button 
-            className='deleteButton'
-            onClick={() => setIsAlive(false)}>x</button>
+                onBlur={() => setIsFocused(false)}
+            />
+            <button className='deleteButton'>
+                x
+            </button>
         </div>
     );
 }

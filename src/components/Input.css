@@ -1,4 +1,4 @@
-.Input {
+.input {
     position: relative;
     display: flex;
     background: white;
@@ -13,11 +13,11 @@
     overflow: hidden;
 }
 
-.Input.focused {
+.input.focused {
     outline: 1px solid skyblue;
 }
 
-.OnOff {
+.onOff {
     position: absolute;
     left: 0;
     width: 30px;
@@ -27,12 +27,12 @@
     font-family: "Arial", sans-serif;
 }
 
-.OnOff.focused {
+.onOff.focused {
     background-color: skyblue;
     color: white;
 }
 
-.OnOffButton {
+.onOffButton {
     position: absolute;
     top: 24px;
     left: 7px;
@@ -43,15 +43,15 @@
     background-color: rgb(66, 224, 66);
 }
 
-.OnOffButton.noValue {
+.onOffButton.noValue {
     visibility: hidden;
 }
 
-.OnOffButton.showGraphFalse {
+.onOffButton.showGraphFalse {
     background-color: white;
 }
 
-.UserInput {
+.userInput {
     position: absolute;
     width: 300px;
     top: 20px;
