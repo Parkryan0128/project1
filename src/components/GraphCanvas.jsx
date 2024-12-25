@@ -4,7 +4,6 @@ function GraphCanvas() {
     const canvasRef = useRef(null);
     const [equation, setEquation] = useState('y = x^2');
 
-
     useEffect(() => {
         drawGraph(canvasRef.current);
     }, [equation]);
@@ -75,7 +74,7 @@ const drawGraph = (canvas) => {
 
 
     const xMin = -originX / scale; // e.g., -800/50 = -16 units
-    const xMax = originX / scale;  // e.g., 800/50 = 16 units
+    const xMax = originX / scale; // 50 = 16 units
     const step = 0.1; // Step size for x-values
 
     let firstPoint = true;

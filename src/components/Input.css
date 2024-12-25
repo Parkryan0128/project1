@@ -1,0 +1,72 @@
+.Input {
+    position: relative;
+    display: flex;
+    background: white;
+    color: black;
+    width: 300px;
+    height: 60px;
+    outline: 1px solid lightgrey;
+    align-items: center;
+    padding-left: 38px;
+    font-size: 16px;
+    font-family: "Arial", sans-serif;
+    overflow: hidden;
+}
+
+.Input.focused {
+    outline: 1px solid skyblue;
+}
+
+.OnOff {
+    position: absolute;
+    left: 0;
+    width: 30px;
+    height: 60px;
+    background-color: lightgrey;
+    font-size: 12px;
+    font-family: "Arial", sans-serif;
+}
+
+.OnOff.focused {
+    background-color: skyblue;
+    color: white;
+}
+
+.OnOffButton {
+    position: absolute;
+    top: 24px;
+    left: 7px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: none;
+    background-color: rgb(66, 224, 66);
+}
+
+.OnOffButton.noValue {
+    visibility: hidden;
+}
+
+.OnOffButton.showGraphFalse {
+    background-color: white;
+}
+
+.UserInput {
+    position: absolute;
+    width: 300px;
+    top: 20px;
+    left: 35px;
+    font-size: 16px;
+    font-family: "Arial", sans-serif;
+    border: none;
+    outline: none;
+    color: transparent;
+    caret-color: black;
+    background-color: transparent;
+}
+
+.deleteButton {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
