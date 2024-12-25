@@ -34,115 +34,69 @@ function applyOperator(operator, a, b=NaN) {
     }
 }
 
-// // converts a given infix to postfix expression
-// function infixToPostfix(str) {
-//     let stack = new Stack()
-//     let queue = new Queue()
+function groupWords(input) {
+    let result = [];
+    let temp = ""; // Temporary variable to collect letters
 
-//     // str.replace(/^[\(\[]+|[\)\]]+$/g, "")
+    for (let i = 0; i < input.length; i++) {
+        if (/[a-zA-Z]/.test(input[i])) { // Check if the current element is a letter
+            temp += input[i]; // Add to the temporary string
+        } else {
+            if (temp) {
+                result.push(temp); // Push leftover letters
+                temp = ""; // Reset temp
+            }
+            result.push(input[i]); // Push non-letter characters as-is
+        }
+    }
 
-//     // const regex = /(\d+|[a-zA-Z]+|\(|\))/g;
-//     // let result = str.match(regex)
+    // If there's anything left in temp, add it to the result
+    if (temp) result.push(temp);
 
-//     // result = result.filter(item => {
-//     //     if ()
-//     // })
-//     // console.log(result)
+    return result;
+}
 
-//     // Regular expression to match numbers, functions (like sqrt), and parentheses
+// converts a given infix to postfix expression
+function infixToPostfix(str) {
+    let stack = new Stack()
+    let queue = new Queue()
 
-//     // for (let i of result){
-//     //     if (regex.test(result[i]) && result[i+1] in ["(", ")"]) {
-//     //         result[i].replace(/^[\(\[]+|[\)\]]+$/g, "")
-//     //     }
-//     // }
-//     // console.log(result)
+    for (let i of result) {
+        // checking if str is a number
+        if (isNumber(result[i])) {
+            queue.enqueue(Number(result[i]))  // adding it to the queue
 
-//     for (let i of result) {
-//         // checking if str is a number
-//         if (isNumber(result[i])) {
-//             queue.enqueue(Number(result[i]))  // adding it to the queue
+        // checking if str is a start of a parenthesis
+        } else if (result[i] == '(') {
+            stack.push(result[i]) // adding it to the stack
 
-//         // checking if str is a start of a parenthesis
-//         } else if (result[i] == '(') {
-//             stack.push(result[i]) // adding it to the stack
+        // checking if str is  a end of a parenthesis,
+        // if so, pop from the stack and enqueue to the queue
+        // until '(' is found
+        } else if (result[i] == ')') {
+            while (!stack.isEmpty() && stack.peek() !== '(') {
+                queue.enqueue(stack.pop())
+            }
+            stack.pop() // remove the '('
 
-//         // checking if str is  a end of a parenthesis,
-//         // if so, pop from the stack and enqueue to the queue
-//         // until '(' is found
-//         } else if (result[i] == ')') {
-//             while (!stack.isEmpty() && stack.peek() !== '(') {
-//                 queue.enqueue(stack.pop())
-//             }
-//             stack.pop() // remove the '('
-
-//         // str is an operator
-//         // if the precedence of the first item in the stack is greater than
-//         // the precedence of str, then pop from the stack and enqueue to the queue
-//         } else {
-//             while (!stack.isEmpty() && precedence(stack.peek()) > precedence(result[i])) {
-//                 queue.enqueue(stack.pop())
-//             }
-//             stack.push(result[i])
-//         } 
-//     }
+        // str is an operator
+        // if the precedence of the first item in the stack is greater than
+        // the precedence of str, then pop from the stack and enqueue to the queue
+        } else {
+            while (!stack.isEmpty() && precedence(stack.peek()) > precedence(result[i])) {
+                queue.enqueue(stack.pop())
+            }
+            stack.push(result[i])
+        } 
+    }
     
-//     // enqueue all the items in the stack
-//     while (!stack.isEmpty()) {
-//         queue.enqueue(stack.pop())
-//     }
+    // enqueue all the items in the stack
+    while (!stack.isEmpty()) {
+        queue.enqueue(stack.pop())
+    }
 
-//     return queue.getItems()
-// }
-
-
-// // converts a given infix to postfix expression
-// function infixToPostfix(str) {
-//     let stack = new Stack()
-//     let queue = new Queue()
-
-//     // Regular expression to match numbers, functions (like sqrt), and parentheses
-//     const regex = /(\d+|[a-zA-Z]+|\(|\))/g;
-//     const result = str.match(regex)
-
-
-//     for (let letter of str) {
-//         // checking if str is a number
-//         if (isNumber(letter)) {
-//             queue.enqueue(Number(letter))  // adding it to the queue
-
-//         // checking if str is a start of a parenthesis
-//         } else if (letter == '(') {
-//             stack.push(letter) // adding it to the stack
-
-//         // checking if str is  a end of a parenthesis,
-//         // if so, pop from the stack and enqueue to the queue
-//         // until '(' is found
-//         } else if (letter == ')') {
-//             while (!stack.isEmpty() && stack.peek() !== '(') {
-//                 queue.enqueue(stack.pop())
-//             }
-//             stack.pop() // remove the '('
-
-//         // str is an operator
-//         // if the precedence of the first item in the stack is greater than
-//         // the precedence of str, then pop from the stack and enqueue to the queue
-//         } else {
-//             while (!stack.isEmpty() && precedence(stack.peek()) > precedence(letter)) {
-//                 queue.enqueue(stack.pop())
-//             }
-//             stack.push(letter)
-//         } 
-//     }
-    
-//     // enqueue all the items in the stack
-//     while (!stack.isEmpty()) {
-//         queue.enqueue(stack.pop())
-//     }
-
-//     return queue.getItems()
-// }
-
+    return queue.getItems()
+}
 
 
 // evaluates the given postfix expression
@@ -164,19 +118,7 @@ export function evalutePostfix(expression) {
 }
 
 
-function groupExpression(expression) {
-    // Regular expression to match numbers, functions (like sqrt), and parentheses
-    const regex = /(\d+|[a-zA-Z]+|\(|\))/g;
-    
-    // Use the regex to extract matches from the expression string
-    const result = expression.match(regex);
-    
-    // Filter out the "+" signs (or other operators if needed) if you don't want them in the result
-    return result.filter(item => item !== '+');
-  }
-  
-//   const expression = "3+sqrt(4)";
-//   const grouped = groupExpression(expression);
-//   console.log(grouped);  // Output: ["3", "sqrt", "4"]
-
-// console.log(infixToPostfix("3+sqrt(4)"))
+// 1. Take in an array of letters ex) '3x+2' = ['3','x','+','2']
+// 2. First group the words like sqrt, sin or etc
+// 3. Apply Stack Algorithm
+// 4. Apply operation by given operators (functions like sin, cos, etc included)
