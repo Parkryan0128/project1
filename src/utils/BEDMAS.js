@@ -4,17 +4,27 @@ import { Queue } from './queue.js'
 import * as math from './calculateExpression.js'
 
 
-// helper function to determine if a given string is
+// helper function to determine if a given string
 // is an operand or a number
 function isNumber(str) {
     return !isNaN(str) && str.trim() !== ""
+}
+
+// helper function to determine if a given string
+// is a mathematical fucntion
+function isFunction(input) {
+    const mathFunctions = new Set(['sin', 'cos', 'tan', 'sqrt'])
+
+    const normalizedInput = input.toLowerCase()
+
+    return mathFunctions.has(normalizedInput)
 }
 
 // helper function to return the precedence of a given operator
 function precedence(operator) {
     if (operator == '+' || operator == '-') return 1
     if (operator == '*' || operator == '/') return 2
-    if (operator == '^') return 3
+    if (operator == '^' || isFunction(operator)) return 3
     return 0
 }
 
@@ -34,19 +44,26 @@ function applyOperator(operator, a, b=NaN) {
     }
 }
 
+// inputs an array with single letter/number, and
+// outputs an array with grouped words (e.g. sqrt, sin, cos, etc)
 function groupWords(input) {
     let result = [];
-    let temp = ""; // Temporary variable to collect letters
+    // Temporary variable to collect letters
+    let temp = "";
 
     for (let i = 0; i < input.length; i++) {
-        if (/[a-zA-Z]/.test(input[i])) { // Check if the current element is a letter
-            temp += input[i]; // Add to the temporary string
+        // Check if the current element is a letter and add to temp
+        if (/[a-zA-Z]/.test(input[i])) { 
+            temp += input[i]; 
+
         } else {
             if (temp) {
-                result.push(temp); // Push leftover letters
-                temp = ""; // Reset temp
+                // Push leftover letters and reset temp
+                result.push(temp); 
+                temp = ""; 
             }
-            result.push(input[i]); // Push non-letter characters as-is
+            // Push non-letter characters as-is
+            result.push(input[i]); 
         }
     }
 
@@ -57,23 +74,24 @@ function groupWords(input) {
 }
 
 // converts a given infix to postfix expression
-function infixToPostfix(str) {
+export function infixToPostfix(str) {
     let stack = new Stack()
     let queue = new Queue()
+    let gruopedStr = groupWords(str)
 
-    for (let i of result) {
+    for (let i=0; i<gruopedStr.length; i++) {
         // checking if str is a number
-        if (isNumber(result[i])) {
-            queue.enqueue(Number(result[i]))  // adding it to the queue
+        if (isNumber(gruopedStr[i])) {
+            queue.enqueue(Number(gruopedStr[i]))  // adding it to the queue
 
         // checking if str is a start of a parenthesis
-        } else if (result[i] == '(') {
-            stack.push(result[i]) // adding it to the stack
+        } else if (gruopedStr[i] == '(') {
+            stack.push(gruopedStr[i]) // adding it to the stack
 
         // checking if str is  a end of a parenthesis,
         // if so, pop from the stack and enqueue to the queue
         // until '(' is found
-        } else if (result[i] == ')') {
+        } else if (gruopedStr[i] == ')') {
             while (!stack.isEmpty() && stack.peek() !== '(') {
                 queue.enqueue(stack.pop())
             }
@@ -83,10 +101,10 @@ function infixToPostfix(str) {
         // if the precedence of the first item in the stack is greater than
         // the precedence of str, then pop from the stack and enqueue to the queue
         } else {
-            while (!stack.isEmpty() && precedence(stack.peek()) > precedence(result[i])) {
+            while (!stack.isEmpty() && precedence(stack.peek()) > precedence(gruopedStr[i])) {
                 queue.enqueue(stack.pop())
             }
-            stack.push(result[i])
+            stack.push(gruopedStr[i])
         } 
     }
     
@@ -99,7 +117,7 @@ function infixToPostfix(str) {
 }
 
 
-// evaluates the given postfix expression
+// evaluates the given expression in an array
 export function evalutePostfix(expression) {
     let stack = new Stack()
     let postfix = infixToPostfix(expression)
@@ -122,3 +140,6 @@ export function evalutePostfix(expression) {
 // 2. First group the words like sqrt, sin or etc
 // 3. Apply Stack Algorithm
 // 4. Apply operation by given operators (functions like sin, cos, etc included)
+
+console.log(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
+console.log(evalutePostfix(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"])))
