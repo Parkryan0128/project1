@@ -70,3 +70,38 @@
     top: 5px;
     right: 5px;
 }
+
+
+
+@keyframes cursorBlink {
+    0%, 50% {
+        border-left: 2px solid black;
+    }
+    51%, 100% {
+        border-left: 2px solid transparent;
+    }
+}
+
+.inputBox {
+    display: flex;
+    align-items: center;
+    position: relative;
+    top: 10px;
+}
+
+.value {
+    background-color: white;
+    outline: none;
+}
+
+.value.empty {
+    background-color: white;
+    width: 10px;
+}
+
+.value.focused {
+    border-left: 2px solid black;
+    background-color: transparent;
+    animation: cursorBlink 1s steps(2, start) infinite;
+}
+
