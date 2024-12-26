@@ -4,13 +4,12 @@ import { useState } from 'react'
 
 
 function Input() {
-    let [expression, displayInput] = useState(" ");
+    let [expression, displayInput] = useState("");
     let [isFocused, setIsFocused] = useState(false);
     let [showGraph, setShowGraph] = useState(true);
     let [isAlive, setIsAlive] = useState(true);
-
+    
     let hasValue = expression.trim() !== '';
-
     return (
         <div
             className={`Input ${isFocused ? 'focused' : ''}`}>

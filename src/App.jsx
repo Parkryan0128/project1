@@ -4,7 +4,7 @@ import InputList from './components/InputList.jsx'
 
 function App() {
   return <div>
-    <InputList/>
+    
   </div>
 }
 
