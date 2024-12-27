@@ -7,7 +7,7 @@ import * as math from './calculateExpression.js'
 // helper function to determine if a given string
 // is an operand or a number
 function isNumber(str) {
-    return !isNaN(str) && str.trim() !== ""
+    return !isNaN(str)
 }
 
 // helper function to determine if a given string
@@ -23,8 +23,7 @@ function isFunction(input) {
 // helper function to return the precedence of a given operator
 function precedence(operator) {
     if (operator == '+' || operator == '-') return 1
-    if (operator == '*' || operator == '/') return 2
-    if (operator == '^' || isFunction(operator)) return 3
+    if (operator == '*' || operator == '/' || operator == '^' || isFunction(operator)) return 2
     return 0
 }
 
@@ -55,7 +54,6 @@ function groupWords(input) {
         // Check if the current element is a letter and add to temp
         if (/[a-zA-Z]/.test(input[i])) { 
             temp += input[i]; 
-
         } else {
             if (temp) {
                 // Push leftover letters and reset temp
@@ -68,7 +66,9 @@ function groupWords(input) {
     }
 
     // If there's anything left in temp, add it to the result
-    if (temp) result.push(temp);
+    // if (temp) {
+    //     result.push(temp);
+    // }
 
     return result;
 }
@@ -80,6 +80,7 @@ export function infixToPostfix(str) {
     let gruopedStr = groupWords(str)
 
     for (let i=0; i<gruopedStr.length; i++) {
+
         // checking if str is a number
         if (isNumber(gruopedStr[i])) {
             queue.enqueue(Number(gruopedStr[i]))  // adding it to the queue
@@ -122,14 +123,22 @@ export function evalutePostfix(expression) {
     let stack = new Stack()
     let postfix = infixToPostfix(expression)
 
-    for (let i in postfix) {
+    for (let i = 0; i < postfix.length; i++) {
+
+        console.log(postfix[i])
         if (typeof postfix[i] == 'number') {
             stack.push(postfix[i])
+            console.log(stack.getItems())
 
+        } else if (postfix[i].length > 1) {
+            const a = stack.pop()
+            stack.push(applyOperator(postfix[i], a))
+            console.log(stack.getItems())
         } else {
             const b = stack.pop()
             const a = stack.pop()
             stack.push(applyOperator(postfix[i], a, b))
+            console.log(stack.getItems())
         }
     }
     return stack.pop()
@@ -141,5 +150,6 @@ export function evalutePostfix(expression) {
 // 3. Apply Stack Algorithm
 // 4. Apply operation by given operators (functions like sin, cos, etc included)
 
-console.log(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
-console.log(evalutePostfix(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"])))
+// console.log(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
+// console.log(evalutePostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
+// console.log(applyOperator('cos', 3))
