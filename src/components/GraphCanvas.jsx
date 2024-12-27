@@ -2,20 +2,20 @@ import React, { useRef, useEffect, useState } from 'react';
 
 function GraphCanvas() {
     const canvasRef = useRef(null);
+    const [width, setWidth] = useState(1000);
+    const [height, setHeight] = useState(1000);
     const [equation, setEquation] = useState('y = x ** 2');
     const [error, setError] = useState('');
-    const [origin, setOrigin] = useState({ x: 400, y: 400 })
-    const [scale, setScale] = useState(50);
+    const [origin, setOrigin] = useState({ x: 500, y: 500 })
+    const [position, setPosition] = useState({ x: 0, y: 0 })
+
+    const [scale, setScale] = useState(100);
     const lastMousePos = useRef({ x: 0, y: 0 });
     const isDragging = useRef(false)
-
-
 
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
         ctx.clearRect(0, 0, width, height);
 
         // const dpr = window.devicePixelRatio || 1;
@@ -30,7 +30,7 @@ function GraphCanvas() {
         drawGrid(ctx, width, height, origin, scale);
         drawAxis(ctx, origin, width, height, scale);
         drawLabel(ctx, origin, width, height, scale);
-        drawGraph(ctx, origin, scale, equation);
+        drawGraph(ctx, origin, width, height, scale, equation, position);
 
     }, [equation, origin, scale]);
 
@@ -57,6 +57,7 @@ function GraphCanvas() {
 
             // Update the last mouse position
             lastMousePos.current = { x: e.clientX, y: e.clientY };
+            console.log(origin.x);
         };
 
         const handleMouseUp = () => {
@@ -87,13 +88,11 @@ function GraphCanvas() {
             canvas.removeEventListener('mouseup', handleMouseUp);
             canvas.removeEventListener('mouseleave', handleMouseLeave);
         };
-    }, []);
+    }, [origin]);
 
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-
         const handleWheel = (e) => {
             e.preventDefault();
 
@@ -134,8 +133,8 @@ function GraphCanvas() {
             <canvas
                 ref={canvasRef}
                 id="preview"
-                width={800} // Canvas width in pixels
-                height={800} // Canvas height in pixels
+                width={width} // Canvas width in pixels
+                height={height} // Canvas height in pixels
                 style={{ border: '1px solid #ccc' }}
             />
         </div>
@@ -183,9 +182,9 @@ const drawAxis = (ctx, origin, width, height, scale) => {
 }
 
 
-const drawGraph = (ctx, origin, scale, equation) => {
-    const xMin = -10 *origin.x / scale; // e.g., -800/50 = -16 units
-    const xMax = 10* origin.x / scale; // 50 = 16 units
+const drawGraph = (ctx, origin, width, height, scale, equation, position) => {
+    const xMin = position.x - width / 2;
+    const xMax = position.x + width / 2;
     const step = 0.001; // Step size for x-values
 
     let firstPoint = true;
@@ -207,8 +206,10 @@ const drawGraph = (ctx, origin, scale, equation) => {
         }
         // let y = yFunction(x)
         // Convert mathematical coordinates to canvas coordinates
+
+
         const canvasX = origin.x + x * scale;
-        const canvasY = origin.y - y * scale; // Invert y-axis
+        const canvasY = origin.y - y * scale;
 
         if (firstPoint) {
             ctx.moveTo(canvasX, canvasY);
@@ -228,28 +229,37 @@ const drawLabel = (ctx, origin, width, height, scale) => {
     ctx.font = '12px Arial';    // Font style and size
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const numberOfLabels = Math.floor(width / scale / 2); // Dynamic based on scale and canvas size
 
-    // Draw labels on X-axis
-    for (let i = 1; i <= numberOfLabels; i++) {
-        const xPos = origin.x + i * scale;
-        const label = i;
-        ctx.fillText(label.toString(), xPos, origin.y + 15); // Positioned below X-axis
+    // Determine label spacing based on scale
+    let labelSpacing = 1; // In units
+    if (scale < 30) labelSpacing = 5;
+    else if (scale < 50) labelSpacing = 10;
+    else labelSpacing = 1;
 
-        const xNegPos = origin.x - i * scale;
-        const labelNeg = -i;
-        ctx.fillText(labelNeg.toString(), xNegPos, origin.y + 15); // Positioned below X-axis
+    // Determine the range of x-values visible on the canvas
+    const xMin = Math.ceil((-origin.x) / scale / labelSpacing) * labelSpacing;
+    const xMax = Math.floor((width - origin.x) / scale / labelSpacing) * labelSpacing;
+
+    // Draw labels on the X-axis
+    for (let x = xMin; x <= xMax; x += labelSpacing) {
+        if (x != 0) {
+            const canvasX = origin.x + x * scale;
+            const canvasY = origin.y + 15; // Position below the X-axis
+            ctx.fillText(x.toString(), canvasX, canvasY);
+        }
     }
 
-    // Draw labels on Y-axis
-    for (let i = 1; i <= numberOfLabels; i++) {
-        const yPos = origin.y - i * scale;
-        const label = i;
-        ctx.fillText(label.toString(), origin.x + 15, yPos); // Positioned to the right of Y-axis
+    // Determine the range of y-values visible on the canvas
+    const yMin = Math.ceil((-origin.y) / scale / labelSpacing) * labelSpacing;
+    const yMax = Math.floor((height - origin.y) / scale / labelSpacing) * labelSpacing;
 
-        const yNegPos = origin.y + i * scale;
-        const labelNeg = -i;
-        ctx.fillText(labelNeg.toString(), origin.x + 15, yNegPos); // Positioned to the right of Y-axis
+    for (let y = yMin; y <= yMax; y += labelSpacing) {
+        if (y != 0) {
+            const canvasY = origin.y + y * scale;
+            const canvasX = origin.x - 15; // Position to the right of the Y-axis
+            // Only draw labels within canvas bounds
+            ctx.fillText((-y).toString(), canvasX, canvasY);
+        }
     }
 
     // Label at the origin
