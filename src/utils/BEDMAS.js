@@ -35,7 +35,7 @@ function applyOperator(operator, a, b=NaN) {
         case '*': return math.multiply(a,b);
         case '/': return math.divide(a,b);
         case '^': return math.exp(a,b);
-        case 'sqrt': return math.root(a,b); // need to determine which symnbol to use
+        case 'sqrt': return Math.sqrt(a); // need to determine which symnbol to use
         case 'sin': return Math.sin(a)
         case 'cos': return Math.cos(a)
         case 'tan': return Math.tan(a)
@@ -43,7 +43,24 @@ function applyOperator(operator, a, b=NaN) {
     }
 }
 
-// inputs an array with single letter/number, and
+// helper function to check if a given string is a constant
+// e.g. 'pi' => Math.PI, 'e' => Math.E
+function isConstant(str) {
+    const normalizedStr = str.toLowerCase()
+
+    return normalizedStr == 'pi' || normalizedStr == 'e'
+}
+
+// helper function to convert each constant to Math.*
+function convertConstant(constant) {
+    switch (constant.toLowerCase()) {
+        case 'pi': return Math.PI;
+        case 'e': return Math.E;
+    }
+}
+
+
+// helper function: inputs an array with single letter/number, and
 // outputs an array with grouped words (e.g. sqrt, sin, cos, etc)
 function groupWords(input) {
     let result = [];
@@ -54,6 +71,12 @@ function groupWords(input) {
         // Check if the current element is a letter and add to temp
         if (/[a-zA-Z]/.test(input[i])) { 
             temp += input[i]; 
+            
+            // if temp is a constant (e.g. pi or e), add to result
+            if (isConstant(temp)) {
+                result.push(temp);
+                temp = '';
+            }
         } else {
             if (temp) {
                 // Push leftover letters and reset temp
@@ -73,26 +96,29 @@ function groupWords(input) {
     return result;
 }
 
+
 // converts a given infix to postfix expression
 export function infixToPostfix(str) {
     let stack = new Stack()
     let queue = new Queue()
-    let gruopedStr = groupWords(str)
+    let groupedStr = groupWords(str)
 
-    for (let i=0; i<gruopedStr.length; i++) {
+    for (let i=0; i<groupedStr.length; i++) {
 
         // checking if str is a number
-        if (isNumber(gruopedStr[i])) {
-            queue.enqueue(Number(gruopedStr[i]))  // adding it to the queue
+        if (isNumber(groupedStr[i])) {
+            queue.enqueue(Number(groupedStr[i]))  // adding it to the queue
 
-        // checking if str is a start of a parenthesis
-        } else if (gruopedStr[i] == '(') {
-            stack.push(gruopedStr[i]) // adding it to the stack
+        } else if (isConstant(groupedStr[i])) {
+            queue.enqueue(groupedStr[i]) // adding it to the queue
+
+        } else if (groupedStr[i] == '(') {
+            stack.push(groupedStr[i]) // adding it to the stack
 
         // checking if str is  a end of a parenthesis,
         // if so, pop from the stack and enqueue to the queue
         // until '(' is found
-        } else if (gruopedStr[i] == ')') {
+        } else if (groupedStr[i] == ')') {
             while (!stack.isEmpty() && stack.peek() !== '(') {
                 queue.enqueue(stack.pop())
             }
@@ -102,10 +128,10 @@ export function infixToPostfix(str) {
         // if the precedence of the first item in the stack is greater than
         // the precedence of str, then pop from the stack and enqueue to the queue
         } else {
-            while (!stack.isEmpty() && precedence(stack.peek()) > precedence(gruopedStr[i])) {
+            while (!stack.isEmpty() && precedence(stack.peek()) > precedence(groupedStr[i])) {
                 queue.enqueue(stack.pop())
             }
-            stack.push(gruopedStr[i])
+            stack.push(groupedStr[i])
         } 
     }
     
@@ -119,7 +145,7 @@ export function infixToPostfix(str) {
 
 
 // evaluates the given expression in an array
-export function evalutePostfix(expression) {
+export function evaluteExpression(expression) {
     let stack = new Stack()
     let postfix = infixToPostfix(expression)
 
@@ -128,17 +154,21 @@ export function evalutePostfix(expression) {
         console.log(postfix[i])
         if (typeof postfix[i] == 'number') {
             stack.push(postfix[i])
-            console.log(stack.getItems())
+            console.log(stack)
 
+        } else if (isConstant(postfix[i])) {
+            let a = convertConstant(postfix[i])
+            stack.push(a)
+            console.log(stack)
         } else if (postfix[i].length > 1) {
             const a = stack.pop()
             stack.push(applyOperator(postfix[i], a))
-            console.log(stack.getItems())
+            console.log(stack)
         } else {
             const b = stack.pop()
             const a = stack.pop()
             stack.push(applyOperator(postfix[i], a, b))
-            console.log(stack.getItems())
+            console.log(stack)
         }
     }
     return stack.pop()
@@ -150,6 +180,15 @@ export function evalutePostfix(expression) {
 // 3. Apply Stack Algorithm
 // 4. Apply operation by given operators (functions like sin, cos, etc included)
 
+
+// test 1
 // console.log(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
 // console.log(evalutePostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
 // console.log(applyOperator('cos', 3))
+
+// test 2
+// const statement = ['s','q','r','t','4','+','3', '*', 's', 'i', 'n','(','p', 'i', ')']
+
+// console.log(groupWords(statement))
+// console.log(infixToPostfix(statement))
+// console.log(evaluteExpression(statement))
