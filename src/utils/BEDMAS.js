@@ -151,24 +151,22 @@ export function evaluteExpression(expression) {
 
     for (let i = 0; i < postfix.length; i++) {
 
-        console.log(postfix[i])
         if (typeof postfix[i] == 'number') {
             stack.push(postfix[i])
-            console.log(stack)
 
         } else if (isConstant(postfix[i])) {
             let a = convertConstant(postfix[i])
             stack.push(a)
-            console.log(stack)
+
         } else if (postfix[i].length > 1) {
             const a = stack.pop()
             stack.push(applyOperator(postfix[i], a))
-            console.log(stack)
+
         } else {
             const b = stack.pop()
             const a = stack.pop()
             stack.push(applyOperator(postfix[i], a, b))
-            console.log(stack)
+
         }
     }
     return stack.pop()
@@ -183,7 +181,7 @@ export function evaluteExpression(expression) {
 
 // test 1
 // console.log(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
-// console.log(evalutePostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
+// console.log(evaluateExpression(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
 // console.log(applyOperator('cos', 3))
 
 // test 2
