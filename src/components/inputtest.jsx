@@ -75,6 +75,11 @@ function Input() {
 
         if (e.key == '^') {
             setType('exponent')
+            const temp = [...blocks]
+            const dummySpan = { value: null, type: 'dummy' }
+            temp.splice(blocks.length - 1, 0, dummySpan)
+            setBlocks([...temp])
+            console.log(temp)
         }
 
 
