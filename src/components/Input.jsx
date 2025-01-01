@@ -13,6 +13,7 @@ function Input() {
         handleBlocks(e)
     }
 
+
     // handles user input for calculation
     function handleUserInput(e) {
         if (/^[a-zA-Z0-9+\-*()^=/]$/.test(e.key)) {
@@ -41,7 +42,7 @@ function Input() {
 
     // handles user input for display
     function handleBlocks(e) {
-        if (/^[a-zA-Z0-9+\-*()=.]$/.test(e.key)) {
+        if (/^[a-zA-Z0-9+\-*()/=.\[\]]$/.test(e.key)) {
             const temp = [...blocks]
             const toAdd = { value: e.key, type: type }
             temp.splice(blocks.length - 1, 0, toAdd)
@@ -98,30 +99,18 @@ function Input() {
         //         </span>
         //     )
         // }
-        if (type === 'numerator') {
-            return (
-                <span
-                    className='fraction'
-                    key={index}
-                    tabIndex={0}>
-                    <span
-                        className={`value ${type}`}
-                        key={index}
-                        tabIndex={0}
-                        onKeyDown={(e) => handleKeyPressed(e)}
-                    >
-                        {value}
-                    </span>
-                    <span
-                        className='value.denominator-empty'
-                        key={index}
-                        tabIndex={0}
-                        onKeyDown={(e) => handleKeyPressed(e)}>
-                        {value}
-                    </span>
-                </span>
-            )
-        }
+        // if (type === 'numerator') {
+        //     return (
+        //         <span className='fraction'>
+        //             <span
+        //                 className={`value${type}`}
+        //                 key={index}
+        //                 tabIndex={0}>
+        //                 {value}
+        //             </span>
+        //             <span>denominator</span>
+        //         </span>
+        //     )}
         return (
             <span
                 className={`value
