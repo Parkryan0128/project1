@@ -1,4 +1,4 @@
-.Input {
+.input {
     position: relative;
     display: flex;
     background: white;
@@ -13,11 +13,11 @@
     overflow: hidden;
 }
 
-.Input.focused {
+.input.focused {
     outline: 1px solid skyblue;
 }
 
-.OnOff {
+.onOff {
     position: absolute;
     left: 0;
     width: 30px;
@@ -27,12 +27,12 @@
     font-family: "Arial", sans-serif;
 }
 
-.OnOff.focused {
+.onOff.focused {
     background-color: skyblue;
     color: white;
 }
 
-.OnOffButton {
+.onOffButton {
     position: absolute;
     top: 24px;
     left: 7px;
@@ -43,15 +43,15 @@
     background-color: rgb(66, 224, 66);
 }
 
-.OnOffButton.noValue {
+.onOffButton.noValue {
     visibility: hidden;
 }
 
-.OnOffButton.showGraphFalse {
+.onOffButton.showGraphFalse {
     background-color: white;
 }
 
-.UserInput {
+.userInput {
     position: absolute;
     width: 300px;
     top: 20px;
@@ -69,4 +69,66 @@
     position: absolute;
     top: 5px;
     right: 5px;
+}
+
+
+
+@keyframes cursorBlink {
+    0%, 50% {
+        border-left: 2px solid black;
+    }
+    51%, 100% {
+        border-left: 2px solid transparent;
+    }
+}
+
+.inputBox {
+    display: flex;
+    align-items: center;
+    position: relative;
+    top: 10px;
+    background-color: transparent;
+}
+
+.value {
+    background-color: transparent;
+    outline: none;
+    font-size: 40px;
+}
+
+.value.empty {
+    background-color: transparent;
+    width: 10px;
+}
+
+.value.focused {
+    border-left: 2px solid black;
+    background-color: transparent;
+    animation: cursorBlink 1s steps(2, start) infinite;
+}
+
+.value.exponent {
+    background-color: transparent;
+    padding-top: 3px;
+    align-self:flex-start;
+    font-size: 20px;
+}
+
+.value.numerator {
+    background-color: transparent;
+    padding-top: 3px;
+    align-self:flex-start;
+    font-size: 20px;
+    border-bottom: 2px solid black;
+}
+
+.value.denominator-empty {
+    background-color: lightgrey;
+    font-size: 20px;
+}
+
+.fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
 }
