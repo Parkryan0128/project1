@@ -4,7 +4,7 @@ function GraphCanvas() {
     const canvasRef = useRef(null);
     const [width, setWidth] = useState(1000);
     const [height, setHeight] = useState(1000);
-    const [equation, setEquation] = useState('y = x ** 2');
+    const [equation, setEquation] = useState('y = x ** 3');
     const [origin, setOrigin] = useState({ x: 500, y: 500 })
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const [scale, setScale] = useState(100);
@@ -16,14 +16,14 @@ function GraphCanvas() {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, width, height);
 
-        // const dpr = window.devicePixelRatio || 1;
-        // if (dpr !== 1) {
-        //     canvas.width = width * dpr;
-        //     canvas.height = height * dpr;
-        //     canvas.style.width = `${width}px`;
-        //     canvas.style.height = `${height}px`;
-        //     ctx.scale(dpr, dpr);
-        // }
+        const dpr = window.devicePixelRatio || 1;
+        if (dpr !== 1) {
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            ctx.scale(dpr, dpr);
+        }
 
         drawGrid(ctx, width, height, origin, scale);
         drawAxis(ctx, origin, width, height, scale);
@@ -161,8 +161,8 @@ const drawGrid = (ctx, width, height, origin, scale) => {
     const { majorStep, minorStep } = getGridSteps(scale);
     const majorGridSpacing = majorStep * scale;
     const minorGridSpacing = minorStep * scale;
-    ctx.strokeStyle = '#F0F0F0'; // Light grey for grid lines
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#DCDCDC'; // Light grey for grid lines
+    ctx.lineWidth = 0.5;
     ctx.beginPath();
 
     // Vertical minor grid lines
@@ -188,8 +188,8 @@ const drawGrid = (ctx, width, height, origin, scale) => {
     ctx.stroke();
 
     // Draw major grid lines (darker color)
-    ctx.strokeStyle = '#E0E0E0'; // Slightly darker grey for major grid lines
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#808080'; // Slightly darker grey for major grid lines
+    ctx.lineWidth = 0.5;
 
     ctx.beginPath();
 
@@ -231,7 +231,7 @@ const drawAxis = (ctx, origin, width, height, scale) => {
 const drawGraph = (ctx, origin, width, height, scale, equation, position) => {
     const xMin = position.x - width / 2;
     const xMax = position.x + width / 2;
-    const step = 0.001; // Step size for x-values
+    const step = 0.01; // Step size for x-values
 
     let firstPoint = true;
 
@@ -271,39 +271,34 @@ const drawGraph = (ctx, origin, width, height, scale, equation, position) => {
 
 
 const drawLabel = (ctx, origin, width, height, scale) => {
+    const { majorStep, minorStep } = getGridSteps(scale);
     ctx.fillStyle = '#000000'; // Black color for text
-    ctx.font = '12px Arial';    // Font style and size
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.font = `12px Arial`;
 
-
-    // Determine label spacing based on scale
-    let labelSpacing = 1; // In units
-
-    // Determine the range of x-values visible on the canvas
-    const xMin = Math.ceil((-origin.x) / scale / labelSpacing) * labelSpacing;
-    const xMax = Math.floor((width - origin.x) / scale / labelSpacing) * labelSpacing;
+    // Calculate the range of labels to display on the X-axis
+    const xStartUnit = Math.ceil((-origin.x) / scale / majorStep) * majorStep;
+    const xEndUnit = Math.floor((width - origin.x) / scale / majorStep) * majorStep;
 
     // Draw labels on the X-axis
-    for (let x = xMin; x <= xMax; x++) {
-        if (x != 0) {
-            const canvasX = origin.x + x * scale;
-            const canvasY = origin.y + 15; // Position below the X-axis
-            ctx.fillText((x).toString(), canvasX, canvasY);
-        }
+    for (let x = xStartUnit; x <= xEndUnit; x += majorStep) {
+        if (x === 0) continue; // Skip origin to prevent duplicate labeling
+        const canvasX = origin.x + x * scale;
+        const canvasY = origin.y + 15; // Position below the X-axis
+        ctx.fillText(x.toString(), canvasX, canvasY);
     }
 
-    // Determine the range of y-values visible on the canvas
-    const yMin = Math.ceil((-origin.y) / scale);
-    const yMax = Math.floor((height - origin.y) / scale );
+    // Calculate the range of labels to display on the Y-axis
+    const yStartUnit = Math.ceil((-origin.y) / scale / majorStep) * majorStep;
+    const yEndUnit = Math.floor((height - origin.y) / scale / majorStep) * majorStep;
 
-    for (let y = yMin; y <= yMax; y++) {
-        if (y != 0) {
-            const canvasY = origin.y + y * scale;
-            const canvasX = origin.x - 15; // Position to the right of the Y-axis
-            // Only draw labels within canvas bounds
-            ctx.fillText(((-y)).toString(), canvasX, canvasY);
-        }
+    // Draw labels on the Y-axis
+    for (let y = yStartUnit; y <= yEndUnit; y += majorStep) {
+        if (y === 0) continue; // Skip origin to prevent duplicate labeling
+        const canvasY = origin.y + y * scale;
+        const canvasX = origin.x - 15; // Position to the left of the Y-axis
+        ctx.fillText((-y).toString(), canvasX, canvasY);
     }
 
     // Label at the origin
