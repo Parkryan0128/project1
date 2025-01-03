@@ -197,7 +197,6 @@ function Input() {
     )
 }
 
-
 export default Input
 
 // ${index == blocks.length - 1 ? 'focused' : ''}`}
