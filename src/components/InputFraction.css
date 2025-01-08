@@ -1,0 +1,7 @@
+.container {
+    border: 1px;
+    border-style: solid;
+    border-color: red;
+    width: 500px;
+    height: 50px;
+}
