@@ -26,8 +26,43 @@
     width: 10px;
 }
 
-.value.focused {
+.value.cursor {
     border-left: 2px solid black;
     background-color: transparent;
     animation: cursorBlink 1s steps(2, start) infinite;
+}
+
+/* .value.focused {
+    border-left: 2px solid black;
+    background-color: transparent;
+    animation: cursorBlink 1s steps(2, start) infinite;
+} */
+
+.integral-container {
+    display: inline-block;
+    position: relative;
+    font-size: 24px; /* Adjust the size as needed */
+    line-height: 1.2;
+}
+
+.upper-bound1 {
+    position: absolute;
+    top: -10px; /* Adjust as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px; /* Smaller size for bounds */
+}
+
+.upper-bound {
+    background-color: transparent;
+    font-size: 20px;
+    position: relative;
+    left: 10px; bottom: 20px;
+}
+  
+.lower-bound {
+    border-color: transparent;
+    position: relative;
+    bottom: -10px;
+    font-size: 20px;
 }
