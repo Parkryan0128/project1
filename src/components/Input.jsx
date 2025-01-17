@@ -1,128 +1,166 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import './Input.css'
 
 function Input() {
-    let [userInput, setUserInput] = useState([])
-    let [blocks, setBlocks] = useState([
-        { value: '\u00A0', type: 'empty' },
+
+    let [userInput, setUserInput] = useState([
+        '1', '2', '+', 'x', '^', '#', '2', '^', '#', '2', '^', '#', '3', '+', '3', '$', '$', '+', '3', '$', 'cursor'
     ])
-    let [type, setType] = useState(null)
 
-    function handleKeyPressed(e) {
-        handleUserInput(e)
-        handleBlocks(e)
+    let [objects, setObjects] = useState([
+        { value: '1', type: 'default' },
+        { value: '2', type: 'default' },
+        { value: '+', type: 'default' },
+        {
+            value: 'x', type: 'exponent', exponent: [
+                {
+                    value: '2', type: 'exponent', exponent: [
+                        {
+                            value: '2', type: 'exponent', exponent: [
+                                { value: '3', type: '' },
+                                { value: '+', type: '' },
+                                { value: '3', type: '' }
+                            ]
+                        }
+                    ]
+                },
+                { value: '+', type: '' },
+                { value: '3', type: '' }
+            ]
+        },
+        { value: '\u00A0', type: 'cursor' }
+    ])
+
+    // let [userInput, setUserInput] = useState([
+    //     '1', '2', '+', 'cursor'
+    // ])
+
+    // let [objects, setObjects] = useState([
+    //     // { value: 'a', type: 'default' },
+    //     // { value: '\u00A0', type: 'cursor' }
+    // ])
+
+    useEffect(() => {
+        inputToObjects()
+        console.log(userInput)
+    }, [userInput])
+
+    function inputToObjects() {
+        // const inputType = 'default'
+        // const res = []
+        // userInput.map((item, index) => {
+        //     if (item === 'cursor') {
+        //         res.push({ value: '\u00A0', parentIndex: index, type: 'cursor' })
+        //     } else if (/^[a-z0-9]+$/i.test(item)) {
+        //         res.push({ value: item, parentIndex: index, type: { inputType }, })
+        //     }
+        // })
+        // setObjects(res)
+        // console.log(res)
     }
 
+    // // function moveCursor(index) {
+    // //     const temp = objects.filter((item) => item.type !== "cursor")
+    // //     temp.splice(index, 0, { value: '', type: 'cursor' })
+    // //     setObjects(temp)
+    // // }
 
-    // handles user input for calculation
-    function handleUserInput(e) {
-        if (/^[a-zA-Z0-9+\-*()^=/]$/.test(e.key)) {
-            const temp = [...userInput]
-            temp.push(e.key)
-            setUserInput([...temp])
-            console.log(temp)
+    // // handles user input for display
+    // function handleKeyPressed(e, index) {
+    //     // if (/^[a-zA-Z0-9+\-*()/=.\[\]]$/.test(e.key)) {
+    //     //     const temp = [...userInput]
+    //     //     const toAdd = { value: e.key, type: '' }
+    //     //     temp.splice(index, 0, toAdd)
+    //     //     setUserInput([...temp])
+    //     //     console.log(temp)
+    //     // }
+
+    //     // if (e.key === 'ArrowLeft') {
+    //     //     if (index > 0) {
+    //     //         moveCursor(index - 1)
+    //     //     }
+    //     // }
+
+    //     // if (e.key === 'ArrowRight') {
+    //     //     if (index < userInput.length - 1) {
+    //     //         moveCursor(index + 1)
+    //     //     }
+    //     // }
+
+    //     // if (e.key === 'Backspace' && index > 0) {
+    //     //     const temp = [...userInput];
+    //     //     temp.splice(index - 1, 1)
+    //     //     setUserInput([...temp]);
+    //     //     console.log(temp);
+    //     // }
+    //     console.log(index)
+    // }
+
+    const Exponent = ({ node, fontSize = 40 }) => {
+        if (!node) return null;
+
+        if (Array.isArray(node)) {
+            return node.map((child, index) => (
+                <Exponent key={index} node={child} fontSize={fontSize * 0.8} />
+            ))
         }
 
-        if (e.key === "Backspace" && userInput.length > 0) {
-            const temp = [...userInput]
-            let numDelete = 1
-            switch (temp[userInput.length - 1]) {
-                case '^':
-                    numDelete = 2
-                    setType(null)
-                    break;
-                default:
-                    break;
-            }
-            temp.splice(userInput.length - 1, numDelete)
-            setUserInput([...temp])
-            console.log(temp)
+        if (node.type === 'cursor') {
+            return (
+                <span
+                    className="value cursor"
+                    ref={cursorRef}
+                    tabIndex={0}
+                    onKeyDown={handleKeyPressed}
+                    style={{ fontSize: `${fontSize}px` }}>
+                    {'\u200B'}
+                </span>
+            )
         }
+
+        return (
+            <span style={{ fontSize: `${fontSize}px` }}>
+                {node.value}
+                {node.exponent && (
+                    <sup>
+                        <Exponent node={node.exponent} fontSize={fontSize * 0.9} />
+                    </sup>
+                )}
+            </span>
+        )
     }
 
-    // handles user input for display
-    function handleBlocks(e) {
-        if (/^[a-zA-Z0-9+\-*()/=.\[\]]$/.test(e.key)) {
-            const temp = [...blocks]
-            const toAdd = { value: e.key, type: type }
-            temp.splice(blocks.length - 1, 0, toAdd)
-            setBlocks([...temp])
-            console.log(temp)
+    const Display = objects.map((item) => {
+        if (item.type === 'cursor') {
+            return (
+                <span
+                    className="cursor"
+                    key={item.parentIndex}>
+                    {item.value}
+                </span>
+            )
         }
 
-        if (e.key == '^') {
-            setType('exponent')
+        if (item.type === 'exponent') {
+            return (
+                <Exponent node={item} />
+            )
         }
 
-        if (e.key == 'ArrowRight' && type == 'exponent') {
-            setType(null)
-        }
-
-        // if (e.key == 'ArrowRight' && type == 'denominator') {
-        //     setType(null)
-        // }
-
-        if (e.key === "Backspace" && blocks.length > 1) {
-            const temp = [...blocks]
-            temp.splice(blocks.length - 2, 1)
-            setBlocks([...temp])
-            console.log(temp)
-        }
-
-        if (e.key === "/" && type == null) {
-            const temp = [...blocks].reverse().slice(1) // reverse and remove cursor
-            const sliceIndex = [...temp].findIndex(block => !/^[a-zA-Z0-9.]$/.test(block.value));
-            const sliced = sliceIndex === -1 ? temp : temp.slice(0, sliceIndex); // finds numerator
-            const combinedBlock = [...sliced.reverse()].reduce(
-                (acc, block) => ({
-                    value: acc.value + block.value,
-                    type: 'numerator',
-                }),
-                { value: '', type: 'numerator' }
-            );
-            const slicedBlocks = [...blocks].slice(0, blocks.length - (sliced.length + 1))
-            setBlocks([...slicedBlocks, combinedBlock, { value: '\u00A0', type: 'denominator-empty' }])
-            setType('denominator')
-            console.log([...slicedBlocks, combinedBlock, { value: '\u00A0', type: 'denominator-empty' }])
-        }
-    }
-
-    let display = blocks.map(({ value, type }, index) => {
-        // while (type === 'denominator') {
-        //     return (
-        //         <span 
-        //         className='value.denominator-empty'
-        //         key={index}
-        //         tabIndex={0}
-        //         onKeyDown={(e) => handleKeyPressed(e)}>
-        //             {value}
-        //         </span>
-        //     )
-        // }
-        // if (type === 'numerator') {
-        //     return (
-        //         <span className='fraction'>
-        //             <span
-        //                 className={`value${type}`}
-        //                 key={index}
-        //                 tabIndex={0}>
-        //                 {value}
-        //             </span>
-        //             <span>denominator</span>
-        //         </span>
-        //     )}
         return (
             <span
-                className={`value
-                    ${type}
-                    ${index == blocks.length - 1 ? 'focused' : ''}`}
-                key={index}
-                tabIndex={0}
-                onKeyDown={(e) => handleKeyPressed(e)}>
-                {value}
+                className='value'
+                key={item.parentIndex}>
+                {item.value}
             </span>
         )
     })
+
+    return (
+        <div className="inputBox">
+            {Display}
+        </div>
+    )
 }
 
 export default Input
