@@ -8,7 +8,7 @@ function InputList() {
 
 
     useEffect(() => {
-        processInput()
+        setProcessedInput(processInput(userInput));
     }, [userInput])
 
     function findParenPairs(str) {
@@ -67,11 +67,12 @@ function InputList() {
             const limit = ['+', '-', '(', ')']
 
             if (copy.length == 1) {
-                copy.splice(copy.length - 1, 0, '(')
-                copy.splice(cursorIndex+1, 0, ')')
-                copy.splice(cursorIndex+1, 0, '(')
-                copy.splice(cursorIndex+1, 0, '/')
-                copy.splice(cursorIndex+1, 0, ')')
+                copy.splice(cursorIndex, 0, '(')
+                copy.splice(cursorIndex + 2, 0, ')')
+                copy.splice(cursorIndex + 3, 0, '/')
+                copy.splice(cursorIndex + 4, 0, '(')
+                copy.splice(cursorIndex + 5, 0, ')')
+                console.log(copy)
                 setUserInput(copy)
             } else {
                 let i = cursorIndex;
@@ -79,10 +80,10 @@ function InputList() {
                     i--;
                 }
                 copy.splice(i + 1, 0, '(');
-                copy.splice(cursorIndex+1, 0, ')')
-                copy.splice(cursorIndex+1, 0, '(')
-                copy.splice(cursorIndex+1, 0, '/')
-                copy.splice(cursorIndex+1, 0, ')')
+                copy.splice(cursorIndex + 1, 0, ')')
+                copy.splice(cursorIndex + 2, 0, '/')
+                copy.splice(cursorIndex + 3, 0, '(')
+                copy.splice(cursorIndex + 5, 0, ')')
                 console.log(copy)
                 setUserInput(copy)
             }
@@ -124,7 +125,7 @@ function InputList() {
         }
     };
 
-    const processInput = () => {
+    const processInput = (userInput) => {
         const operators = ['+', '-', '*']
         let arr = []
         let i = 0;
@@ -146,13 +147,13 @@ function InputList() {
                     }
                 })
 
-                let temp = '';
-                for (let j=i; j <= end; j++) {
-                    temp = temp + copy[j];
+                let temp = [];
+                for (let j = i + 1; j <= end - 1; j++) {
+                    temp.push(copy[j])
                 }
 
                 i = end + 2
-                let denom = '';
+                let denom = [];
 
                 pairs.forEach((item) => {
                     if (item[0] == i) {
@@ -160,83 +161,61 @@ function InputList() {
                     }
                 })
 
-                for (let j=i; j<=end; j++) {
-                    denom = denom + copy[j];
+                for (let j = i + 1; j <= end - 1; j++) {
+                    denom.push(copy[j])
                 }
 
                 arr.push({
                     type: 'fraction',
-                    numerator: temp,
-                    denominator: denom,
+                    numerator: processInput(temp),
+                    denominator: processInput(denom),
                 })
 
-
-                i = end+1;
+                i = end + 1;
             } else {
                 i++;
             }
         }
+        return arr;
+    }
 
-        // for (let i = 0; i < userInput.length; i++) {
-        //     if (/^[a-z0-9()]+$/i.test(userInput[i])) {
-        //         arr.push({
-        //             type: 'text',
-        //             value: userInput[i]
-        //         })
-        //     }
-        //     else if (userInput[i] == '/') {
-        //         let pairs = findParenPairs(userInput)
-
-
-
-        //         // if (arr[arr.length - 1].type == "text") {
-        //         //     let i = arr.length - 1;
-        //         //     let num = '';
-        //         //     while (i >= 0 && !operators.includes(arr[i].value) && arr[i].type !== 'fraction') {
-        //         //         num = arr[i].value + num;
-        //         //         i--;
-        //         //     }
-        //         //     arr = [...arr.slice(0, i + 1)]
-        //         //     arr.push({
-        //         //         type: 'fraction',
-        //         //         numerator: num,
-        //         //         denominator: ''
-        //         //     })
-
-        //         // } else if (arr[arr.length - 1].type == "fraction") {
-
-
-        //         // } else {
-        //         //     arr.push({
-        //         //         type: 'fraction',
-        //         //         numerator: '',
-        //         //         denominator: ''
-        //         //     })
-        //         // }
-        //     }
-        // }
-
-        console.log(arr);
-        setProcessedInput(arr);
+    const displayText = (list) => {
+        return list.map((item, index) => {
+            if (item.type === 'text') {
+                return (
+                    <span key={index}>{item.value}</span>
+                );
+            } else {
+                // Fraction node
+                return (
+                    <span className="fraction" key={index}>
+                        <span className="numerator">{displayText(item.numerator)}</span>
+                        <span className="fraction-bar" />
+                        <span className="denominator">{displayText(item.denominator)}</span>
+                    </span>
+                );
+            }
+        })
     }
 
     // Render the userInput
-    const display = processedInput.map((item, index) => {
-        if (item.type === 'text') {
-            return (
-                <span key={index}>{item.value}</span>
-            );
-        } else {
-            // Fraction node
-            return (
-                <span className="fraction" key={index}>
-                    <span className="numerator">{item.numerator || ' '}</span>
-                    <span className="fraction-bar" />
-                    <span className="denominator">{item.denominator || ' '}</span>
-                </span>
-            );
-        }
-    });
+    // const display = processedInput.map((item, index) => {
+    //     if (item.type === 'text') {
+    //         return (
+    //             <span key={index}>{item.value}</span>
+    //         );
+    //     } else {
+    //         // Fraction node
+    //         return (
+    //             <span className="fraction" key={index}>
+    //                 <span className="numerator">{displayText(item.numerator)}</span>
+    //                 <span className="fraction-bar" />
+    //                 <span className="denominator">{displayText(item.denominator)}</span>
+    //             </span>
+    //         );
+    //     }
+    // });
+
 
     return (
         <div
@@ -251,7 +230,7 @@ function InputList() {
                 outline: 'none', // Removes default focus outline
             }}
         >
-            {display}
+            {displayText(processedInput)}
             {/* {isFocused && <span className="cursor">|</span>} */}
         </div>
     );
