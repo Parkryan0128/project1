@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import './InputFraction.css'
 
+
+// Implement Backspace logic
+// Implement Arrow movement logic with brackets
+//
+
 function InputList() {
     const [userInput, setUserInput] = useState(['cursor']);
     const [isFocused, setIsFocused] = useState(false);
@@ -54,6 +59,12 @@ function InputList() {
         return copy;
     }
 
+    function deleteItems(arr, i) {
+        const copy = [...arr];
+        copy.splice(i, 1);
+        return copy
+    }
+
 
 
     const handleKeyDown = (e) => {
@@ -100,8 +111,14 @@ function InputList() {
         else if (key === 'ArrowLeft') {
             if (cursorIndex > 0) {
                 // Swap the cursor with the item to its left
-                const updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
+                let updated;
+                if (cursorIndex > 3 && userInput[cursorIndex - 1] == "(" && userInput[cursorIndex - 2] == "/") {
+                    updated = insertAt(deleteItems(userInput, cursorIndex), cursorIndex - 3, "cursor");
+                } else {
+                    updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
+                }
                 setUserInput(updated);
+                console.log(updated);
             }
             return;
         }
@@ -109,15 +126,25 @@ function InputList() {
         // 3. Right arrow: move 'cursor' right if possible
         else if (key === 'ArrowRight') {
             if (cursorIndex < userInput.length - 1) {
-                // Swap the cursor with the item to its right
-                const updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
+                let updated;
+                if (cursorIndex < userInput.length -4 && userInput[cursorIndex + 1] == ")" && userInput[cursorIndex+2] == "/") {
+                    updated = deleteItems(insertAt(userInput, cursorIndex + 4, "cursor"), cursorIndex);
+                } else {
+                    updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
+                }
                 setUserInput(updated);
+                console.log(updated);
             }
             return;
         }
 
         else if (key == 'Backspace') {
             if (cursorIndex > 0) {
+                if (userInput[cursorIndex - 1] == ")") {
+                    // implement
+                } else if (userInput[cursorIndex - 1] == "(") {
+                    // implement
+                }
                 const copy = [...userInput];
                 copy.splice(cursorIndex - 1, 1)
                 setUserInput(copy);
