@@ -14,6 +14,7 @@ function InputList() {
 
     useEffect(() => {
         setProcessedInput(processInput(userInput));
+        console.log(userInput)
     }, [userInput])
 
     function findParenPairs(str) {
@@ -65,16 +66,68 @@ function InputList() {
         return copy
     }
 
+    function removeFraction(arr, i) {
+        let pairs = findParenPairs(arr);
+
+        if (i > 0 && arr[i - 1] == "/") {
+
+            let numerEnd = i - 2;
+            let numerStart;
+
+            let denomEnd;
+
+            pairs.forEach((item) => {
+                if (item[0] == i) {
+                    denomEnd = item[1];
+                }
+                if (item[1] == numerEnd) {
+                    numerStart = item[0];
+                }
+            })
+
+            arr = deleteItems(arr, denomEnd);
+            arr = deleteItems(arr, i);
+            arr = deleteItems(arr, i - 1);
+            arr = deleteItems(arr, numerEnd);
+            arr = deleteItems(arr, numerStart);
+            return arr;
+
+
+        } else {
+            let numerEnd;
+            let denomStart;
+            let denomEnd;
+
+            pairs.forEach((item) => {
+                if (item[0] == i) {
+                    numerEnd = item[1]
+                    denomStart = item[1] + 2
+                }
+
+                if (denomStart && item[0] == denomStart) {
+                    denomEnd = item[1]
+                }
+            })
+            arr = deleteItems(arr, denomEnd);
+            arr = deleteItems(arr, denomStart);
+            arr = deleteItems(arr, numerEnd+1);
+            arr = deleteItems(arr, numerEnd);
+            arr = deleteItems(arr, i);
+
+            return arr;
+
+        }
+    }
+
 
 
     const handleKeyDown = (e) => {
         e.preventDefault(); // Prevent default browser behavior
         const key = e.key;
         const cursorIndex = userInput.indexOf('cursor');
+        let copy = [...userInput];
 
         if (key == '/') {
-
-            const copy = [...userInput];
             const limit = ['+', '-', '(', ')']
 
             if (copy.length == 1) {
@@ -83,7 +136,6 @@ function InputList() {
                 copy.splice(cursorIndex + 3, 0, '/')
                 copy.splice(cursorIndex + 4, 0, '(')
                 copy.splice(cursorIndex + 5, 0, ')')
-                console.log(copy)
                 setUserInput(copy)
             } else {
                 let i = cursorIndex;
@@ -95,14 +147,13 @@ function InputList() {
                 copy.splice(cursorIndex + 2, 0, '/')
                 copy.splice(cursorIndex + 3, 0, '(')
                 copy.splice(cursorIndex + 5, 0, ')')
-                console.log(copy)
                 setUserInput(copy)
             }
 
 
         } else if (key.length === 1) {
             // Insert the new char right BEFORE the cursor
-            const updated = insertAt(userInput, cursorIndex, key);
+            const updated = insertAt(copy, cursorIndex, key);
             setUserInput(updated);
             return;
         }
@@ -112,42 +163,45 @@ function InputList() {
             if (cursorIndex > 0) {
                 // Swap the cursor with the item to its left
                 let updated;
-                if (cursorIndex > 3 && userInput[cursorIndex - 1] == "(" && userInput[cursorIndex - 2] == "/") {
-                    updated = insertAt(deleteItems(userInput, cursorIndex), cursorIndex - 3, "cursor");
+                if (cursorIndex > 3 && copy[cursorIndex - 1] == "(" && copy[cursorIndex - 2] == "/") {
+                    updated = insertAt(deleteItems(copy, cursorIndex), cursorIndex - 3, "cursor");
                 } else {
-                    updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
+                    updated = swapItems(copy, cursorIndex, cursorIndex - 1);
                 }
                 setUserInput(updated);
-                console.log(updated);
             }
             return;
         }
 
         // 3. Right arrow: move 'cursor' right if possible
         else if (key === 'ArrowRight') {
-            if (cursorIndex < userInput.length - 1) {
+            if (cursorIndex < copy.length - 1) {
                 let updated;
-                if (cursorIndex < userInput.length -4 && userInput[cursorIndex + 1] == ")" && userInput[cursorIndex+2] == "/") {
-                    updated = deleteItems(insertAt(userInput, cursorIndex + 4, "cursor"), cursorIndex);
+                if (cursorIndex < copy.length - 4 && copy[cursorIndex + 1] == ")" && copy[cursorIndex + 2] == "/") {
+                    updated = deleteItems(insertAt(copy, cursorIndex + 4, "cursor"), cursorIndex);
                 } else {
-                    updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
+                    updated = swapItems(copy, cursorIndex, cursorIndex + 1);
                 }
                 setUserInput(updated);
-                console.log(updated);
             }
             return;
         }
 
         else if (key == 'Backspace') {
             if (cursorIndex > 0) {
-                if (userInput[cursorIndex - 1] == ")") {
-                    // implement
-                } else if (userInput[cursorIndex - 1] == "(") {
-                    // implement
+                if (copy[cursorIndex - 1] == ")") {
+                    if (copy.length > 5 && copy.slice(cursorIndex - 5, cursorIndex).join("") == "()/()") {
+                        copy.splice(cursorIndex - 5, 5);
+                        setUserInput(copy);
+                    } else {
+                        setUserInput(swapItems(copy, cursorIndex, cursorIndex - 1));
+                    }
+                } else if (copy[cursorIndex - 1] == "(") {
+                    setUserInput(removeFraction(copy, cursorIndex - 1))
+                } else {
+                    copy.splice(cursorIndex - 1, 1);
+                    setUserInput(copy);
                 }
-                const copy = [...userInput];
-                copy.splice(cursorIndex - 1, 1)
-                setUserInput(copy);
             }
         }
     };
@@ -224,25 +278,6 @@ function InputList() {
             }
         })
     }
-
-    // Render the userInput
-    // const display = processedInput.map((item, index) => {
-    //     if (item.type === 'text') {
-    //         return (
-    //             <span key={index}>{item.value}</span>
-    //         );
-    //     } else {
-    //         // Fraction node
-    //         return (
-    //             <span className="fraction" key={index}>
-    //                 <span className="numerator">{displayText(item.numerator)}</span>
-    //                 <span className="fraction-bar" />
-    //                 <span className="denominator">{displayText(item.denominator)}</span>
-    //             </span>
-    //         );
-    //     }
-    // });
-
 
     return (
         <div
