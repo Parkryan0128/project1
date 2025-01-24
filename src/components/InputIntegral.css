@@ -1,0 +1,33 @@
+@keyframes cursorBlink {
+    0%, 50% {
+        border-left: 2px solid black;
+    }
+    51%, 100% {
+        border-left: 2px solid transparent;
+    }
+}
+
+.inputBox {
+    display: flex;
+    align-items: center;
+    position: relative;
+    top: 10px;
+    background-color: transparent;
+}
+
+.upper-bound {
+    position: absolute;
+    top: -20px; left: 25px;
+    font-size: 16px;
+}
+
+.lower-bound {
+    position: absolute;
+    bottom: -20px; left: 25px;
+    font-size: 16px;
+}
+
+.value.integral {
+    font-size: 40px;
+    vertical-align: middle;
+}
