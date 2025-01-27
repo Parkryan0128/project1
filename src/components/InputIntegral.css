@@ -1,13 +1,27 @@
-.upper-bound {
-    position: absolute;
-    top: -20px; /* Position above the integral */
-    left: 15px; /* Adjust to align with the integral */
-    font-size: 16px; /* Smaller font size */
-  }
+.integral {
+  display: flex;
+  margin: 10px;
+  position: absolute;
+}
 
-  .lower-bound {
-    position: absolute;
-    bottom: -20px; /* Position below the integral */
-    left: 15px; /* Adjust to align with the integral */
-    font-size: 16px; /* Smaller font size */
-  }
+.upper-bound {
+  font-size: 1.2em;
+  position: relative;
+  top: -5px; left: 5px;
+}
+
+.lower-bound {
+  font-size: 1.2em;
+  position: relative;
+  bottom: -20px; right: 30px;
+}
+
+.integral-sign {
+  font-size: 30px;
+  font-weight: bold;
+  margin: 0 5px;
+}
+
+.value {
+  margin-left: 5px;
+}

@@ -209,6 +209,7 @@ function InputIntegral() {
             }
         }
         // setprocessedInput(arr)
+        console.log("Processed Input: ", JSON.stringify(processedInput, null, 2));
         return arr
     }
 
@@ -249,45 +250,9 @@ function InputIntegral() {
     //     )
     // }
 
-    // const paintInput = (list) => {
-    //     return list.map((item, index) => {
-    //         if (item.type === 'text') {
-    //             return (
-    //                 <span key={index}>{item.value}</span>
-    //             );
-    //         } else {
-    //             return (
-    //                 <span className='integral' key={index}>
-    //                     <span className='integral-sign'>
-    //                         <big>∫</big>
-    //                     </span>
-    //                     <span className='upper-bound'>{paintInput(item.upperBound)}</span>
-    //                     <span className='lower-bound'>{paintInput(item.lowerBound)}</span>
-    //                 </span>
-    //             );
-    //         }
-    //     })
-    // }
-
-    // function renderInput(item, index) {
-    //     if (item.type === 'text') {
-    //         return (
-    //             <span key={index}>{item.value}</span>
-    //         );
-    //     } else if (item.type === 'integral') {
-    //         return (
-    //         <span className='integral' key={index}>
-    //                     <span className='integral-sign'>
-    //                         <big>∫</big>
-    //                     </span>
-    //                     <span className='upper-bound'>{item.upperBound.map((input, childIndex) => renderInput(input, childIndex))}</span> 
-    //                     <span className='lower-bound'>{item.lowerBound.map((input, childIndex) => renderInput(input, childIndex))}</span>
-    //                 </span>
-    //         );
-    //     }
-    // }
-
     const renderInput = (list) => {
+        console.log("Processed Input: ", JSON.stringify(processedInput, null, 2));
+
         return list.map((item, index) => {
             if (item.type == 'text') {
                 return (
