@@ -1,0 +1,13 @@
+.upper-bound {
+    position: absolute;
+    top: -20px; /* Position above the integral */
+    left: 15px; /* Adjust to align with the integral */
+    font-size: 16px; /* Smaller font size */
+  }
+
+  .lower-bound {
+    position: absolute;
+    bottom: -20px; /* Position below the integral */
+    left: 15px; /* Adjust to align with the integral */
+    font-size: 16px; /* Smaller font size */
+  }
