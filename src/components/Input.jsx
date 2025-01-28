@@ -71,7 +71,7 @@ function Input() {
         if (key == '^' && userInput.length > 1 && !(userInput[cursorIndex - 1] instanceof ExponentBracket)) {
 
             const copy = [...userInput];
-            const limit = ['+', '-', '(', ')']
+            const limit = ['+', '-']
 
             let i = cursorIndex;
 
@@ -79,12 +79,14 @@ function Input() {
                 while (i >= 0 && copy[i] != '(') {
                     i--;
                 }
+                i--;
             } else {
                 while (i >= 0 && !limit.includes(copy[i]) && !(copy[i] instanceof ExponentBracket)) {
                     i--;
                 }
-                console.log(i)
             }
+
+            console.log(i)
             
             copy.splice(i + 1, 0, new ExponentBracket('(', 'base'))
             copy.splice(cursorIndex + 1, 0, new ExponentBracket(')', 'base'))
