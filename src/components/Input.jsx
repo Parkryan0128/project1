@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import './Input.css'
 
+// value is one of '(' or ')' and type is one of 'base' or 'child'
+class ExponentBracket {
+    constructor(value, type) {
+        this.value = value;
+        this.type = type;
+    }
+}
+
 function Input() {
     const [userInput, setUserInput] = useState(['cursor']);
     const [isFocused, setIsFocused] = useState(false);
     const [processedInput, setProcessedInput] = useState([]);
-
 
     useEffect(() => {
         let temp = processInput(userInput)
@@ -35,12 +42,12 @@ function Input() {
 
     const handleFocus = () => {
         setIsFocused(true);
-    };
+    }
 
     const handleBlur = () => {
         setIsFocused(false);
         // If you want to finalize fraction editing on blur, you could do so here.
-    };
+    }
 
     function insertAt(arr, index, item) {
         const copy = [...arr];
@@ -56,34 +63,40 @@ function Input() {
     }
 
 
-
     const handleKeyDown = (e) => {
         e.preventDefault(); // Prevent default browser behavior
         const key = e.key;
         const cursorIndex = userInput.indexOf('cursor');
 
-        if (key == '^' && userInput.length > 1) {
+        if (key == '^' && userInput.length > 1 && !(userInput[cursorIndex - 1] instanceof ExponentBracket)) {
 
             const copy = [...userInput];
             const limit = ['+', '-', '(', ')']
 
             let i = cursorIndex;
-            while (i >= 0 && !limit.includes(copy[i])) {
-                i--;
+
+            if (copy[i - 1] == ')') {
+                while (i >= 0 && copy[i] != '(') {
+                    i--;
+                }
+            } else {
+                while (i >= 0 && !limit.includes(copy[i]) && !(copy[i] instanceof ExponentBracket)) {
+                    i--;
+                }
+                console.log(i)
             }
-            copy.splice(i + 1, 0, '(');
-            copy.splice(cursorIndex + 2, 0, ')')
-            copy.splice(cursorIndex + 1, 0, '(')
-            copy.splice(cursorIndex + 1, 0, '^')
-            copy.splice(cursorIndex + 1, 0, ')')
-            console.log(copy)
+            
+            copy.splice(i + 1, 0, new ExponentBracket('(', 'base'))
+            copy.splice(cursorIndex + 1, 0, new ExponentBracket(')', 'base'))
+            copy.splice(cursorIndex + 2, 0, '^')
+            copy.splice(cursorIndex + 3, 0, new ExponentBracket('(', 'child'))
+            copy.splice(cursorIndex + 5, 0, new ExponentBracket(')', 'child'))
             setUserInput(copy)
         }
 
         else if (key.length === 1 && key != '^') {
             // Insert the new char right BEFORE the cursor
             const updated = insertAt(userInput, cursorIndex, key);
-            console.log(updated)
             setUserInput(updated);
             return;
         }
@@ -115,48 +128,46 @@ function Input() {
                 setUserInput(copy);
             }
         }
-    };
+    }
 
     function findBase(array) {
-        let copy = array.reverse()
-        let i = 0
-        let count = 1
+        let temp = [...array]
+        let i = temp.length - 2
         let res = ''
 
-        while (count > 0 && i < copy.length) {
-            const next = copy[i++]
-
-            if (next == '(') {
-                count--
-            } else if (next == ')') {
-                count++
-            } else {
-                res = next + res
-            }
+        while (i >= 0 && !(temp[i] instanceof ExponentBracket)) {
+            const next = temp[i]
+            res = next + res
+            i--
         }
 
+        console.log(res)
         return res
     }
 
     function findChildren(array) {
-        let copy = [...array]
-        let i = 0
-        let count = 1
-        let res = []
-
-        while (count > 0 && i < copy.length) {
-            const next = copy[i++]
-
-            if (next == ')') {
-                count--
-            } else if (next == '(') {
-                count++
+        let copy = [...array];
+        let res = [];
+        let openBrackets = 0;
+    
+        for (let i = 0; i < copy.length; i++) {
+            const next = copy[i];
+    
+            if (next instanceof ExponentBracket && next.type === 'child' && next.value === '(') {
+                openBrackets++;
             }
-
-            res.push(next)
+    
+            res.push(next);
+    
+            if (next instanceof ExponentBracket && next.type === 'child' && next.value === ')') {
+                openBrackets--;
+                if (openBrackets === 0) {
+                    break;
+                }
+            }
         }
-
-        return res
+    
+        return res;
     }
 
     function removeElements(array, index, numElements) {
@@ -170,66 +181,41 @@ function Input() {
         return array
     }
 
-    function processExponent(arr) {
-        let base = '(';
-        let exponent = [];
-        let i = 1;
-        let parenCount = 1;
-
-        while (parenCount > 0) {
-            let next = arr[i]
-            if (next == '(') {
-                parenCount++;
-            }
-            if (next == ')') {
-                parenCount--;
-            }
-            base = base + next;
-            i++;
-        }
-
-        return { type: 'exponent', value: base, children: exponent }
-    }
-
     function processInput(array) {
-        const operators = ['+', '-', '*']
-        let arr = []
-        let i = 0;
-        let copy = [...array];
-        let pairs = findParenPairs(copy)
+        let res = []
+        let i = 0
+        let temp = [...array]
 
-        while (i < copy.length) {
-            if (/^[a-z0-9]+$/i.test(array[i])) {
-                arr.push({
+        while (i < temp.length) {
+            if (/^[a-z0-9()]+$/i.test(array[i])) {
+                res.push({
                     type: 'text',
                     value: array[i]
                 })
                 i++;
-            }
+            } else if (temp[i] == '^') {
+                let base = findBase([...temp].slice(0, i)) // returns base as string
+                let children_0 = processInput(findChildren([...temp].slice(i + 1))) // returns children of the exponent by recursion
 
-            else if (copy[i] == '^') {
+                res.splice(res.length - base.length, base.length)
 
-                let base = findBase([...copy].slice(0, i)) // returns base as string
-                let children_0 = processInput(findChildren([...copy].slice(i + 1))) // returns children of the exponent by recursion
-
-                arr.splice(i - (base.length + 3), base.length)
-
-                arr.push({
+                res.push({
                     type: 'exponent',
                     value: base,
                     children: children_0
                 })
 
-                i += findChildren([...copy].slice(i + 1)).length;
-            }
+                console.log(findChildren([...temp].slice(i + 1)))
 
-            else {
+                i += findChildren([...temp].slice(i + 1)).length;
+            } else {
                 i++;
             }
         }
 
-        console.log(arr);
-        return arr;
+        console.log(userInput)
+        console.log(res);
+        return res;
     }
 
     const Exponent = ({ node, fontSize = 16 }) => {
@@ -261,7 +247,7 @@ function Input() {
             );
         } else if (item.type === 'exponent') {
             return (
-                <Exponent key ={index} node={item} />
+                <Exponent key={index} node={item} />
             )
         } else {
             // Fraction node
@@ -271,9 +257,9 @@ function Input() {
                     <span className="fraction-bar" />
                     <span className="denominator">{item.denominator || ' '}</span>
                 </span>
-            );
+            )
         }
-    });
+    })
 
     return (
         <div
