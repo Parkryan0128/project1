@@ -1,27 +1,28 @@
 .integral {
-  display: flex;
-  margin: 10px;
-  position: absolute;
+  display: inline-block;
+  align-items: center;
+  margin: 0 5px;
+  font-size: 1em;
 }
 
 .upper-bound {
-  font-size: 1.2em;
-  position: relative;
-  top: -5px; left: 5px;
+  font-size: 0.8em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .lower-bound {
-  font-size: 1.2em;
-  position: relative;
-  bottom: -20px; right: 30px;
+  font-size: 0.8em;
+  display: flex;
+  bottom: -10px; right: -50px;
+  justify-content: center;
+  align-self: center;
 }
 
 .integral-sign {
-  font-size: 30px;
+  font-size: 2em;
   font-weight: bold;
-  margin: 0 5px;
 }
 
-.value {
-  margin-left: 5px;
-}
+

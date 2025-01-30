@@ -3,6 +3,7 @@ import './InputIntegral.css'
 import { index } from 'mathjs'
 
 function InputIntegral() {
+
     // useStates
     let [userInput, setUserInput] = useState([
         'cursor'
@@ -38,10 +39,10 @@ function InputIntegral() {
 
         for (let i = 0; i < str.length; i++) {
             const char = str[i];
-            if (char === '(') {
+            if (char.endsWith("OPEN_")) { // used to be char == "("
                 // Push the index of the '(' onto the stack
                 stack.push(i);
-            } else if (char === ')') {
+            } else if (char.endsWith("CLOSE_")) { // used to be char == ")"
                 // Pop the last '(' from the stack (it matches this ')')
                 const openIndex = stack.pop();
                 // Record the pair of indexes
@@ -59,19 +60,17 @@ function InputIntegral() {
         const cursorIndex = userInput.indexOf('cursor')
         let copy = [...userInput]
 
-        if (/^[a-zA-Z0-9+\-*()=/_]$/.test(e.key)) {
+        if (/^[a-zA-Z0-9+\-*()=/]$/.test(e.key)) {
 
             if (e.key === 't' && copy[cursorIndex-1] === 'n' && copy[cursorIndex-2] === 'i') {
                 let final = insertAt(copy, cursorIndex, e.key)
-                final = insertAt(final, cursorIndex+1, '(')
+                final = insertAt(final, cursorIndex+1, '_INT_UPPER_BRACKET_OPEN_')
                 final = insertAt(final, cursorIndex+2, 'cursor')
-                final = insertAt(final, cursorIndex+3, ')')
-                final = insertAt(final, cursorIndex+4, '(')
-                final = insertAt(final, cursorIndex+5, ')')
-                final = insertAt(final, cursorIndex+6, '(')
-                final = insertAt(final, cursorIndex+7, ')')
-                // final = insertAt(final, cursorIndex+8, 'd')
-                // final = insertAt(final, cursorIndex+9, 'x')
+                final = insertAt(final, cursorIndex+3, '_INT_UPPER_BRACKET_CLOSE_')
+                final = insertAt(final, cursorIndex+4, '_INT_LOWER_BRACKET_OPEN_')
+                final = insertAt(final, cursorIndex+5, '_INT_LOWER_BRACKET_CLOSE_')
+                final = insertAt(final, cursorIndex+6, '_INT_VALUE_BRACKET_OPEN_')
+                final = insertAt(final, cursorIndex+7, '_INT_VALUE_BRACKET_CLOSE_')
                 final.splice(cursorIndex+8, 1)
                 setUserInput(final)
             } else {
@@ -82,7 +81,33 @@ function InputIntegral() {
 
         // deletes the existing processedInput and focus the previous block
         if (e.key == "Backspace") {
+            
+            // when backspace is pressed and it has no numbers in it,
+            // then we move the cursor to the upperbound
+            if (copy[cursorIndex-1] === '_INT_VALUE_BRACKET_OPEN_') {
+                let final = insertAt(copy, copy.indexOf("_INT_UPPER_BRACKET_CLOSE_"), 'cursor')
+                final.splice(cursorIndex+1, 1)
+                setUserInput(final)
+            } 
+            // when backspace is pressed in upperbound and it has no numbers in it, 
+            // then we remove the integral (as well as all the components; upperbound, 
+            // lowerbound, and value)
+            else if (copy[cursorIndex-1] === '_INT_UPPER_BRACKET_OPEN_') {
+                let final = insertAt(copy, cursorIndex-5, 'cursor')
+                final.splice(cursorIndex, 5)
+                final.splice(cursorIndex+1, 1)
+                setUserInput(final)
+            } 
+            // when backspace is pressed in lowerbound and it has no numbers in it,
+            // then we remove the integral (as well as all the components) - same logic as upperbound
+            else if (copy[cursorIndex-1] === '_INT_LOWER_BRACKET_OPEN_') {
+                
+            }
 
+            else {
+                copy.splice(cursorIndex-1, 1)
+                setUserInput(copy)
+            }
         }
 
         if (e.key == 'ArrowLeft') {
@@ -152,9 +177,6 @@ function InputIntegral() {
         let arr = []
         let i = 0
         let copy = [...input]
-        // const upper = []
-        // const lower = []
-        // const value = []
 
         const pairs = findParenPairs(copy)
 
@@ -165,19 +187,13 @@ function InputIntegral() {
                     // looking for the closing brackets
                     let end;
                     pairs.forEach((item) => {
-                        if (item[0] == i + 3) { //used to be item[0] == i
+                        if (item[0] == i + 3) {
                             end = item[1]
                         }
                     })
 
-                    const upper = copy.slice(i+4, end) // used to be nothing
+                    const upper = copy.slice(i+4, end)
                     i = end + 1
-
-                    // for (let j=i+1; j <= end-1; j++) {
-                    //     upper.push(copy[j])
-                    // }
-
-                    // i = end + 2
 
                     pairs.forEach((item) => {
                         if (item[0] == i) {
@@ -186,15 +202,20 @@ function InputIntegral() {
                     })
 
                     const lower = copy.slice(i+1, end)
+                    i = end + 1
 
-                    // for (let j=i+1; j<=end-1;j++) {
-                    //     lower.push(copy[j])
-                    // }
+                    pairs.forEach((item) => {
+                        if (item[0] == i) {
+                            end = item[1]
+                        }
+                    })
+
+                    const value = copy.slice(i+1, end)
                 
 
                     arr.push({
                         type: 'integral',
-                        value: [],
+                        value: processInput(value),
                         upperBound: processInput(upper),
                         lowerBound: processInput(lower)
                     })
@@ -251,20 +272,20 @@ function InputIntegral() {
     // }
 
     const renderInput = (list) => {
-        console.log("Processed Input: ", JSON.stringify(processedInput, null, 2));
 
         return list.map((item, index) => {
             if (item.type == 'text') {
                 return (
-                    <span key={index}>{item.value}</span>
+                    <span className='text' key={index}>{item.value}</span>
                 );
             } else if (item.type == 'integral') {
                 return (
                     <span className='integral' key={index}>
+                        <span className='upper-bound'>{renderInput(item.upperBound)}</span>
                         <span className='integral-sign'>
                         <big>∫</big>
                         </span>
-                        <span className='upper-bound'>{renderInput(item.upperBound)}</span>
+                        <span className='integral-value'>{renderInput(item.value)}</span>
                         <span className='lower-bound'>{renderInput(item.lowerBound)}</span>
                     </span>
                 )
@@ -272,7 +293,6 @@ function InputIntegral() {
         })
     }
 
-    //need to do another map on both upper-bound and lower-bound because they are array
 
     return (
         <div
@@ -284,5 +304,3 @@ function InputIntegral() {
 }
 
 export default InputIntegral
-
-// {/* {processedInput.map((input, index) => renderInput(input, index))} */}
