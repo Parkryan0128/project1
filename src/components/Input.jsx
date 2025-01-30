@@ -62,7 +62,6 @@ function Input() {
         return copy;
     }
 
-
     const handleKeyDown = (e) => {
         e.preventDefault(); // Prevent default browser behavior
         const key = e.key;
@@ -87,7 +86,7 @@ function Input() {
             }
 
             console.log(i)
-            
+
             copy.splice(i + 1, 0, new ExponentBracket('(', 'base'))
             copy.splice(cursorIndex + 1, 0, new ExponentBracket(')', 'base'))
             copy.splice(cursorIndex + 2, 0, '^')
@@ -107,7 +106,21 @@ function Input() {
         else if (key === 'ArrowLeft') {
             if (cursorIndex > 0) {
                 // Swap the cursor with the item to its left
-                const updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
+                let updated = []
+                if (userInput[cursorIndex - 1] instanceof ExponentBracket &&
+                    userInput[cursorIndex - 1].value === '(' &&
+                    userInput[cursorIndex - 1].type === 'child') {
+                    updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
+                    updated = swapItems(updated, cursorIndex - 1, cursorIndex - 2);
+                    updated = swapItems(updated, cursorIndex - 2, cursorIndex - 3);
+                    // } 
+                    // else if (userInput[cursorIndex - 1] instanceof ExponentBracket &&
+                    //     userInput[cursorIndex - 1].value === '(' &&
+                    //     userInput[cursorIndex - 1].type === 'base') {
+                } else {
+                    updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
+                }
+                console.log(updated)
                 setUserInput(updated);
             }
             return;
@@ -117,7 +130,16 @@ function Input() {
         else if (key === 'ArrowRight') {
             if (cursorIndex < userInput.length - 1) {
                 // Swap the cursor with the item to its right
-                const updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
+                let updated = []
+                if (userInput[cursorIndex + 1] instanceof ExponentBracket &&
+                    userInput[cursorIndex + 1].value === ')' &&
+                    userInput[cursorIndex + 1].type === 'base') {
+                    updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
+                    updated = swapItems(updated, cursorIndex + 1, cursorIndex + 2);
+                    updated = swapItems(updated, cursorIndex + 2, cursorIndex + 3);
+                } else {
+                    updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
+                }
                 setUserInput(updated);
             }
             return;
@@ -126,10 +148,60 @@ function Input() {
         else if (key == 'Backspace') {
             if (cursorIndex > 0) {
                 const copy = [...userInput];
-                copy.splice(cursorIndex - 1, 1)
-                setUserInput(copy);
+                if (copy[cursorIndex - 1] instanceof ExponentBracket) {
+                    if (copy[cursorIndex - 1].value === '(' && copy[cursorIndex - 1].type === 'child') {
+                        let closingIndex = findMatchingBracket(copy, cursorIndex, 'child', 'opening');
+                        copy.splice(closingIndex, 1);
+
+                        copy.splice(cursorIndex - 1, 1);
+                        copy.splice(cursorIndex - 2, 1);
+                        copy.splice(cursorIndex - 3, 1);
+
+                        let baseClosingIndex = findMatchingBracket(copy, cursorIndex - 3, 'base', 'closing');
+                        copy.splice(baseClosingIndex, 1);
+
+                        setUserInput(copy);
+                    } else if (copy[cursorIndex - 1].value === ')' && copy[cursorIndex - 1].type === 'child') {
+                        const updated = swapItems(copy, cursorIndex, cursorIndex - 1);
+                        setUserInput(updated);
+                    }
+                } else {
+                    copy.splice(cursorIndex - 1, 1);
+                    setUserInput(copy);
+                }
             }
         }
+    }
+
+    function findMatchingBracket(array, startIndex, type, direction) {
+        let openBrackets = 1;
+        let index = startIndex;
+    
+        if (direction === 'opening') {
+            while (index < array.length && openBrackets > 0) {
+                index++;
+                if (array[index] instanceof ExponentBracket) {
+                    if (array[index].value === '(' && array[index].type === type) {
+                        openBrackets++;
+                    } else if (array[index].value === ')' && array[index].type === type) {
+                        openBrackets--;
+                    }
+                }
+            }
+        } else if (direction === 'closing') {
+            while (index >= 0 && openBrackets > 0) {
+                index--;
+                if (array[index] instanceof ExponentBracket) {
+                    if (array[index].value === '(' && array[index].type === type) {
+                        openBrackets--;
+                    } else if (array[index].value === ')' && array[index].type === type) {
+                        openBrackets++;
+                    }
+                }
+            }
+        }
+    
+        return index;
     }
 
     function findBase(array) {
@@ -151,16 +223,16 @@ function Input() {
         let copy = [...array];
         let res = [];
         let openBrackets = 0;
-    
+
         for (let i = 0; i < copy.length; i++) {
             const next = copy[i];
-    
+
             if (next instanceof ExponentBracket && next.type === 'child' && next.value === '(') {
                 openBrackets++;
             }
-    
+
             res.push(next);
-    
+
             if (next instanceof ExponentBracket && next.type === 'child' && next.value === ')') {
                 openBrackets--;
                 if (openBrackets === 0) {
@@ -168,7 +240,7 @@ function Input() {
                 }
             }
         }
-    
+
         return res;
     }
 
