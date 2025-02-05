@@ -57,8 +57,9 @@ function InputIntegral() {
     // calls this function everytime user presses key
     function handleKeyPressed(e) {
         e.preventDefault()
-        const cursorIndex = userInput.indexOf('cursor')
+        let cursorIndex = userInput.indexOf('cursor')
         let copy = [...userInput]
+        const pairs = findParenPairs(copy)
 
         if (/^[a-zA-Z0-9+\-*()=/]$/.test(e.key)) {
 
@@ -93,10 +94,21 @@ function InputIntegral() {
             // then we remove the integral (as well as all the components; upperbound, 
             // lowerbound, and value)
             else if (copy[cursorIndex-1] === '_INT_UPPER_BRACKET_OPEN_') {
-                let final = insertAt(copy, cursorIndex-5, 'cursor')
-                final.splice(cursorIndex, 5)
-                final.splice(cursorIndex+1, 1)
-                setUserInput(final)
+
+                // pairs.forEach((item) => {
+                //     copy.splice(item[0], 1)
+                //     copy.splice(item[1], 1)
+                // })
+
+                copy = copy.filter(item => !item.endsWith("OPEN_") && !item.endsWith("CLOSE_"))
+
+                // insert the cursor in front of "int" and remove 4 elements after that
+                copy = insertAt(copy, cursorIndex-4, 'cursor')
+                copy.splice(cursorIndex, 1)
+                cursorIndex = copy.indexOf("cursor")
+                copy.splice(cursorIndex+1, 3)
+
+                setUserInput(copy)
             } 
             // when backspace is pressed in lowerbound and it has no numbers in it,
             // then we remove the integral (as well as all the components) - same logic as upperbound
