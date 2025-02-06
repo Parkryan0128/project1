@@ -33,6 +33,12 @@ function InputIntegral() {
         return copy;
     }
 
+    function deleteAt(arr, index) {
+        const copy = [...arr];
+        copy.splice(index, 1);
+        return copy;
+    }
+
     function findParenPairs(str) {
         const stack = [];
         const pairs = [];
@@ -83,7 +89,7 @@ function InputIntegral() {
         // deletes the existing processedInput and focus the previous block
         if (e.key == "Backspace") {
             
-            // when backspace is pressed and it has no numbers in it,
+            // when backspace is pressed in value and it has no numbers in it,
             // then we move the cursor to the upperbound
             if (copy[cursorIndex-1] === '_INT_VALUE_BRACKET_OPEN_') {
                 let final = insertAt(copy, copy.indexOf("_INT_UPPER_BRACKET_CLOSE_"), 'cursor')
@@ -95,18 +101,41 @@ function InputIntegral() {
             // lowerbound, and value)
             else if (copy[cursorIndex-1] === '_INT_UPPER_BRACKET_OPEN_') {
 
-                // pairs.forEach((item) => {
-                //     copy.splice(item[0], 1)
-                //     copy.splice(item[1], 1)
-                // })
+                let upperStart = cursorIndex - 1;
+                let upperEnd;
+                let lowerStart;
+                let lowerEnd;
+                let valueStart;
+                let valueEnd;
 
-                copy = copy.filter(item => !item.endsWith("OPEN_") && !item.endsWith("CLOSE_"))
 
-                // insert the cursor in front of "int" and remove 4 elements after that
-                copy = insertAt(copy, cursorIndex-4, 'cursor')
-                copy.splice(cursorIndex, 1)
-                cursorIndex = copy.indexOf("cursor")
-                copy.splice(cursorIndex+1, 3)
+                pairs.forEach((item) => {
+                    if (item[0] === upperStart) {
+                        upperEnd = item[1]
+                        lowerStart = item[1] + 1
+                    }
+                })
+
+                pairs.forEach((item) => {
+                    if (item[0] === lowerStart) {
+                        lowerEnd = item[1];
+                        valueStart = item[1] + 1;
+                    }
+                })
+
+                pairs.forEach((item) => {
+                    if (item[0] === valueStart) {
+                        valueEnd = item[1];
+                    }
+                })
+
+                copy.splice(0, 3)
+                copy = deleteAt(copy, upperStart-3)
+                copy = deleteAt(copy, upperEnd-4)
+                copy = deleteAt(copy, lowerStart-5)
+                copy = deleteAt(copy, lowerEnd-6)
+                copy = deleteAt(copy, valueStart-7)
+                copy = deleteAt(copy, valueEnd-8)
 
                 setUserInput(copy)
             } 
@@ -243,6 +272,7 @@ function InputIntegral() {
         }
         // setprocessedInput(arr)
         console.log("Processed Input: ", JSON.stringify(processedInput, null, 2));
+        console.log(pairs)
         return arr
     }
 
