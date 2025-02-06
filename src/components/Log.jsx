@@ -65,8 +65,8 @@ function Log() {
             
             copy = insertAt(copy, cursorIndex, LOG_OPEN);
             copy = insertAt(copy, cursorIndex + 2, LOG_CLOSE);
-            console.log(copy.length);
-            console.log(cursorIndex);
+            // console.log(copy.length);
+            // console.log(cursorIndex);
             return copy;
         }
 
@@ -139,9 +139,10 @@ function Log() {
                     copy.splice(logStartIndex - 1, 3);
                 } else {
                     // Otherwise, just delete the previous character
-                    copy = deleteAt(copy, cursorIndex - 1);
+                    copy = deleteAt(copy, cursorIndex - 2);
                 }
             }
+            console.log(copy);
         } else if (prevChar === LOG_OPEN) {
             // If the previous character is LOG_OPEN, check if the log function is empty
             const pairs = findParenPairs(copy);
