@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './InputIntegral.css'
-import { index } from 'mathjs'
+import { index, leftShift } from 'mathjs'
 
 function InputIntegral() {
 
@@ -249,7 +249,7 @@ function InputIntegral() {
 
         if (e.key == 'ArrowRight') {
 
-            if (cursorIndex >= copy.length -1 ) {
+            if (cursorIndex >= copy.length-1) {
                 setUserInput(copy)
             } else if (copy[cursorIndex+1] === 'i' && copy[cursorIndex+2] === 'n' && copy[cursorIndex+3] === 't') {
                 let updated = insertAt(copy, cursorIndex+5, 'cursor')
@@ -268,6 +268,43 @@ function InputIntegral() {
                 setUserInput(updated)
             }
         }
+
+        if (e.key === "ArrowDown") {
+            if (cursorIndex > pairs[0][0] && cursorIndex < pairs[0][1]) {
+                const upper_diff = cursorIndex - pairs[0][0];
+                
+                if (upper_diff > pairs[1][1]-pairs[1][0]) {
+                    copy = insertAt(copy, pairs[1][1], 'cursor')
+                    copy.splice(cursorIndex, 1)
+                } else {
+                    copy = insertAt(copy, pairs[1][0]+upper_diff, 'cursor')
+                    copy.splice(cursorIndex,1)
+                }
+            } else if (cursorIndex > pairs[2][0] && cursorIndex < pairs[2][1]) {
+                copy = insertAt(copy, pairs[1][1], 'cursor')
+                copy.splice(cursorIndex+1,1)
+            }
+            setUserInput(copy)
+        }
+
+        if (e.key === "ArrowUp") {
+            if (cursorIndex > pairs[1][0] && cursorIndex < pairs[1][1]) {
+                const lower_diff = cursorIndex - pairs[1][0]
+
+                if (lower_diff > pairs[0][1]-pairs[0][0]) {
+                    copy = insertAt(copy, pairs[0][1], 'cursor')
+                    copy.splice(cursorIndex+1,1)
+                } else {
+                    copy = insertAt(copy, pairs[0][0]+lower_diff, 'cursor')
+                    copy.splice(cursorIndex+1, 1)
+                }
+            } else if (cursorIndex > pairs[2][0] && cursorIndex < pairs[2][1]) {
+                copy = insertAt(copy, pairs[0][1], 'cursor')
+                copy.splice(cursorIndex+1,1)
+            }
+            setUserInput(copy)
+        }
+
      }
 
     function processInput(input) {
