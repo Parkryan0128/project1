@@ -6,7 +6,7 @@ const EXPONENT_CLOSE = "__EXPONENT_CLOSE__";
 const CURSOR = 'cursor';
 
 function Input() {
-    const [userInput, setUserInput] = useState(['cursor']);
+    const [userInput, setUserInput] = useState([CURSOR]);
     const [isFocused, setIsFocused] = useState(false);
     const [processedInput, setProcessedInput] = useState([]);
 
@@ -16,15 +16,6 @@ function Input() {
         console.log(userInput)
         console.log(temp)
     }, [userInput])
-
-    const handleFocus = () => {
-        setIsFocused(true);
-    }
-
-    const handleBlur = () => {
-        setIsFocused(false);
-        // If you want to finalize fraction editing on blur, you could do so here.
-    }
 
     function insertAt(arr, index, item) {
         const copy = [...arr];
@@ -102,7 +93,8 @@ function Input() {
                     }
                 } else {
                     updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
-                    if (userInput[cursorIndex + 1] == EXPONENT_CLOSE && userInput[cursorIndex - 1] == EXPONENT_OPEN) {
+                    if (userInput[cursorIndex + 1] == EXPONENT_CLOSE && 
+                        userInput[cursorIndex - 1] == EXPONENT_OPEN) {
                         updated.splice(cursorIndex, 0, 'empty');
                     }
                 }
@@ -155,19 +147,21 @@ function Input() {
     function findBase(array) {
         let temp = [...array]
         let i = temp.length - 1
-        let res = ''
+        let res = []
 
         if (temp[i] == ')') {
             while (i >= 0 && temp[i] != '(') {
                 const next = temp[i]
-                res = next + res
+                // res = next + res
+                res.splice(0, 0, next)
                 i--
             }
             res = '(' + res;
         } else {
             while (i >= 0 && temp[i] != ')' && temp[i] != EXPONENT_CLOSE) {
                 const next = temp[i]
-                res = next + res
+                // res = next + res
+                res.splice(0, 0, next)
                 i--
             }
         }
@@ -202,17 +196,18 @@ function Input() {
         let temp = [...array]
 
         while (i < temp.length) {
-            if (/^[a-z0-9()+*]+$/i.test(array[i])) {
+            if (temp[i] == CURSOR) {
+                res.push({type : 'cursor'})
+                i++
+            } else if (/^[a-z0-9()+*-]+$/i.test(array[i])) {
                 res.push({
                     type: 'text',
                     value: array[i]
                 })
                 i++;
             } else if (temp[i] == '^') {
-                let base = findBase([...temp].slice(0, i))
+                let base = processInput(findBase([...temp].slice(0, i)))
                 let children_0 = processInput(findChildren([...temp].slice(i + 1)))
-                console.log(base)
-                console.log(children_0)
 
                 res.splice(res.length - base.length, base.length)
 
@@ -230,55 +225,50 @@ function Input() {
         return res;
     }
 
-    // exponent component using recursion. Manually change the font size of base
-    const Exponent = ({ node, fontSize = 16 }) => {
-        if (!node) return null;
+    // Recursively render the nested structure from processedinput
+    function displayText(nodeList) {
+        return nodeList.map((node, index) => {
+            switch (node.type) {
+                case 'text':
+                    return <span key={index}>{node.value}</span>;
 
-        if (Array.isArray(node)) {
-            return node.map((child, index) => (
-                <Exponent key={index} node={child} fontSize={fontSize * 0.9} />
-            ))
-        }
+                case 'fraction':
+                    return (
+                        <span className="fraction" key={index}>
+                            <span className="numerator">{displayText(node.numerator)}</span>
+                            <span className="fraction-bar" />
+                            <span className="denominator">{displayText(node.denominator)}</span>
+                        </span>
+                    );
 
-        return (
-            <span style={{ fontSize: `${fontSize}px` }}>
-                {node.value}
-                {node.children && (
-                    <sup>
-                        <Exponent node={node.children} fontSize={fontSize * 0.9} />
-                    </sup>
-                )}
-            </span>
-        )
+                case 'exponent':
+                    return (
+                        <span key={index}>
+                            <span>{displayText(node.value)}</span>
+                            <sup>
+                                <span>{displayText(node.children)}</span>
+                            </sup>
+                        </span>
+                    )
+
+                case 'cursor':
+                    return (
+                        <span key={index} className="blink-cursor">
+                            |
+                        </span>
+                    );
+
+                default:
+                    return null;
+            }
+        });
     }
-
-    // Render the userInput
-    const display = processedInput.map((item, index) => {
-        if (item.type === 'text') {
-            return (
-                <span key={index}>{item.value}</span>
-            );
-        } else if (item.type === 'exponent') {
-            return (
-                <Exponent key={index} node={item} />
-            )
-        } else {
-            // Fraction node
-            return (
-                <span className="fraction" key={index}>
-                    <span className="numerator">{item.numerator || ' '}</span>
-                    <span className="fraction-bar" />
-                    <span className="denominator">{item.denominator || ' '}</span>
-                </span>
-            )
-        }
-    })
 
     return (
         <div
             tabIndex={0}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyDown}
             style={{
                 border: isFocused ? '2px solid blue' : '1px solid gray',
@@ -287,7 +277,7 @@ function Input() {
                 outline: 'none',
             }}
         >
-            {display}
+            {displayText(processedInput)}
         </div>
     );
 }
