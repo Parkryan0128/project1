@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import './Input.css'
 
-// value is one of '(' or ')' and type is one of 'base' or 'child'
-class ExponentBracket {
-    constructor(value, type) {
-        this.value = value;
-        this.type = type;
-    }
-}
+const EXPONENT_OPEN = "__EXPONENT_OPEN__";
+const EXPONENT_CLOSE = "__EXPONENT_CLOSE__";
+const CURSOR = 'cursor';
 
 function Input() {
     const [userInput, setUserInput] = useState(['cursor']);
@@ -17,28 +13,9 @@ function Input() {
     useEffect(() => {
         let temp = processInput(userInput)
         setProcessedInput(temp)
+        console.log(userInput)
+        console.log(temp)
     }, [userInput])
-
-    function findParenPairs(str) {
-        const stack = [];
-        const pairs = [];
-
-        for (let i = 0; i < str.length; i++) {
-            const char = str[i];
-            if (char === '(') {
-                // Push the index of the '(' onto the stack
-                stack.push(i);
-            } else if (char === ')') {
-                // Pop the last '(' from the stack (it matches this ')')
-                const openIndex = stack.pop();
-                // Record the pair of indexes
-                pairs.push([openIndex, i]);
-            }
-            // Ignore any other characters
-        }
-
-        return pairs;
-    }
 
     const handleFocus = () => {
         setIsFocused(true);
@@ -63,82 +40,71 @@ function Input() {
     }
 
     const handleKeyDown = (e) => {
-        e.preventDefault(); // Prevent default browser behavior
+        e.preventDefault();
         const key = e.key;
         const cursorIndex = userInput.indexOf('cursor');
+        const testValid = /^[a-z0-9()]+$/i.test(userInput[cursorIndex - 1]);
 
-        if (key == '^' && userInput.length > 1 && !(userInput[cursorIndex - 1] instanceof ExponentBracket)) {
-
-            const copy = [...userInput];
-            const limit = ['+', '-']
-
-            let i = cursorIndex;
-
-            if (copy[i - 1] == ')') {
-                while (i >= 0 && copy[i] != '(') {
-                    i--;
+        if (key == '^' && cursorIndex >= 1 && testValid) {
+            if (userInput[cursorIndex + 1] == '^') {
+                let updated = []
+                updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
+                updated = swapItems(updated, cursorIndex + 1, cursorIndex + 2);
+                if (userInput[cursorIndex + 3] == 'empty') {
+                    updated.splice(cursorIndex + 3, 1);
                 }
-                i--;
-            } else {
-                while (i >= 0 && !limit.includes(copy[i]) && !(copy[i] instanceof ExponentBracket)) {
-                    i--;
-                }
+                setUserInput(updated)
+                return
             }
+            const copy = [...userInput];
 
-            console.log(i)
-
-            copy.splice(i + 1, 0, new ExponentBracket('(', 'base'))
-            copy.splice(cursorIndex + 1, 0, new ExponentBracket(')', 'base'))
-            copy.splice(cursorIndex + 2, 0, '^')
-            copy.splice(cursorIndex + 3, 0, new ExponentBracket('(', 'child'))
-            copy.splice(cursorIndex + 5, 0, new ExponentBracket(')', 'child'))
+            copy.splice(cursorIndex, 0, '^')
+            copy.splice(cursorIndex + 1, 0, EXPONENT_OPEN)
+            copy.splice(cursorIndex + 3, 0, EXPONENT_CLOSE)
             setUserInput(copy)
         }
 
         else if (key.length === 1 && key != '^') {
-            // Insert the new char right BEFORE the cursor
             const updated = insertAt(userInput, cursorIndex, key);
-            setUserInput(updated);
+            setUserInput(updated)
             return;
         }
 
-        // 2. Left arrow: move 'cursor' left if possible
         else if (key === 'ArrowLeft') {
             if (cursorIndex > 0) {
-                // Swap the cursor with the item to its left
                 let updated = []
-                if (userInput[cursorIndex - 1] instanceof ExponentBracket &&
-                    userInput[cursorIndex - 1].value === '(' &&
-                    userInput[cursorIndex - 1].type === 'child') {
+                if (userInput[cursorIndex - 1] == EXPONENT_OPEN) {
                     updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
                     updated = swapItems(updated, cursorIndex - 1, cursorIndex - 2);
-                    updated = swapItems(updated, cursorIndex - 2, cursorIndex - 3);
-                    // } 
-                    // else if (userInput[cursorIndex - 1] instanceof ExponentBracket &&
-                    //     userInput[cursorIndex - 1].value === '(' &&
-                    //     userInput[cursorIndex - 1].type === 'base') {
+                    if (userInput[cursorIndex + 1] == EXPONENT_CLOSE) {
+                        updated.splice(cursorIndex + 1, 0, 'empty');
+                    }
                 } else {
                     updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
+                    if (userInput[cursorIndex - 1] == EXPONENT_CLOSE && 
+                        userInput[cursorIndex - 2] == 'empty') {
+                        updated.splice(cursorIndex - 2, 1);
+                    }
                 }
-                console.log(updated)
                 setUserInput(updated);
             }
             return;
         }
 
-        // 3. Right arrow: move 'cursor' right if possible
         else if (key === 'ArrowRight') {
             if (cursorIndex < userInput.length - 1) {
-                // Swap the cursor with the item to its right
                 let updated = []
-                if (userInput[cursorIndex + 1] instanceof ExponentBracket &&
-                    userInput[cursorIndex + 1].value === ')' &&
-                    userInput[cursorIndex + 1].type === 'base') {
+                if (userInput[cursorIndex + 1] == '^') {
                     updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
                     updated = swapItems(updated, cursorIndex + 1, cursorIndex + 2);
-                    updated = swapItems(updated, cursorIndex + 2, cursorIndex + 3);
+                    if (userInput[cursorIndex + 3] == 'empty') {
+                        updated.splice(cursorIndex + 3, 1);
+                    }
                 } else {
                     updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
+                    if (userInput[cursorIndex + 1] == EXPONENT_CLOSE && userInput[cursorIndex - 1] == EXPONENT_OPEN) {
+                        updated.splice(cursorIndex, 0, 'empty');
+                    }
                 }
                 setUserInput(updated);
             }
@@ -148,20 +114,17 @@ function Input() {
         else if (key == 'Backspace') {
             if (cursorIndex > 0) {
                 const copy = [...userInput];
-                if (copy[cursorIndex - 1] instanceof ExponentBracket) {
-                    if (copy[cursorIndex - 1].value === '(' && copy[cursorIndex - 1].type === 'child') {
-                        let closingIndex = findMatchingBracket(copy, cursorIndex, 'child', 'opening');
-                        copy.splice(closingIndex, 1);
+                
+                if (copy[cursorIndex - 1] == EXPONENT_OPEN || copy[cursorIndex - 1] == EXPONENT_CLOSE) {
+                    if (copy[cursorIndex - 1] == EXPONENT_OPEN) {
+                        let closingIndex = findMatchingExponentClose(userInput, cursorIndex - 1)
 
-                        copy.splice(cursorIndex - 1, 1);
                         copy.splice(cursorIndex - 2, 1);
-                        copy.splice(cursorIndex - 3, 1);
-
-                        let baseClosingIndex = findMatchingBracket(copy, cursorIndex - 3, 'base', 'closing');
-                        copy.splice(baseClosingIndex, 1);
+                        copy.splice(cursorIndex - 2, 1);
+                        copy.splice(closingIndex - 2, 1);
 
                         setUserInput(copy);
-                    } else if (copy[cursorIndex - 1].value === ')' && copy[cursorIndex - 1].type === 'child') {
+                    } else if (copy[cursorIndex - 1] == EXPONENT_CLOSE) {
                         const updated = swapItems(copy, cursorIndex, cursorIndex - 1);
                         setUserInput(updated);
                     }
@@ -173,86 +136,64 @@ function Input() {
         }
     }
 
-    function findMatchingBracket(array, startIndex, type, direction) {
+    function findMatchingExponentClose(array, openIndex) {
         let openBrackets = 1;
-        let index = startIndex;
+        let index = openIndex + 1;
     
-        if (direction === 'opening') {
-            while (index < array.length && openBrackets > 0) {
-                index++;
-                if (array[index] instanceof ExponentBracket) {
-                    if (array[index].value === '(' && array[index].type === type) {
-                        openBrackets++;
-                    } else if (array[index].value === ')' && array[index].type === type) {
-                        openBrackets--;
-                    }
-                }
+        while (index < array.length && openBrackets > 0) {
+            if (array[index] === EXPONENT_OPEN) {
+                openBrackets++;
+            } else if (array[index] === EXPONENT_CLOSE) {
+                openBrackets--;
             }
-        } else if (direction === 'closing') {
-            while (index >= 0 && openBrackets > 0) {
-                index--;
-                if (array[index] instanceof ExponentBracket) {
-                    if (array[index].value === '(' && array[index].type === type) {
-                        openBrackets--;
-                    } else if (array[index].value === ')' && array[index].type === type) {
-                        openBrackets++;
-                    }
-                }
-            }
+            index++;
         }
     
-        return index;
+        return openBrackets === 0 ? index - 1 : -1;
     }
 
     function findBase(array) {
         let temp = [...array]
-        let i = temp.length - 2
+        let i = temp.length - 1
         let res = ''
 
-        while (i >= 0 && !(temp[i] instanceof ExponentBracket)) {
-            const next = temp[i]
-            res = next + res
-            i--
+        if (temp[i] == ')') {
+            while (i >= 0 && temp[i] != '(') {
+                const next = temp[i]
+                res = next + res
+                i--
+            }
+            res = '(' + res;
+        } else {
+            while (i >= 0 && temp[i] != ')' && temp[i] != EXPONENT_CLOSE) {
+                const next = temp[i]
+                res = next + res
+                i--
+            }
         }
-
-        console.log(res)
         return res
     }
 
     function findChildren(array) {
         let copy = [...array];
         let res = [];
-        let openBrackets = 0;
+        let i = 1;
+        let count = 1;
 
-        for (let i = 0; i < copy.length; i++) {
-            const next = copy[i];
+        res.push(copy[0])
 
-            if (next instanceof ExponentBracket && next.type === 'child' && next.value === '(') {
-                openBrackets++;
+        while (count > 0) {
+            let curr = copy[i]
+            if (curr == EXPONENT_OPEN) {
+                count++;
             }
-
-            res.push(next);
-
-            if (next instanceof ExponentBracket && next.type === 'child' && next.value === ')') {
-                openBrackets--;
-                if (openBrackets === 0) {
-                    break;
-                }
+            if (curr == EXPONENT_CLOSE) {
+                count--;
             }
+            res.push(curr)
+            i++
         }
-
         return res;
-    }
-
-    function removeElements(array, index, numElements) {
-        let i = index - 1
-        while (numElements > 0 && i >= 0) {
-            array.splice(i, 1)
-            i--
-            numElements--
-        }
-
-        return array
     }
 
     function processInput(array) {
@@ -261,15 +202,17 @@ function Input() {
         let temp = [...array]
 
         while (i < temp.length) {
-            if (/^[a-z0-9()]+$/i.test(array[i])) {
+            if (/^[a-z0-9()+*]+$/i.test(array[i])) {
                 res.push({
                     type: 'text',
                     value: array[i]
                 })
                 i++;
             } else if (temp[i] == '^') {
-                let base = findBase([...temp].slice(0, i)) // returns base as string
-                let children_0 = processInput(findChildren([...temp].slice(i + 1))) // returns children of the exponent by recursion
+                let base = findBase([...temp].slice(0, i))
+                let children_0 = processInput(findChildren([...temp].slice(i + 1)))
+                console.log(base)
+                console.log(children_0)
 
                 res.splice(res.length - base.length, base.length)
 
@@ -279,25 +222,21 @@ function Input() {
                     children: children_0
                 })
 
-                console.log(findChildren([...temp].slice(i + 1)))
-
                 i += findChildren([...temp].slice(i + 1)).length;
             } else {
                 i++;
             }
         }
-
-        console.log(userInput)
-        console.log(res);
         return res;
     }
 
+    // exponent component using recursion. Manually change the font size of base
     const Exponent = ({ node, fontSize = 16 }) => {
         if (!node) return null;
 
         if (Array.isArray(node)) {
             return node.map((child, index) => (
-                <Exponent key={index} node={child} fontSize={fontSize * 0.8} />
+                <Exponent key={index} node={child} fontSize={fontSize * 0.9} />
             ))
         }
 
@@ -345,11 +284,10 @@ function Input() {
                 border: isFocused ? '2px solid blue' : '1px solid gray',
                 padding: '8px',
                 minHeight: '40px',
-                outline: 'none', // Removes default focus outline
+                outline: 'none',
             }}
         >
             {display}
-            {/* {isFocused && <span className="cursor">|</span>} */}
         </div>
     );
 }
