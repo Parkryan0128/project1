@@ -5,7 +5,7 @@ const EXPONENT_OPEN = "__EXPONENT_OPEN__";
 const EXPONENT_CLOSE = "__EXPONENT_CLOSE__";
 const CURSOR = 'cursor';
 const EMPTY_EXPONENT = '__EMPTY__EXPONENT__'
- 
+
 function Input() {
     const [userInput, setUserInput] = useState([CURSOR]);
     const [isFocused, setIsFocused] = useState(false);
@@ -276,7 +276,7 @@ function Input() {
                                 <span>{displayText(node.children)}</span>
                             </sup>
                         </span>
-                    )
+                    );
 
                 case 'empty_exponent' :
                     return (
