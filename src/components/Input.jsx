@@ -1,128 +1,332 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './Input.css'
 
+const SQUARE_ROOT_OPEN = "__SQUARE_ROOT_OPEN__";
+const SQUARE_ROOT_CLOSE = "__SQUARE_ROOT_CLOSE__";
+const CURSOR = 'cursor';
+const EMPTY_SQUARE_ROOT = '__EMPTY_SQUARE_ROOT__'
+
 function Input() {
-    let [userInput, setUserInput] = useState([])
-    let [blocks, setBlocks] = useState([
-        { value: '\u00A0', type: 'empty' },
-    ])
-    let [type, setType] = useState(null)
+    const [userInput, setUserInput] = useState([CURSOR]);
+    const [isFocused, setIsFocused] = useState(false);
+    const [processedInput, setProcessedInput] = useState([]);
 
-    function handleKeyPressed(e) {
-        handleUserInput(e)
-        handleBlocks(e)
+    useEffect(() => {
+
+        let temp = processInput(userInput)
+        setProcessedInput(temp)
+        console.log(userInput)
+        console.log(temp)
+    }, [userInput])
+
+    function insertAt(arr, index, item) {
+        const copy = [...arr];
+        copy.splice(index, 0, item);
+        return copy;
     }
 
+    function swapItems(arr, i, j) {
+        const copy = [...arr];
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+        return copy;
+    }
 
-    // handles user input for calculation
-    function handleUserInput(e) {
-        if (/^[a-zA-Z0-9+\-*()^=/]$/.test(e.key)) {
-            const temp = [...userInput]
-            temp.push(e.key)
-            setUserInput([...temp])
-            console.log(temp)
-        }
+    function deleteAt(arr, index) {
+        const copy = [...arr];
+        copy.splice(index, 1);
+        return copy;
+    }
 
-        if (e.key === "Backspace" && userInput.length > 0) {
-            const temp = [...userInput]
-            let numDelete = 1
-            switch (temp[userInput.length - 1]) {
-                case '^':
-                    numDelete = 2
-                    setType(null)
-                    break;
-                default:
-                    break;
+    function findMatchingSquareRootClose(array, openIndex) {
+        let openBrackets = 1;
+        let index = openIndex + 1;
+    
+        while (index < array.length && openBrackets > 0) {
+            if (array[index] === SQUARE_ROOT_OPEN) {
+                openBrackets++;
+            } else if (array[index] === SQUARE_ROOT_CLOSE) {
+                openBrackets--;
             }
-            temp.splice(userInput.length - 1, numDelete)
-            setUserInput([...temp])
-            console.log(temp)
+            index++;
         }
+    
+        return openBrackets === 0 ? index - 1 : -1;
     }
 
-    // handles user input for display
-    function handleBlocks(e) {
-        if (/^[a-zA-Z0-9+\-*()/=.\[\]]$/.test(e.key)) {
-            const temp = [...blocks]
-            const toAdd = { value: e.key, type: type }
-            temp.splice(blocks.length - 1, 0, toAdd)
-            setBlocks([...temp])
-            console.log(temp)
+    function handleCaretPress(arr, cursorIndex) {
+
+        // if userInput only contains cursor, no action
+        if (arr <= 1) return arr;
+
+        // if ^ was pressed right in front of another ^, move cursor to right
+        if (arr[cursorIndex + 1] == '^') {
+            arr = swapItems(arr, cursorIndex, cursorIndex + 1);
+            arr = swapItems(arr, cursorIndex + 1, cursorIndex + 2);
+            if (arr[cursorIndex + 3] == EMPTY_SQUARE_ROOT) {
+                arr = deleteAt(arr, cursorIndex + 3)
+            }
+            return arr;
         }
 
-        if (e.key == '^') {
-            setType('exponent')
-        }
+        // otherwise, insert ^, EXPONENT_OPEN and EXPONENT_CLOSE
+        arr = insertAt(arr, cursorIndex, '^')
+        arr = insertAt(arr, cursorIndex + 1, SQUARE_ROOT_OPEN)
+        arr = insertAt(arr, cursorIndex + 3, SQUARE_ROOT_CLOSE)
 
-        if (e.key == 'ArrowRight' && type == 'exponent') {
-            setType(null)
-        }
-
-        // if (e.key == 'ArrowRight' && type == 'denominator') {
-        //     setType(null)
-        // }
-
-        if (e.key === "Backspace" && blocks.length > 1) {
-            const temp = [...blocks]
-            temp.splice(blocks.length - 2, 1)
-            setBlocks([...temp])
-            console.log(temp)
-        }
-
-        if (e.key === "/" && type == null) {
-            const temp = [...blocks].reverse().slice(1) // reverse and remove cursor
-            const sliceIndex = [...temp].findIndex(block => !/^[a-zA-Z0-9.]$/.test(block.value));
-            const sliced = sliceIndex === -1 ? temp : temp.slice(0, sliceIndex); // finds numerator
-            const combinedBlock = [...sliced.reverse()].reduce(
-                (acc, block) => ({
-                    value: acc.value + block.value,
-                    type: 'numerator',
-                }),
-                { value: '', type: 'numerator' }
-            );
-            const slicedBlocks = [...blocks].slice(0, blocks.length - (sliced.length + 1))
-            setBlocks([...slicedBlocks, combinedBlock, { value: '\u00A0', type: 'denominator-empty' }])
-            setType('denominator')
-            console.log([...slicedBlocks, combinedBlock, { value: '\u00A0', type: 'denominator-empty' }])
-        }
+        return arr;
     }
 
-    let display = blocks.map(({ value, type }, index) => {
-        // while (type === 'denominator') {
-        //     return (
-        //         <span 
-        //         className='value.denominator-empty'
-        //         key={index}
-        //         tabIndex={0}
-        //         onKeyDown={(e) => handleKeyPressed(e)}>
-        //             {value}
-        //         </span>
-        //     )
-        // }
-        // if (type === 'numerator') {
-        //     return (
-        //         <span className='fraction'>
-        //             <span
-        //                 className={`value${type}`}
-        //                 key={index}
-        //                 tabIndex={0}>
-        //                 {value}
-        //             </span>
-        //             <span>denominator</span>
-        //         </span>
-        //     )}
-        return (
-            <span
-                className={`value
-                    ${type}
-                    ${index == blocks.length - 1 ? 'focused' : ''}`}
-                key={index}
-                tabIndex={0}
-                onKeyDown={(e) => handleKeyPressed(e)}>
-                {value}
-            </span>
-        )
-    })
+    function handleCharPress(arr, cursorIndex, item) {
+        arr = insertAt(arr, cursorIndex, item);
+        return arr;
+    }
+
+    function handleArrowLeft(arr, cursorIndex) {
+        if (cursorIndex > 0) { // cursor can't move left if it is at index 0
+            if (arr[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
+                arr = swapItems(arr, cursorIndex, cursorIndex - 1);
+                arr = swapItems(arr, cursorIndex - 1, cursorIndex - 2);
+                if (arr[cursorIndex + 1] == SQUARE_ROOT_CLOSE) {
+                    arr = insertAt(arr, cursorIndex + 1, EMPTY_SQUARE_ROOT);
+                }
+            } else {
+                arr = swapItems(arr, cursorIndex, cursorIndex - 1);
+                if (arr[cursorIndex] == SQUARE_ROOT_CLOSE && 
+                    arr[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
+                    arr = deleteAt(arr, cursorIndex - 2)
+                }
+            }
+        }
+        return arr;
+    }
+
+    function handleArrowRight(arr, cursorIndex) {
+        if (cursorIndex < arr.length - 1) {
+            if (userInput[cursorIndex + 1] == '√') {
+                arr = swapItems(arr, cursorIndex, cursorIndex + 1);
+                arr = swapItems(arr, cursorIndex + 1, cursorIndex + 2);
+                if (arr[cursorIndex + 3] == EMPTY_SQUARE_ROOT) {
+                    arr = deleteAt(arr, cursorIndex + 3)
+                }
+            } else {
+                arr = swapItems(arr, cursorIndex, cursorIndex + 1);
+                if (arr[cursorIndex] == SQUARE_ROOT_CLOSE && 
+                    arr[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
+                    arr = insertAt(arr, cursorIndex, EMPTY_SQUARE_ROOT)
+                }
+            }
+        }
+        return arr;
+    }
+
+    function handleBackspace(arr, cursorIndex) {
+        if (cursorIndex > 0) {
+            if (arr[cursorIndex - 1] == SQUARE_ROOT_OPEN || arr[cursorIndex - 1] == SQUARE_ROOT_CLOSE) {
+                if (arr[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
+                    let closingIndex = findMatchingSquareRootClose(arr, cursorIndex - 1)
+
+                    arr = deleteAt(arr, cursorIndex - 2)
+                    arr = deleteAt(arr, cursorIndex - 2)
+                    arr = deleteAt(arr, closingIndex - 2)
+                } else if (arr[cursorIndex - 1] == SQUARE_ROOT_CLOSE) {
+                    arr = swapItems(arr, cursorIndex, cursorIndex - 1);
+                    if (arr[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
+                        arr = deleteAt(arr, cursorIndex - 2)
+                    }
+                }
+            } else {
+                arr = deleteAt(arr, cursorIndex - 1)
+            }
+        }
+        return arr;
+    }
+
+    function isSqrtPressed(arr, cursorIndex) {
+        let i = cursorIndex;
+        return arr[i - 3] == 's' && arr[i - 2] == 'q' && arr[i - 1] == 'r'
+    }
+
+    function handleSqrtPressed(arr, cursorIndex) {
+        arr = deleteAt(arr, cursorIndex - 3);
+        arr = deleteAt(arr, cursorIndex - 3);
+        arr = deleteAt(arr, cursorIndex - 3);
+        arr = insertAt(arr, cursorIndex - 3, '√');
+        arr = insertAt(arr, cursorIndex - 2, SQUARE_ROOT_OPEN);
+        arr = insertAt(arr, cursorIndex, SQUARE_ROOT_CLOSE);
+        return arr;
+    }
+
+    const handleKeyDown = (e) => {
+        e.preventDefault();
+
+        const key = e.key;
+        let copy = [...userInput];
+        const cursorIndex = copy.indexOf(CURSOR);
+
+        if (key.length === 1) {
+            if (key === 't' && isSqrtPressed(copy, cursorIndex)) {
+                copy = handleSqrtPressed(copy, cursorIndex);
+            } else {
+                copy = handleCharPress(copy, cursorIndex, key);
+            }
+        }
+        else if (key === 'ArrowLeft') {
+            copy = handleArrowLeft(copy, cursorIndex);
+        }
+        else if (key === 'ArrowRight') {
+            copy = handleArrowRight(copy, cursorIndex);
+        }
+        else if (key === 'Backspace') {
+            copy = handleBackspace(copy, cursorIndex);
+        }
+
+        setUserInput(copy);
+    };
+
+    function findBase(array) {
+        let temp = [...array]
+        let i = temp.length - 1
+        let res = []
+
+        if (temp[i] == ')') {
+            while (i >= 0 && temp[i] != '(') {
+                const next = temp[i]
+                // res = next + res
+                res.splice(0, 0, next)
+                i--
+            }
+            res = '(' + res;
+        } else {
+            while (i >= 0 && temp[i] != ')' && temp[i] != SQUARE_ROOT_CLOSE) {
+                const next = temp[i]
+                // res = next + res
+                res.splice(0, 0, next)
+                i--
+            }
+        }
+        return res
+    }
+
+    function findChildren(array) {
+        let copy = [...array];
+        let res = [];
+        let i = 1;
+        let count = 1;
+
+        res.push(copy[0])
+
+        while (count > 0) {
+            let curr = copy[i]
+            if (curr == SQUARE_ROOT_OPEN) {
+                count++;
+            }
+            if (curr == SQUARE_ROOT_CLOSE) {
+                count--;
+            }
+            res.push(curr)
+            i++
+        }
+        return res;
+    }
+
+    function processInput(array) {
+        let res = []
+        let i = 0
+        let temp = [...array]
+
+        while (i < temp.length) {
+            if (temp[i] == CURSOR) {
+                res.push({type : 'cursor'})
+                i++
+            } else if (temp[i] == EMPTY_SQUARE_ROOT) {
+                res.push({type : 'empty_square_root'})
+                i++
+            } else if (/^[a-z0-9()+*-]+$/i.test(array[i])) {
+                res.push({
+                    type: 'text',
+                    value: array[i]
+                })
+                i++;
+            } else if (temp[i] == '^') {
+                let base = processInput(findBase([...temp].slice(0, i)))
+                let children_0 = processInput(findChildren([...temp].slice(i + 1)))
+
+                res.splice(res.length - base.length, base.length)
+
+                res.push({
+                    type: 'exponent',
+                    value: base,
+                    children: children_0
+                })
+
+                i += findChildren([...temp].slice(i + 1)).length;
+            } else {
+                i++;
+            }
+        }
+        return res;
+    }
+
+    // Recursively render the nested structure from processedinput
+    function displayText(nodeList) {
+        return nodeList.map((node, index) => {
+            switch (node.type) {
+                case 'text':
+                    return <span key={index}>{node.value}</span>;
+
+                case 'fraction':
+                    return (
+                        <span className="fraction" key={index}>
+                            <span className="numerator">{displayText(node.numerator)}</span>
+                            <span className="fraction-bar" />
+                            <span className="denominator">{displayText(node.denominator)}</span>
+                        </span>
+                    );
+
+                case 'exponent':
+                    return (
+                        <span key={index}>
+                            <span>{displayText(node.value)}</span>
+                            <sup>
+                                <span>{displayText(node.children)}</span>
+                            </sup>
+                        </span>
+                    );
+
+                case 'empty_square_root' :
+                    return (
+                        <span key={index} className="empty-square-root"/>
+                    );
+
+                case 'cursor':
+                    return (
+                        <span key={index} className="blink-cursor">
+                            |
+                        </span>
+                    );
+
+                default:
+                    return null;
+            }
+        });
+    }
+
+    return (
+        <div
+            tabIndex={0}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            onKeyDown={handleKeyDown}
+            style={{
+                border: isFocused ? '2px solid blue' : '1px solid gray',
+                padding: '8px',
+                minHeight: '40px',
+                outline: 'none',
+            }}
+        >
+            {displayText(processedInput)}
+        </div>
+    );
 }
 
-export default Input
+export default Input;
