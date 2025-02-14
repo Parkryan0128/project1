@@ -12,7 +12,7 @@ function Log() {
 
     useEffect(() => {
         setProcessedInput(processInput(userInput));
-        // console.log(userInput);
+        console.log(userInput);
     }, [userInput]);
 
     // Insert item at given index
@@ -91,13 +91,22 @@ function Log() {
     // Handle when left arrow key is pressed
     function handleArrowLeft(copy, cursorIndex) {
         if (cursorIndex <= 0) return copy;
-        return swapItems(copy, cursorIndex, cursorIndex - 1);
+        if ((copy[cursorIndex - 1] === LOG_OPEN || copy[cursorIndex - 1] === LOG_CLOSE) && cursorIndex - 2 !== 0) {
+            return swapItems(copy, cursorIndex, cursorIndex - 2);
+        } else {
+            return swapItems(copy, cursorIndex, cursorIndex - 1);
+        }
     }
 
     // Handle when right arrow key is pressed
     function handleArrowRight(copy, cursorIndex) {
         if (cursorIndex >= copy.length - 1) return copy;
-        return swapItems(copy, cursorIndex, cursorIndex + 1);
+
+        if ((copy[cursorIndex + 1] === LOG_OPEN || copy[cursorIndex + 1] === LOG_CLOSE) && cursorIndex + 2 <= copy.length - 1) {
+            return swapItems(copy, cursorIndex, cursorIndex + 2);
+        } else {
+            return swapItems(copy, cursorIndex, cursorIndex + 1);
+        }
     }
 
     // Handle backspace
@@ -105,20 +114,6 @@ function Log() {
         if (cursorIndex <= 0) return copy;
 
         const prevChar = copy[cursorIndex - 1];
-
-        //  // Check if the previous character is 'g' and the sequence is ['l', 'o', 'g', LOG_OPEN, CURSOR, LOG_CLOSE]
-        // if (
-        //     copy[cursorIndex - 2] === 'g' &&
-        //     copy[cursorIndex - 3] === 'o' &&
-        //     copy[cursorIndex - 4] === 'l' &&
-        //     prevChar === LOG_OPEN &&
-        //     copy[cursorIndex + 1] === LOG_CLOSE
-        // ) {
-        //     // remove 'g', LOG_OPEN, and LOG_CLOSE
-        //     copy.splice(cursorIndex - 2, 2); // removes 'g', LOG_OPEN
-        //     copy.splice(cursorIndex + 1, 1); // removes LOG_CLOSE
-        //     return copy;
-        // }
 
         if (prevChar === LOG_CLOSE) {
             // If the previous character is LOG_CLOSE, check if the log function is empty
@@ -134,15 +129,16 @@ function Log() {
 
             if (logStartIndex !== undefined) {
                 // Check if there is no content between LOG_OPEN and LOG_CLOSE
-                if (logStartIndex + 1 === cursorIndex - 1) {
+                if (logStartIndex + 1 < cursorIndex - 1 && cursorIndex - 2 !== logStartIndex) {
                     // Remove the entire log function (LOG_OPEN and LOG_CLOSE)
-                    copy.splice(logStartIndex - 1, 3);
-                } else {
-                    // Otherwise, just delete the previous character
                     copy = deleteAt(copy, cursorIndex - 2);
+                } else if (logStartIndex + 1 === cursorIndex - 1 && copy.length >= 6) {
+                    // If there is no content, remove the entire log function (LOG_OPEN, LOG_CLOSE, and 'g')
+                    copy.splice(cursorIndex - 3, 3); // removes 'g', LOG_OPEN, LOG_CLOSE
+                } else {
+                    copy.splice(cursorIndex - 2, 3);
                 }
             }
-            console.log(copy);
         } else if (prevChar === LOG_OPEN) {
             // If the previous character is LOG_OPEN, check if the log function is empty
             const pairs = findParenPairs(copy);
@@ -157,13 +153,22 @@ function Log() {
 
             if (logCloseIndex !== undefined) {
                 // Check if there is no content between LOG_OPEN and LOG_CLOSE
-                if (cursorIndex + 1 === logCloseIndex) {
-                    // Remove the g with (LOG_OPEN and LOG_CLOSE)
-                    copy.splice(cursorIndex - 2, 2); // removes 'g', LOG_OPEN
+                if ((cursorIndex < logCloseIndex - 1 && cursorIndex + 1 !== logCloseIndex) && cursorIndex - 1 !== 0) {
+                    // Remove the entire log function (LOG_OPEN and LOG_CLOSE)
+                    copy = deleteAt(copy, cursorIndex - 2);
+                } else if (logCloseIndex - 1 === cursorIndex && copy.length >= 6) {
+                    // If there is no content, remove the entire log function (LOG_OPEN, LOG_CLOSE, and 'g')
                     copy.splice(cursorIndex + 1, 1); // removes LOG_CLOSE
+                    copy.splice(cursorIndex - 2, 2); // removes 'g', LOG_OPEN
                 } else {
-                    // Otherwise, just delete the previous character
-                    copy = deleteAt(copy, cursorIndex - 1);
+                    if (cursorIndex - 1 !== 0) {
+                        copy.splice(cursorIndex - 2, 2);
+                    }
+
+                    if (cursorIndex - 1 === 0 && copy.length === 3) {
+                        copy.splice(cursorIndex - 1, 1);
+                        copy.splice(cursorIndex, 1);
+                    }
                 }
             }
         } else {
@@ -236,7 +241,7 @@ function Log() {
                 i++;
             }
         }
-        console.log(result);
+        // console.log(result);
         return result;
     }
 
