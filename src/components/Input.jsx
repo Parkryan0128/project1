@@ -4,7 +4,8 @@ import './Input.css'
 const EXPONENT_OPEN = "__EXPONENT_OPEN__";
 const EXPONENT_CLOSE = "__EXPONENT_CLOSE__";
 const CURSOR = 'cursor';
-
+const EMPTY_EXPONENT = '__EMPTY__EXPONENT__'
+ 
 function Input() {
     const [userInput, setUserInput] = useState([CURSOR]);
     const [isFocused, setIsFocused] = useState(false);
@@ -23,109 +24,16 @@ function Input() {
         return copy;
     }
 
-    // Helper: Swap items at two indexes (immutable)
     function swapItems(arr, i, j) {
         const copy = [...arr];
         [copy[i], copy[j]] = [copy[j], copy[i]];
         return copy;
     }
 
-    const handleKeyDown = (e) => {
-        e.preventDefault();
-        const key = e.key;
-        const cursorIndex = userInput.indexOf('cursor');
-        const testValid = /^[a-z0-9()]+$/i.test(userInput[cursorIndex - 1]);
-
-        if (key == '^' && cursorIndex >= 1 && testValid) {
-            if (userInput[cursorIndex + 1] == '^') {
-                let updated = []
-                updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
-                updated = swapItems(updated, cursorIndex + 1, cursorIndex + 2);
-                if (userInput[cursorIndex + 3] == 'empty') {
-                    updated.splice(cursorIndex + 3, 1);
-                }
-                setUserInput(updated)
-                return
-            }
-            const copy = [...userInput];
-
-            copy.splice(cursorIndex, 0, '^')
-            copy.splice(cursorIndex + 1, 0, EXPONENT_OPEN)
-            copy.splice(cursorIndex + 3, 0, EXPONENT_CLOSE)
-            setUserInput(copy)
-        }
-
-        else if (key.length === 1 && key != '^') {
-            const updated = insertAt(userInput, cursorIndex, key);
-            setUserInput(updated)
-            return;
-        }
-
-        else if (key === 'ArrowLeft') {
-            if (cursorIndex > 0) {
-                let updated = []
-                if (userInput[cursorIndex - 1] == EXPONENT_OPEN) {
-                    updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
-                    updated = swapItems(updated, cursorIndex - 1, cursorIndex - 2);
-                    if (userInput[cursorIndex + 1] == EXPONENT_CLOSE) {
-                        updated.splice(cursorIndex + 1, 0, 'empty');
-                    }
-                } else {
-                    updated = swapItems(userInput, cursorIndex, cursorIndex - 1);
-                    if (userInput[cursorIndex - 1] == EXPONENT_CLOSE && 
-                        userInput[cursorIndex - 2] == 'empty') {
-                        updated.splice(cursorIndex - 2, 1);
-                    }
-                }
-                setUserInput(updated);
-            }
-            return;
-        }
-
-        else if (key === 'ArrowRight') {
-            if (cursorIndex < userInput.length - 1) {
-                let updated = []
-                if (userInput[cursorIndex + 1] == '^') {
-                    updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
-                    updated = swapItems(updated, cursorIndex + 1, cursorIndex + 2);
-                    if (userInput[cursorIndex + 3] == 'empty') {
-                        updated.splice(cursorIndex + 3, 1);
-                    }
-                } else {
-                    updated = swapItems(userInput, cursorIndex, cursorIndex + 1);
-                    if (userInput[cursorIndex + 1] == EXPONENT_CLOSE && 
-                        userInput[cursorIndex - 1] == EXPONENT_OPEN) {
-                        updated.splice(cursorIndex, 0, 'empty');
-                    }
-                }
-                setUserInput(updated);
-            }
-            return;
-        }
-
-        else if (key == 'Backspace') {
-            if (cursorIndex > 0) {
-                const copy = [...userInput];
-                
-                if (copy[cursorIndex - 1] == EXPONENT_OPEN || copy[cursorIndex - 1] == EXPONENT_CLOSE) {
-                    if (copy[cursorIndex - 1] == EXPONENT_OPEN) {
-                        let closingIndex = findMatchingExponentClose(userInput, cursorIndex - 1)
-
-                        copy.splice(cursorIndex - 2, 1);
-                        copy.splice(cursorIndex - 2, 1);
-                        copy.splice(closingIndex - 2, 1);
-
-                        setUserInput(copy);
-                    } else if (copy[cursorIndex - 1] == EXPONENT_CLOSE) {
-                        const updated = swapItems(copy, cursorIndex, cursorIndex - 1);
-                        setUserInput(updated);
-                    }
-                } else {
-                    copy.splice(cursorIndex - 1, 1);
-                    setUserInput(copy);
-                }
-            }
-        }
+    function deleteAt(arr, index) {
+        const copy = [...arr];
+        copy.splice(index, 1);
+        return copy;
     }
 
     function findMatchingExponentClose(array, openIndex) {
@@ -143,6 +51,122 @@ function Input() {
     
         return openBrackets === 0 ? index - 1 : -1;
     }
+
+    function handleCaretPress(arr, cursorIndex) {
+
+        // if userInput only contains cursor, no action
+        if (arr <= 1) return arr;
+
+        // if ^ was pressed right in front of another ^, move cursor to right
+        if (arr[cursorIndex + 1] == '^') {
+            arr = swapItems(arr, cursorIndex, cursorIndex + 1);
+            arr = swapItems(arr, cursorIndex + 1, cursorIndex + 2);
+            if (arr[cursorIndex + 3] == EMPTY_EXPONENT) {
+                arr = deleteAt(arr, cursorIndex + 3)
+            }
+            return arr;
+        }
+
+        // otherwise, insert ^, EXPONENT_OPEN and EXPONENT_CLOSE
+        arr = insertAt(arr, cursorIndex, '^')
+        arr = insertAt(arr, cursorIndex + 1, EXPONENT_OPEN)
+        arr = insertAt(arr, cursorIndex + 3, EXPONENT_CLOSE)
+
+        return arr;
+    }
+
+    function handleCharPress(arr, cursorIndex, item) {
+        arr = insertAt(arr, cursorIndex, item);
+        return arr;
+    }
+
+    function handleArrowLeft(arr, cursorIndex) {
+        if (cursorIndex > 0) { // cursor can't move left if it is at index 0
+            if (arr[cursorIndex - 1] == EXPONENT_OPEN) {
+                arr = swapItems(arr, cursorIndex, cursorIndex - 1);
+                arr = swapItems(arr, cursorIndex - 1, cursorIndex - 2);
+                if (arr[cursorIndex + 1] == EXPONENT_CLOSE) {
+                    arr = insertAt(arr, cursorIndex + 1, EMPTY_EXPONENT);
+                }
+            } else {
+                arr = swapItems(arr, cursorIndex, cursorIndex - 1);
+                console.log(cursorIndex)
+                console.log(arr)
+                if (arr[cursorIndex] == EXPONENT_CLOSE && 
+                    arr[cursorIndex - 2] == EMPTY_EXPONENT) {
+                    arr = deleteAt(arr, cursorIndex - 2)
+                }
+            }
+        }
+        return arr;
+    }
+
+    function handleArrowRight(arr, cursorIndex) {
+        if (cursorIndex < arr.length - 1) {
+            if (userInput[cursorIndex + 1] == '^') {
+                arr = swapItems(arr, cursorIndex, cursorIndex + 1);
+                arr = swapItems(arr, cursorIndex + 1, cursorIndex + 2);
+                if (arr[cursorIndex + 3] == EMPTY_EXPONENT) {
+                    arr = deleteAt(arr, cursorIndex + 3)
+                }
+            } else {
+                arr = swapItems(arr, cursorIndex, cursorIndex + 1);
+                if (arr[cursorIndex] == EXPONENT_CLOSE && 
+                    arr[cursorIndex - 1] == EXPONENT_OPEN) {
+                    arr = insertAt(arr, cursorIndex, EMPTY_EXPONENT)
+                }
+            }
+        }
+        return arr;
+    }
+
+    function handleBackspace(arr, cursorIndex) {
+        if (cursorIndex > 0) {
+            if (arr[cursorIndex - 1] == EXPONENT_OPEN || arr[cursorIndex - 1] == EXPONENT_CLOSE) {
+                if (arr[cursorIndex - 1] == EXPONENT_OPEN) {
+                    let closingIndex = findMatchingExponentClose(arr, cursorIndex - 1)
+
+                    arr = deleteAt(arr, cursorIndex - 2)
+                    arr = deleteAt(arr, cursorIndex - 2)
+                    arr = deleteAt(arr, closingIndex - 2)
+                } else if (arr[cursorIndex - 1] == EXPONENT_CLOSE) {
+                    arr = swapItems(arr, cursorIndex, cursorIndex - 1);
+                    if (arr[cursorIndex - 2] == EMPTY_EXPONENT) {
+                        arr = deleteAt(arr, cursorIndex - 2)
+                    }
+                }
+            } else {
+                arr = deleteAt(arr, cursorIndex - 1)
+            }
+        }
+        return arr;
+    }
+
+    const handleKeyDown = (e) => {
+        e.preventDefault();
+
+        const key = e.key;
+        let copy = [...userInput];
+        const cursorIndex = copy.indexOf(CURSOR);
+
+        if (key === '^') {
+            copy = handleCaretPress(copy, cursorIndex);
+        }
+        else if (key.length === 1) {
+            copy = handleCharPress(copy, cursorIndex, key);
+        }
+        else if (key === 'ArrowLeft') {
+            copy = handleArrowLeft(copy, cursorIndex);
+        }
+        else if (key === 'ArrowRight') {
+            copy = handleArrowRight(copy, cursorIndex);
+        }
+        else if (key === 'Backspace') {
+            copy = handleBackspace(copy, cursorIndex);
+        }
+
+        setUserInput(copy);
+    };
 
     function findBase(array) {
         let temp = [...array]
@@ -199,6 +223,9 @@ function Input() {
             if (temp[i] == CURSOR) {
                 res.push({type : 'cursor'})
                 i++
+            } else if (temp[i] == EMPTY_EXPONENT) {
+                res.push({type : 'empty_exponent'})
+                i++
             } else if (/^[a-z0-9()+*-]+$/i.test(array[i])) {
                 res.push({
                     type: 'text',
@@ -250,6 +277,11 @@ function Input() {
                             </sup>
                         </span>
                     )
+
+                case 'empty_exponent' :
+                    return (
+                        <span key={index} className="empty-exponent"/>
+                    );
 
                 case 'cursor':
                     return (

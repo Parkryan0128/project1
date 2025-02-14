@@ -18,6 +18,11 @@
   .denominator {
     padding: 0 2px;
   }
+
+  .empty-exponent {
+    padding: 0 2px;
+    background-color: lightgray;
+  }
   
   .blink-cursor {
     display: inline-block;
