@@ -91,7 +91,10 @@ function Log() {
     // Handle when left arrow key is pressed
     function handleArrowLeft(copy, cursorIndex) {
         if (cursorIndex <= 0) return copy;
-        if ((copy[cursorIndex - 1] === LOG_OPEN || copy[cursorIndex - 1] === LOG_CLOSE) && cursorIndex - 2 !== 0) {
+
+        const prevChar = copy[cursorIndex - 1];
+
+        if ((prevChar === LOG_OPEN || prevChar === LOG_CLOSE) && cursorIndex - 1 !== 0 && copy[cursorIndex - 2] !== LOG_OPEN) {
             return swapItems(copy, cursorIndex, cursorIndex - 2);
         } else {
             return swapItems(copy, cursorIndex, cursorIndex - 1);
@@ -102,7 +105,8 @@ function Log() {
     function handleArrowRight(copy, cursorIndex) {
         if (cursorIndex >= copy.length - 1) return copy;
 
-        if ((copy[cursorIndex + 1] === LOG_OPEN || copy[cursorIndex + 1] === LOG_CLOSE) && cursorIndex + 2 <= copy.length - 1) {
+        const nextChar = copy[cursorIndex + 1];
+        if ((nextChar === LOG_OPEN || nextChar === LOG_CLOSE) && cursorIndex + 2 < copy.length - 1) {
             return swapItems(copy, cursorIndex, cursorIndex + 2);
         } else {
             return swapItems(copy, cursorIndex, cursorIndex + 1);
@@ -136,7 +140,13 @@ function Log() {
                     // If there is no content, remove the entire log function (LOG_OPEN, LOG_CLOSE, and 'g')
                     copy.splice(cursorIndex - 3, 3); // removes 'g', LOG_OPEN, LOG_CLOSE
                 } else {
-                    copy.splice(cursorIndex - 2, 3);
+                    if (cursorIndex !== copy.length) {
+                        copy.splice(cursorIndex - 2, 2);
+                    }
+
+                    if (cursorIndex - 2 === 0 && copy.length === 3) {
+                        copy.splice(cursorIndex - 2, 2);
+                    }
                 }
             }
         } else if (prevChar === LOG_OPEN) {
@@ -150,7 +160,6 @@ function Log() {
                     logCloseIndex = closeIdx;
                 }
             });
-
             if (logCloseIndex !== undefined) {
                 // Check if there is no content between LOG_OPEN and LOG_CLOSE
                 if ((cursorIndex < logCloseIndex - 1 && cursorIndex + 1 !== logCloseIndex) && cursorIndex - 1 !== 0) {
