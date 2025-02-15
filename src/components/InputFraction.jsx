@@ -189,6 +189,43 @@ function InputList() {
         return updated;
     }
 
+    function handleArrowDown(copy, cursorIndex,pairs) {
+        let start = null;
+        let end = null;
+        let updated;
+        for (let i=0; i< pairs.length; i++) {
+            if (cursorIndex > pairs[i][0] && cursorIndex < pairs[i][1]) {
+                start = pairs[i][0];
+                end = pairs[i][1];
+                break;
+            }
+        }
+
+        if (start != null && copy[end+1] == '/') {
+            updated = deleteAt(insertAt(copy,end+3, CURSOR), cursorIndex)
+        }
+        return updated;
+    }
+
+    function handleArrowUp(copy, cursorIndex, pairs) {
+        let start = null;
+        let end = null;
+        let updated;
+        for (let i=0; i< pairs.length; i++) {
+            if (cursorIndex > pairs[i][0] && cursorIndex < pairs[i][1]) {
+                start = pairs[i][0];
+                end = pairs[i][1];
+                break;
+            }
+        }
+
+        if (start != null && start > 1 && copy[start-1] == '/') {
+            // updated = insertAt(deleteAt(copy, cursorIndex), cursorIndex - 3, CURSOR);
+            updated = insertAt(deleteAt(copy, cursorIndex),start-2, CURSOR);
+        }
+        return updated;
+    }
+
     // Handle backspace
     function handleBackspace(copy, cursorIndex) {
         if (cursorIndex <= 0) return copy; // nothing to delete if cursor at start
@@ -230,6 +267,7 @@ function InputList() {
         const key = e.key;
         let copy = [...userInput];
         const cursorIndex = copy.indexOf(CURSOR);
+        const pairs = findParenPairs(userInput);
 
         if (key === '/') {
             copy = handleSlashPress(copy, cursorIndex);
@@ -245,6 +283,12 @@ function InputList() {
         }
         else if (key === 'Backspace') {
             copy = handleBackspace(copy, cursorIndex);
+        }
+        else if (key == 'ArrowDown') {
+            copy = handleArrowDown(copy, cursorIndex, pairs)
+        }
+        else if (key == 'ArrowUp') {
+            copy = handleArrowUp(copy, cursorIndex, pairs)
         }
 
         setUserInput(copy);
@@ -343,10 +387,6 @@ function InputList() {
             }
         });
     }
-
-    // -----------------------------------
-    // Render
-    // -----------------------------------
 
     return (
         <div
