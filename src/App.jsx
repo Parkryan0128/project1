@@ -4,12 +4,12 @@ import Input from './components/Input.jsx'
 import InputContent from './components/inputtest.jsx'
 import InputList from './components/InputList.jsx'
 import { derivative, differentiate } from './utils/Derivative.js'; // Import derivative function
-import InputIntegral from './components/InputIntegral.jsx'
+import InputFraction from './components/InputFraction.jsx'
 
 function App() {
     return <div>
-    <InputIntegral />
-    </div>
+        <InputFraction/>
+      </div>
 }
 
 export default App

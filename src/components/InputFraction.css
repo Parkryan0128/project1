@@ -6,7 +6,7 @@
   }
   
   .numerator {
-    padding: 0 2px;
+    padding: 0 0px;
   }
   
   .fraction-bar {
@@ -16,12 +16,7 @@
   }
   
   .denominator {
-    padding: 0 2px;
-  }
-
-  .empty-exponent {
-    padding: 0 2px;
-    background-color: lightgray;
+    padding: 0 0px;
   }
   
   .blink-cursor {
