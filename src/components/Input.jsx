@@ -12,7 +12,6 @@ function Input() {
     const [processedInput, setProcessedInput] = useState([]);
 
     useEffect(() => {
-
         let temp = processInput(userInput)
         setProcessedInput(temp)
         console.log(userInput)
@@ -52,30 +51,7 @@ function Input() {
     
         return openBrackets === 0 ? index - 1 : -1;
     }
-
-    function handleCaretPress(arr, cursorIndex) {
-
-        // if userInput only contains cursor, no action
-        if (arr <= 1) return arr;
-
-        // if ^ was pressed right in front of another ^, move cursor to right
-        if (arr[cursorIndex + 1] == '^') {
-            arr = swapItems(arr, cursorIndex, cursorIndex + 1);
-            arr = swapItems(arr, cursorIndex + 1, cursorIndex + 2);
-            if (arr[cursorIndex + 3] == EMPTY_SQUARE_ROOT) {
-                arr = deleteAt(arr, cursorIndex + 3)
-            }
-            return arr;
-        }
-
-        // otherwise, insert ^, EXPONENT_OPEN and EXPONENT_CLOSE
-        arr = insertAt(arr, cursorIndex, '^')
-        arr = insertAt(arr, cursorIndex + 1, SQUARE_ROOT_OPEN)
-        arr = insertAt(arr, cursorIndex + 3, SQUARE_ROOT_CLOSE)
-
-        return arr;
-    }
-
+    
     function handleCharPress(arr, cursorIndex, item) {
         arr = insertAt(arr, cursorIndex, item);
         return arr;
@@ -131,7 +107,10 @@ function Input() {
                 } else if (arr[cursorIndex - 1] == SQUARE_ROOT_CLOSE) {
                     arr = swapItems(arr, cursorIndex, cursorIndex - 1);
                     if (arr[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
-                        arr = deleteAt(arr, cursorIndex - 2)
+                        arr = deleteAt(arr, cursorIndex)
+                        arr = deleteAt(arr, cursorIndex - 4)
+                        arr = deleteAt(arr, cursorIndex - 4)
+                        arr = deleteAt(arr, cursorIndex - 4)
                     }
                 }
             } else {
@@ -229,6 +208,17 @@ function Input() {
         return res;
     }
 
+    function findRadicand(arr) {
+        let res = []
+        let closeIndex = findMatchingSquareRootClose(arr, 0)
+
+        for (let i = 1; i < closeIndex; i++) {
+            res.push(arr[i])
+        }
+
+        return res;
+    }
+
     function processInput(array) {
         let res = []
         let i = 0
@@ -247,19 +237,18 @@ function Input() {
                     value: array[i]
                 })
                 i++;
-            } else if (temp[i] == '^') {
-                let base = processInput(findBase([...temp].slice(0, i)))
-                let children_0 = processInput(findChildren([...temp].slice(i + 1)))
+            } else if (temp[i] == '√') {
+                let closeIndex = findMatchingSquareRootClose(temp, i + 1)
+                let jumpIndex = closeIndex - i;
 
-                res.splice(res.length - base.length, base.length)
+                let radicand = processInput(findRadicand([...temp].slice(i + 1)))
 
                 res.push({
-                    type: 'exponent',
-                    value: base,
-                    children: children_0
+                    type: 'square-root',
+                    value: radicand
                 })
 
-                i += findChildren([...temp].slice(i + 1)).length;
+                i = i + jumpIndex + 1;
             } else {
                 i++;
             }
@@ -293,6 +282,15 @@ function Input() {
                         </span>
                     );
 
+                case 'square-root':
+                    return (
+                        <span key={index} className = "square-root">
+                            <span>√</span>
+                            <span>(</span>
+                            <span className='radicand'>{displayText(node.value)}</span>
+                            <span>)</span>
+                        </span>
+                    );
                 case 'empty_square_root' :
                     return (
                         <span key={index} className="empty-square-root"/>

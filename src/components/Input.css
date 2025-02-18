@@ -3,40 +3,52 @@
     flex-direction: column;
     align-items: center;
     margin: 0 4px;
-  }
-  
-  .numerator {
+}
+
+.numerator {
     padding: 0 2px;
-  }
-  
-  .fraction-bar {
+}
+
+.fraction-bar {
     width: 100%;
     border-top: 1px solid black;
     margin: 1px 0;
-  }
-  
-  .denominator {
-    padding: 0 2px;
-  }
+}
 
-  .empty-square-root {
+.denominator {
+    padding: 0 2px;
+}
+
+.empty-square-root {
     padding: 0 2px;
     background-color: lightgray;
     /* width: 10px;
     display: inline-block; */
-  }
-  
-  .blink-cursor {
+}
+
+.square-root {
+    display: inline-block;
+    vertical-align: bottom;
+    padding-top: 1px
+}
+
+.radicand {
+    display: inline-block;
+    vertical-align: bottom;
+    border-top: 1px solid black;
+}
+
+.blink-cursor {
     display: inline-block;
     width: 1px;
     background-color: black;
     animation: blink 1s infinite;
     margin: 0 0px;
     background: none;
-  }
-  
-  @keyframes blink {
+}
+
+@keyframes blink {
     50% {
-      opacity: 0;
+        opacity: 0;
     }
-  }
+}
