@@ -1,5 +1,64 @@
 import React, { useRef, useEffect, useState } from 'react';
 
+const superScriptMap = {
+    '-': '⁻',
+    '0': '⁰',
+    '1': '¹',
+    '2': '²',
+    '3': '³',
+    '4': '⁴',
+    '5': '⁵',
+    '6': '⁶',
+    '7': '⁷',
+    '8': '⁸',
+    '9': '⁹'
+};
+
+function toSuperscript(str) {
+    // Convert each character in `str` to its superscript form, if it exists
+    // Example: "31" -> "³¹", "-6" -> "⁻⁶"
+    return str
+        .split('')
+        .map(ch => superScriptMap[ch] || ch)
+        .join('');
+}
+
+function drawTextWithBackground(ctx, text, x, y, direction) {
+    const metrics = ctx.measureText(text);
+    const textWidth = metrics.width;
+    let lineHeight = 12;
+    const fontMatch = ctx.font.match(/(\d+)px/);
+    if (fontMatch) {
+        lineHeight = parseInt(fontMatch[1], 10);
+    }
+    const padding = 5;
+
+    let boxX;
+    let boxY;
+    let boxWidth;
+    let boxHeight;
+
+    if (direction == "right") {
+        boxX = x - textWidth / 2 - padding;
+        boxY = y - padding + 1; // 'top' baseline, so y is top of text
+        boxWidth = textWidth + padding * 2;
+        boxHeight = lineHeight + padding * 2;
+    } else {
+        boxX = x - textWidth - 6
+        boxY = y - padding - 6; // 'top' baseline, so y is top of text
+        boxWidth = textWidth + padding * 2;
+        boxHeight = lineHeight + padding * 2;
+    }
+
+    ctx.save();
+    ctx.fillStyle = 'white';
+    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+    ctx.fillStyle = 'black';
+    ctx.fillText(text, x, y);
+
+    ctx.restore();
+}
+
 function GraphCanvas() {
     const canvasRef = useRef(null);
     const isDragging = useRef(false)
@@ -113,13 +172,13 @@ function GraphCanvas() {
             if (distX < THRESHOLD_PX && distY < THRESHOLD_PX) {
                 anchorX = origin.x;
                 anchorY = origin.y;
-              }
+            }
 
             // Calculate the new origin to zoom towards mouse position
             const zoomFactor = newScale / scale;
             const newOrigin = {
-              x: anchorX - zoomFactor * (anchorX - origin.x),
-              y: anchorY - zoomFactor * (anchorY - origin.y),
+                x: anchorX - zoomFactor * (anchorX - origin.x),
+                y: anchorY - zoomFactor * (anchorY - origin.y),
             };
             setScale(newScale);
             setOrigin(newOrigin);
@@ -153,35 +212,52 @@ function roundToDecimals(num, decimals) {
 }
 
 function formatNumber(num) {
-    // Check if the number is finite
-    if (!isFinite(num)) {
-        return num.toString();
+    if (!Number.isFinite(num)) {
+        return String(num); // "Infinity", "NaN", etc.
     }
 
-    // Define thresholds for large numbers
-    const LARGE_THRESHOLD = 99999;
-    const SMALL_THRESHOLD = -99999;
+    const absVal = Math.abs(num);
+    // Thresholds for scientific notation
+    const LARGE_THRESHOLD = 1e5;
+    const SMALL_THRESHOLD = 1e-4;
 
-    // Check if the number exceeds the large thresholds
-    if (num > LARGE_THRESHOLD || num < SMALL_THRESHOLD) {
-        // Convert to scientific notation with 5 decimal places
-        return num.toExponential(1);
+    // Special case: near zero
+    if (absVal < Number.EPSILON) {
+        return '0';
     }
 
-    // Round the number to 5 decimal places
-    const roundedNum = roundToDecimals(num, 5);
+    // Decide when to use scientific notation
+    if (absVal >= LARGE_THRESHOLD || absVal < SMALL_THRESHOLD) {
+        // 1 decimal place in standard "e" notation, e.g. "2.0e+2"
+        let sciStr = num.toExponential(1);
 
-    // Define a small epsilon for floating-point comparison
-    const epsilon = 1e-10;
+        // Example: "-2.0e+2" or "2.0e-6"
+        let [mantissa, exponentStr] = sciStr.split('e');
 
-    // Compare the rounded number with the original number
-    if (Math.abs(num - roundedNum) < epsilon) {
-        // If the difference is less than epsilon, return the rounded number as a string
-        return roundedNum.toString();
+        // Separate out a leading '-' from the mantissa
+        let sign = '';
+        if (mantissa.startsWith('-')) {
+            sign = '-';
+            mantissa = mantissa.slice(1); // remove minus
+        }
+
+        // Parse exponent
+        let exponent = parseInt(exponentStr, 10);
+        // Convert exponent to superscript
+        let exponentSup = toSuperscript(String(exponent));
+
+        // Remove trailing ".0" if the decimal portion is zero
+        // e.g. parseFloat("2.0") => 2 => "2"
+        mantissa = parseFloat(mantissa).toString();
+
+        // Build final string: e.g. "-2×10²"
+        return `${sign}${mantissa}×10${exponentSup}`;
     } else {
-        // If the number has more than 5 decimal places, convert to scientific notation with 5 decimal places
-        return num.toExponential(1);
+        // For "normal" range, just round to 5 decimals
+        const rounded = roundToDecimals(num, 5);
+        return String(rounded);
     }
+
 }
 
 function getNiceNumber(value) {
@@ -326,41 +402,54 @@ const drawGraph = (ctx, origin, width, scale, equation) => {
 
 
 const drawLabel = (ctx, origin, width, height, scale) => {
-    const { majorStep, minorStep } = getGridSteps(scale);
-    const EPSILON = 1e-5
-    ctx.fillStyle = '#000000'; // Black color for text
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    const { majorStep } = getGridSteps(scale);
+    const EPSILON = 1e-5;
+
+    // A small offset so labels don't overlap the axis line
+    const xLabelOffset = 6;
+    const yLabelOffset = 6;
+
+    ctx.save();
+    ctx.fillStyle = '#000000';
     ctx.font = `12px Arial`;
 
-    // Calculate the range of labels to display on the X-axis
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    // Range of units shown on X-axis
     const xStartUnit = Math.ceil((-origin.x) / scale / majorStep) * majorStep;
     const xEndUnit = Math.floor((width - origin.x) / scale / majorStep) * majorStep;
 
-    // Draw labels on the X-axis
     for (let x = xStartUnit; x <= xEndUnit; x += majorStep) {
-        if (Math.abs(x) < EPSILON) continue; // Skip origin to prevent duplicate labeling
+        if (Math.abs(x) < EPSILON) continue; // skip origin label
         const canvasX = origin.x + x * scale;
-        const canvasY = origin.y + 15; // Position below the X-axis
-        const label = formatNumber(x)
-        ctx.fillText(label, canvasX, canvasY);
+        const canvasY = origin.y + xLabelOffset; // small offset below axis
+        const label = formatNumber(x);
+
+        drawTextWithBackground(ctx, label, canvasX, canvasY, "right");
     }
 
-    // Calculate the range of labels to display on the Y-axis
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    // Range of units shown on Y-axis
     const yStartUnit = Math.ceil((-origin.y) / scale / majorStep) * majorStep;
     const yEndUnit = Math.floor((height - origin.y) / scale / majorStep) * majorStep;
 
-    // Draw labels on the Y-axis
     for (let y = yStartUnit; y <= yEndUnit; y += majorStep) {
-        if (Math.abs(y) < EPSILON) continue; // Skip origin to prevent duplicate labeling
+        if (Math.abs(y) < EPSILON) continue; // skip origin label
         const canvasY = origin.y + y * scale;
-        const canvasX = origin.x - 15; // Position to the left of the Y-axis
-        const label = formatNumber(-y)
-        ctx.fillText(label, canvasX, canvasY);
+        const canvasX = origin.x - yLabelOffset; // small offset to the left of axis
+        const label = formatNumber(-y);  // Your code used -y here
+
+        drawTextWithBackground(ctx, label, canvasX, canvasY, "middle");
     }
 
-    // Label at the origin
-    ctx.fillText('0', origin.x - 15, origin.y + 15);
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText('0', origin.x - yLabelOffset, origin.y + xLabelOffset);
+
+    ctx.restore();
 }
 
 
