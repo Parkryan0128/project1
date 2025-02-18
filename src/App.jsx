@@ -8,7 +8,7 @@ import InputFraction from './components/InputFraction.jsx'
 
 function App() {
     return <div>
-        <InputFraction/>
+        <GraphCanvas/>
       </div>
 }
 

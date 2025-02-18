@@ -5,7 +5,7 @@ function GraphCanvas() {
     const isDragging = useRef(false)
     const [width, setWidth] = useState(1000);
     const [height, setHeight] = useState(1000);
-    const [equation, setEquation] = useState('y = x ** 2');
+    const [equation, setEquation] = useState('y = Math.sqrt(x)');
     const [origin, setOrigin] = useState({ x: width / 2, y: height / 2 })
     const [scale, setScale] = useState(100);
     const lastMousePos = useRef({ x: 0, y: 0 });
@@ -93,10 +93,9 @@ function GraphCanvas() {
         const handleWheel = (e) => {
             e.preventDefault();
 
-            const zoomIntensity = 0.005; // Adjust for sensitivity
+            const zoomIntensity = 0.001; // Adjust for sensitivity
             const delta = e.deltaY * zoomIntensity;
             let newScale = scale * (1 - delta);
-            console.log(newScale)
 
             // Limit scale to prevent it from getting too small or too large
             if (newScale < 2.00e-9 || newScale > 5000000) return;
@@ -106,11 +105,21 @@ function GraphCanvas() {
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
+            const THRESHOLD_PX = 75;
+            const distX = Math.abs(mouseX - origin.x);
+            const distY = Math.abs(mouseY - origin.y);
+            let anchorX = mouseX;
+            let anchorY = mouseY;
+            if (distX < THRESHOLD_PX && distY < THRESHOLD_PX) {
+                anchorX = origin.x;
+                anchorY = origin.y;
+              }
+
             // Calculate the new origin to zoom towards mouse position
             const zoomFactor = newScale / scale;
             const newOrigin = {
-                x: mouseX - zoomFactor * (mouseX - origin.x),
-                y: mouseY - zoomFactor * (mouseY - origin.y),
+              x: anchorX - zoomFactor * (anchorX - origin.x),
+              y: anchorY - zoomFactor * (anchorY - origin.y),
             };
             setScale(newScale);
             setOrigin(newOrigin);
@@ -281,35 +290,34 @@ const drawAxis = (ctx, origin, width, height) => {
 
 
 const drawGraph = (ctx, origin, width, scale, equation) => {
-    const xMin = -(width / 2); // Starting point
-    const xMax = width / 2; // End point
-    const step = 0.001; // Step size for x-values
+    const rhsExpression = equation.split('=')[1].trim();
+    const yFunction = new Function('x', `return ${rhsExpression}`);
 
-    let firstPoint = true;
-    const rhsTest = equation.split('=')[1].trim();
-    let yFunction = new Function('x', `return ${rhsTest}`);
+    ctx.beginPath();
 
-    ctx.beginPath()
-    for (let x = xMin; x <= xMax; x += step) {
-        let y;
+    let wasValid = false;
+
+    for (let i = 0; i <= width; i++) {
+        const xValue = (i - origin.x) / scale;
+        let yValue;
+
         try {
-            y = yFunction(x);
-            if (typeof y !== 'number' || !isFinite(y)) {
-                throw new Error('Non-finite y value');
-            }
-        } catch (err) {
+            yValue = yFunction(xValue);
+            if (!Number.isFinite(yValue)) throw new Error('Invalid y');
+        } catch {
+            wasValid = false;
             continue;
         }
 
-        const canvasX = origin.x + x * scale;
-        const canvasY = origin.y - y * scale;
+        const canvasY = origin.y - yValue * scale;
 
-        if (firstPoint) {
-            ctx.moveTo(canvasX, canvasY);
-            firstPoint = false;
+        if (wasValid) {
+            ctx.lineTo(i, canvasY);
         } else {
-            ctx.lineTo(canvasX, canvasY);
+            ctx.moveTo(i, canvasY);
         }
+
+        wasValid = true;
     }
 
     ctx.stroke();
