@@ -91,26 +91,29 @@ function Log() {
     // Handle when left arrow key is pressed
     function handleArrowLeft(copy, cursorIndex) {
         if (cursorIndex <= 0) return copy;
+        let targetIndex = cursorIndex - 1;
+        const prevChar = copy[targetIndex];
 
-        const prevChar = copy[cursorIndex - 1];
-
-        if ((prevChar === LOG_OPEN || prevChar === LOG_CLOSE) && cursorIndex - 1 !== 0 && copy[cursorIndex - 2] !== LOG_OPEN) {
-            return swapItems(copy, cursorIndex, cursorIndex - 2);
-        } else {
-            return swapItems(copy, cursorIndex, cursorIndex - 1);
+        if ((prevChar === LOG_OPEN || prevChar === LOG_CLOSE)) {
+            targetIndex -= 1;
         }
+
+        const updated = insertAt(deleteAt(copy, cursorIndex), targetIndex, CURSOR);
+        return updated;
     }
 
     // Handle when right arrow key is pressed
     function handleArrowRight(copy, cursorIndex) {
         if (cursorIndex >= copy.length - 1) return copy;
-
-        const nextChar = copy[cursorIndex + 1];
-        if ((nextChar === LOG_OPEN || nextChar === LOG_CLOSE) && cursorIndex + 2 < copy.length - 1) {
-            return swapItems(copy, cursorIndex, cursorIndex + 2);
-        } else {
-            return swapItems(copy, cursorIndex, cursorIndex + 1);
+        let targetIndex = cursorIndex + 1;
+        const nextChar = copy[targetIndex];
+        
+        if ((nextChar === LOG_OPEN || nextChar === LOG_CLOSE)) {
+            targetIndex += 1;
         }
+
+        const updated = insertAt(deleteAt(copy, cursorIndex), targetIndex, CURSOR);
+        return updated;
     }
 
     // Handle backspace
@@ -120,36 +123,19 @@ function Log() {
         const prevChar = copy[cursorIndex - 1];
 
         if (prevChar === LOG_CLOSE) {
-            // If the previous character is LOG_CLOSE, check if the log function is empty
-            const pairs = findParenPairs(copy);
-            let logStartIndex;
-
-            // Find the matching LOG_OPEN for this LOG_CLOSE
-            pairs.forEach(([openIdx, closeIdx]) => {
-                if (closeIdx === cursorIndex - 1) {
-                    logStartIndex = openIdx;
-                }
-            });
-
-            if (logStartIndex !== undefined) {
-                // Check if there is no content between LOG_OPEN and LOG_CLOSE
-                if (logStartIndex + 1 < cursorIndex - 1 && cursorIndex - 2 !== logStartIndex) {
-                    // Remove the entire log function (LOG_OPEN and LOG_CLOSE)
-                    copy = deleteAt(copy, cursorIndex - 2);
-                } else if (logStartIndex + 1 === cursorIndex - 1 && copy.length >= 6) {
-                    // If there is no content, remove the entire log function (LOG_OPEN, LOG_CLOSE, and 'g')
-                    copy.splice(cursorIndex - 3, 3); // removes 'g', LOG_OPEN, LOG_CLOSE
-                } else {
-                    if (cursorIndex !== copy.length) {
-                        copy.splice(cursorIndex - 2, 2);
-                    }
-
-                    if (cursorIndex - 2 === 0 && copy.length === 3) {
-                        copy.splice(cursorIndex - 2, 2);
-                    }
-                }
+            if (
+                copy.slice(cursorIndex - 5, cursorIndex).join('') ===
+                'log__LOG_OPEN____LOG_CLOSE__'
+            ) {
+                copy.splice(cursorIndex - 3, 3);
+            } else {
+                copy = swapItems(copy, cursorIndex, cursorIndex - 1);
             }
-        } else if (prevChar === LOG_OPEN) {
+
+            return copy;
+        }
+
+        if (prevChar === LOG_OPEN) {
             // If the previous character is LOG_OPEN, check if the log function is empty
             const pairs = findParenPairs(copy);
             let logCloseIndex;
@@ -160,31 +146,38 @@ function Log() {
                     logCloseIndex = closeIdx;
                 }
             });
-            if (logCloseIndex !== undefined) {
-                // Check if there is no content between LOG_OPEN and LOG_CLOSE
-                if ((cursorIndex < logCloseIndex - 1 && cursorIndex + 1 !== logCloseIndex) && cursorIndex - 1 !== 0) {
-                    // Remove the entire log function (LOG_OPEN and LOG_CLOSE)
-                    copy = deleteAt(copy, cursorIndex - 2);
-                } else if (logCloseIndex - 1 === cursorIndex && copy.length >= 6) {
-                    // If there is no content, remove the entire log function (LOG_OPEN, LOG_CLOSE, and 'g')
-                    copy.splice(cursorIndex + 1, 1); // removes LOG_CLOSE
-                    copy.splice(cursorIndex - 2, 2); // removes 'g', LOG_OPEN
-                } else {
-                    if (cursorIndex - 1 !== 0) {
-                        copy.splice(cursorIndex - 2, 2);
-                    }
 
-                    if (cursorIndex - 1 === 0 && copy.length === 3) {
-                        copy.splice(cursorIndex - 1, 1);
-                        copy.splice(cursorIndex, 1);
-                    }
+            copy = deleteAt(copy, logCloseIndex);
+            copy.splice(cursorIndex - 2, 2);
+            return copy;
+        }
+
+        if ('l' === prevChar || 'o' === prevChar || 'g' === prevChar) {
+            // If the previous character is LOG_OPEN, check if the log function is empty
+            const pairs = findParenPairs(copy);
+            let logCloseIndex;
+            let logOpenIndex;
+
+            // Find the matching LOG_CLOSE for this LOG_OPEN
+            pairs.forEach(([openIdx, closeIdx]) => {
+                if (openIdx === cursorIndex + 3 || openIdx === cursorIndex + 2 || openIdx === cursorIndex + 1) {
+                    logOpenIndex = openIdx;
+                    logCloseIndex = closeIdx;
                 }
+            });
+
+            if (logOpenIndex !== undefined && logCloseIndex !== undefined) {
+                copy = deleteAt(copy, logCloseIndex);
+                copy = deleteAt(copy, logOpenIndex);
+                copy = deleteAt(copy, cursorIndex - 1);
+            } else {
+                copy = deleteAt(copy, cursorIndex - 1);
             }
+
         } else {
             // Otherwise, just delete the previous character
             copy = deleteAt(copy, cursorIndex - 1);
         }
-
         return copy;
     }
 
