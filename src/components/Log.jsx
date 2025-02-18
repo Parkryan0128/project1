@@ -54,30 +54,16 @@ function Log() {
         return pairs;
     }
 
-    // Handle Log
+    // Handle Log bracket insertion
     function handleLogPress(copy, cursorIndex) {
-        // We consider these as "limit" tokens: if we encounter them, stop scanning backward.
-        // const limit = ['+', '-', '*', '(', ')', LOG_OPEN, LOG_CLOSE];
 
-        // if the entire array is just [CURSOR], then just insert an empty fraction skeleton.
-        // Cursor is located at the numerator
         if (copy.length >= 4) {
             let indexLogClose = copy.length - cursorIndex + 1;
             copy = insertAt(copy, cursorIndex, LOG_OPEN);
             copy = insertAt(copy, cursorIndex + indexLogClose, LOG_CLOSE);
-            // console.log(copy.length);
-            // console.log(cursorIndex);
+
             return copy;
         }
-
-        // don't understand...
-        // // Otherwise, backtrack until we hit a "limit" or the start,
-        // let i = cursorIndex;
-        // while (i >= 0 && !limit.includes(copy[i])) {
-        //     i--;
-        // }
-        // copy = insertAt(copy, i + 1, LOG_OPEN);
-        // copy = insertAt(copy, cursorIndex + 1, LOG_CLOSE);
 
         return copy;
     }
@@ -94,6 +80,7 @@ function Log() {
         let targetIndex = cursorIndex - 1;
         const prevChar = copy[targetIndex];
 
+        // Skip over LOG_OPEN and LOG_CLOSE
         if ((prevChar === LOG_OPEN || prevChar === LOG_CLOSE)) {
             targetIndex -= 1;
         }
@@ -122,6 +109,7 @@ function Log() {
 
         const prevChar = copy[cursorIndex - 1];
 
+        // Handle LOG_CLOSE
         if (prevChar === LOG_CLOSE) {
             if (
                 copy.slice(cursorIndex - 5, cursorIndex).join('') ===
@@ -135,8 +123,9 @@ function Log() {
             return copy;
         }
 
+        // Handle LOG_OPEN
         if (prevChar === LOG_OPEN) {
-            // If the previous character is LOG_OPEN, check if the log function is empty
+            
             const pairs = findParenPairs(copy);
             let logCloseIndex;
 
@@ -152,13 +141,14 @@ function Log() {
             return copy;
         }
 
+        // Handle 'l', 'o', or 'g'
         if ('l' === prevChar || 'o' === prevChar || 'g' === prevChar) {
-            // If the previous character is LOG_OPEN, check if the log function is empty
+
             const pairs = findParenPairs(copy);
             let logCloseIndex;
             let logOpenIndex;
 
-            // Find the matching LOG_CLOSE for this LOG_OPEN
+            // Find a pair of LOG_OPEN and LOG_CLOSE
             pairs.forEach(([openIdx, closeIdx]) => {
                 if (openIdx === cursorIndex + 3 || openIdx === cursorIndex + 2 || openIdx === cursorIndex + 1) {
                     logOpenIndex = openIdx;
@@ -201,10 +191,6 @@ function Log() {
             } else if (key === 'l' && copy[cursorIndex + 2] === 'o' && copy[cursorIndex + 3] === 'g') {
                 copy = handleLogPress(copy, cursorIndex + 4);
             }
-            
-            // if (key === 'g' && cursorIndex >= 2 && copy[cursorIndex - 1] === 'o' && copy[cursorIndex - 2] === 'l') {
-            //     copy = handleLogPress(copy, cursorIndex + 1);
-            // }
             
         } else if (key === 'ArrowLeft') {
             copy = handleArrowLeft(copy, cursorIndex);
@@ -252,7 +238,7 @@ function Log() {
                 i++;
             }
         }
-        // console.log(result);
+
         return result;
     }
 
