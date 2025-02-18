@@ -2,15 +2,16 @@ import React, { useRef, useEffect, useState } from 'react';
 
 function GraphCanvas() {
     const canvasRef = useRef(null);
+    const isDragging = useRef(false)
     const [width, setWidth] = useState(1000);
     const [height, setHeight] = useState(1000);
-    const [equation, setEquation] = useState('y = x ** 3');
-    const [origin, setOrigin] = useState({ x: 500, y: 500 })
-    const [position, setPosition] = useState({ x: 0, y: 0 })
+    const [equation, setEquation] = useState('y = x ** 2');
+    const [origin, setOrigin] = useState({ x: width / 2, y: height / 2 })
     const [scale, setScale] = useState(100);
     const lastMousePos = useRef({ x: 0, y: 0 });
-    const isDragging = useRef(false)
 
+
+    // Draw Canvas
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
@@ -26,13 +27,13 @@ function GraphCanvas() {
         }
 
         drawGrid(ctx, width, height, origin, scale);
-        drawAxis(ctx, origin, width, height, scale);
+        drawAxis(ctx, origin, width, height);
         drawLabel(ctx, origin, width, height, scale);
-        drawGraph(ctx, origin, width, height, scale, equation, position);
+        drawGraph(ctx, origin, width, scale, equation);
 
     }, [equation, origin, scale]);
 
-
+    // Handle Panning
     useEffect(() => {
         const canvas = canvasRef.current;
 
@@ -75,8 +76,6 @@ function GraphCanvas() {
         canvas.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('mouseleave', handleMouseLeave);
 
-        // Set initial cursor style
-        canvas.style.cursor = 'grab';
 
         // Clean up event listeners on component unmount
         return () => {
@@ -88,18 +87,19 @@ function GraphCanvas() {
     }, [origin]);
 
 
+    // Handle Zoom in and Zoom out
     useEffect(() => {
         const canvas = canvasRef.current;
         const handleWheel = (e) => {
             e.preventDefault();
 
-            const zoomIntensity = 0.05; // Adjust for sensitivity
+            const zoomIntensity = 0.005; // Adjust for sensitivity
             const delta = e.deltaY * zoomIntensity;
             let newScale = scale * (1 - delta);
             console.log(newScale)
 
             // Limit scale to prevent it from getting too small or too large
-            if (newScale < 20 || newScale > 1000) return;
+            if (newScale < 2.00e-9 || newScale > 5000000) return;
 
             // Get mouse position relative to canvas
             const rect = canvas.getBoundingClientRect();
@@ -138,23 +138,75 @@ function GraphCanvas() {
     );
 }
 
-const getGridSteps = (scale) => {
-    // Define thresholds for different scale ranges
-    if (scale >= 800) {
-        return { majorStep: 1, minorStep: 0.1 };
-    } else if (scale >= 400) {
-        return { majorStep: 1, minorStep: 0.2 }; // High zoom: more minor lines
-    } else if (scale >= 200) {
-        return { majorStep: 1, minorStep: 0.5 };
-    } else if (scale >= 100) {
-        return { majorStep: 1, minorStep: 0.5 };
-    } else if (scale >= 50) {
-        return { majorStep: 2, minorStep: 1 }; // Lower zoom: fewer major lines
-    } else if (scale >= 25) {
-        return { majorStep: 5, minorStep: 1 };
-    } else {
-        return { majorStep: 10, minorStep: 2 }; // Very low zoom: sparse grid
+function roundToDecimals(num, decimals) {
+    const factor = Math.pow(10, decimals);
+    return Math.round((num + Number.EPSILON) * factor) / factor;
+}
+
+function formatNumber(num) {
+    // Check if the number is finite
+    if (!isFinite(num)) {
+        return num.toString();
     }
+
+    // Define thresholds for large numbers
+    const LARGE_THRESHOLD = 99999;
+    const SMALL_THRESHOLD = -99999;
+
+    // Check if the number exceeds the large thresholds
+    if (num > LARGE_THRESHOLD || num < SMALL_THRESHOLD) {
+        // Convert to scientific notation with 5 decimal places
+        return num.toExponential(1);
+    }
+
+    // Round the number to 5 decimal places
+    const roundedNum = roundToDecimals(num, 5);
+
+    // Define a small epsilon for floating-point comparison
+    const epsilon = 1e-10;
+
+    // Compare the rounded number with the original number
+    if (Math.abs(num - roundedNum) < epsilon) {
+        // If the difference is less than epsilon, return the rounded number as a string
+        return roundedNum.toString();
+    } else {
+        // If the number has more than 5 decimal places, convert to scientific notation with 5 decimal places
+        return num.toExponential(1);
+    }
+}
+
+function getNiceNumber(value) {
+    if (value === 0) return 0;
+    const exponent = Math.floor(Math.log10(value));
+    const fraction = value / Math.pow(10, exponent);
+
+    let niceFraction;
+
+    if (fraction <= 1) {
+        niceFraction = 1;
+    } else if (fraction <= 2) {
+        niceFraction = 2;
+    } else if (fraction <= 5) {
+        niceFraction = 5;
+    } else {
+        niceFraction = 10;
+    }
+
+    const niceNumber = niceFraction * Math.pow(10, exponent);
+    return roundToDecimals(niceNumber, 10);
+}
+
+const getGridSteps = (scale) => {
+    const desiredMajorPixelSpacing = 100; // Desired pixels between major grid lines
+    const desiredMinorPixelSpacing = 20;  // Desired pixels between minor grid lines
+
+    const approximateMajorStep = desiredMajorPixelSpacing / scale;
+    const approximateMinorStep = desiredMinorPixelSpacing / scale;
+
+    const majorStep = getNiceNumber(approximateMajorStep);
+    const minorStep = getNiceNumber(approximateMinorStep);
+
+    return { majorStep, minorStep };
 };
 
 const drawGrid = (ctx, width, height, origin, scale) => {
@@ -216,7 +268,7 @@ const drawGrid = (ctx, width, height, origin, scale) => {
     ctx.stroke();
 }
 
-const drawAxis = (ctx, origin, width, height, scale) => {
+const drawAxis = (ctx, origin, width, height) => {
     ctx.beginPath();
     ctx.moveTo(0, origin.y);
     ctx.lineTo(width, origin.y);
@@ -228,18 +280,16 @@ const drawAxis = (ctx, origin, width, height, scale) => {
 }
 
 
-const drawGraph = (ctx, origin, width, height, scale, equation, position) => {
-    const xMin = position.x - width / 2;
-    const xMax = position.x + width / 2;
-    const step = 0.01; // Step size for x-values
+const drawGraph = (ctx, origin, width, scale, equation) => {
+    const xMin = -(width / 2); // Starting point
+    const xMax = width / 2; // End point
+    const step = 0.001; // Step size for x-values
 
     let firstPoint = true;
-
     const rhsTest = equation.split('=')[1].trim();
     let yFunction = new Function('x', `return ${rhsTest}`);
 
-    ctx.beginPath(); // Start a new path
-
+    ctx.beginPath()
     for (let x = xMin; x <= xMax; x += step) {
         let y;
         try {
@@ -250,9 +300,6 @@ const drawGraph = (ctx, origin, width, height, scale, equation, position) => {
         } catch (err) {
             continue;
         }
-        // let y = yFunction(x)
-        // Convert mathematical coordinates to canvas coordinates
-
 
         const canvasX = origin.x + x * scale;
         const canvasY = origin.y - y * scale;
@@ -272,6 +319,7 @@ const drawGraph = (ctx, origin, width, height, scale, equation, position) => {
 
 const drawLabel = (ctx, origin, width, height, scale) => {
     const { majorStep, minorStep } = getGridSteps(scale);
+    const EPSILON = 1e-5
     ctx.fillStyle = '#000000'; // Black color for text
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -283,10 +331,11 @@ const drawLabel = (ctx, origin, width, height, scale) => {
 
     // Draw labels on the X-axis
     for (let x = xStartUnit; x <= xEndUnit; x += majorStep) {
-        if (x === 0) continue; // Skip origin to prevent duplicate labeling
+        if (Math.abs(x) < EPSILON) continue; // Skip origin to prevent duplicate labeling
         const canvasX = origin.x + x * scale;
         const canvasY = origin.y + 15; // Position below the X-axis
-        ctx.fillText(x.toString(), canvasX, canvasY);
+        const label = formatNumber(x)
+        ctx.fillText(label, canvasX, canvasY);
     }
 
     // Calculate the range of labels to display on the Y-axis
@@ -295,10 +344,11 @@ const drawLabel = (ctx, origin, width, height, scale) => {
 
     // Draw labels on the Y-axis
     for (let y = yStartUnit; y <= yEndUnit; y += majorStep) {
-        if (y === 0) continue; // Skip origin to prevent duplicate labeling
+        if (Math.abs(y) < EPSILON) continue; // Skip origin to prevent duplicate labeling
         const canvasY = origin.y + y * scale;
         const canvasX = origin.x - 15; // Position to the left of the Y-axis
-        ctx.fillText((-y).toString(), canvasX, canvasY);
+        const label = formatNumber(-y)
+        ctx.fillText(label, canvasX, canvasY);
     }
 
     // Label at the origin

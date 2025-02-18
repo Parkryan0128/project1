@@ -36,3 +36,5 @@ export function latexToJs(latex) {
         return null;
     }
 }
+
+console.log(latexToJs("x^2"))
