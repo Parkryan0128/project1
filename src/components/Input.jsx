@@ -216,6 +216,10 @@ function Input() {
             res.push(arr[i])
         }
 
+        if (res.length == 1 && res[0] == 'cursor') {
+            res.push(EMPTY_SQUARE_ROOT)
+        }
+
         return res;
     }
 
@@ -231,10 +235,10 @@ function Input() {
             } else if (temp[i] == EMPTY_SQUARE_ROOT) {
                 res.push({type : 'empty_square_root'})
                 i++
-            } else if (/^[a-z0-9()+*-]+$/i.test(array[i])) {
+            } else if (/^[a-z0-9()+*-]+$/i.test(temp[i])) {
                 res.push({
                     type: 'text',
-                    value: array[i]
+                    value: temp[i]
                 })
                 i++;
             } else if (temp[i] == '√') {

@@ -21,21 +21,11 @@
 
 .empty-square-root {
     padding: 0 2px;
-    background-color: lightgray;
-    /* width: 10px;
-    display: inline-block; */
-}
-
-.square-root {
+    background-color: lightgray !important;
+    min-height: 16px;
+    width: 10px;
     display: inline-block;
     vertical-align: bottom;
-    padding-top: 1px
-}
-
-.radicand {
-    display: inline-block;
-    vertical-align: bottom;
-    border-top: 1px solid black;
 }
 
 .blink-cursor {
