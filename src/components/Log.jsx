@@ -193,9 +193,18 @@ function Log() {
         if (key.length === 1) {
             copy = handleCharPress(copy, cursorIndex, key);
             
+            console.log(cursorIndex);
             if (key === 'g' && cursorIndex >= 2 && copy[cursorIndex - 1] === 'o' && copy[cursorIndex - 2] === 'l') {
                 copy = handleLogPress(copy, cursorIndex + 1);
+            } else if (key === 'o' && copy[cursorIndex - 1] === 'l' && copy[cursorIndex + 2] === 'g') {
+                copy = handleLogPress(copy, cursorIndex + 3);
+            } else if (key === 'l' && copy[cursorIndex + 2] === 'o' && copy[cursorIndex + 3] === 'g') {
+                copy = handleLogPress(copy, cursorIndex + 4);
             }
+            
+            // if (key === 'g' && cursorIndex >= 2 && copy[cursorIndex - 1] === 'o' && copy[cursorIndex - 2] === 'l') {
+            //     copy = handleLogPress(copy, cursorIndex + 1);
+            // }
             
         } else if (key === 'ArrowLeft') {
             copy = handleArrowLeft(copy, cursorIndex);
