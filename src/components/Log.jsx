@@ -62,9 +62,9 @@ function Log() {
         // if the entire array is just [CURSOR], then just insert an empty fraction skeleton.
         // Cursor is located at the numerator
         if (copy.length >= 4) {
-            
+            let indexLogClose = copy.length - cursorIndex + 1;
             copy = insertAt(copy, cursorIndex, LOG_OPEN);
-            copy = insertAt(copy, cursorIndex + 2, LOG_CLOSE);
+            copy = insertAt(copy, cursorIndex + indexLogClose, LOG_CLOSE);
             // console.log(copy.length);
             // console.log(cursorIndex);
             return copy;
@@ -107,7 +107,7 @@ function Log() {
         if (cursorIndex >= copy.length - 1) return copy;
         let targetIndex = cursorIndex + 1;
         const nextChar = copy[targetIndex];
-        
+
         if ((nextChar === LOG_OPEN || nextChar === LOG_CLOSE)) {
             targetIndex += 1;
         }
