@@ -9,7 +9,7 @@ import InputFraction from './components/InputFraction.jsx'
 function App() {
     return <div>
         <InputFraction/>
-    </div>
+      </div>
 }
 
 export default App
