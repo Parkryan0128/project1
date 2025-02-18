@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import './Input.css'
 
-const SQUARE_ROOT_OPEN = "__SQUARE_ROOT_OPEN__";
-const SQUARE_ROOT_CLOSE = "__SQUARE_ROOT_CLOSE__";
+const EXPONENT_OPEN = "__EXPONENT_OPEN__";
+const EXPONENT_CLOSE = "__EXPONENT_CLOSE__";
 const CURSOR = 'cursor';
-const EMPTY_SQUARE_ROOT = '__EMPTY_SQUARE_ROOT__'
+const EMPTY_EXPONENT = '__EMPTY__EXPONENT__'
 
 function Input() {
     const [userInput, setUserInput] = useState([CURSOR]);
@@ -36,14 +36,14 @@ function Input() {
         return copy;
     }
 
-    function findMatchingSquareRootClose(array, openIndex) {
+    function findMatchingExponentClose(array, openIndex) {
         let openBrackets = 1;
         let index = openIndex + 1;
     
         while (index < array.length && openBrackets > 0) {
-            if (array[index] === SQUARE_ROOT_OPEN) {
+            if (array[index] === EXPONENT_OPEN) {
                 openBrackets++;
-            } else if (array[index] === SQUARE_ROOT_CLOSE) {
+            } else if (array[index] === EXPONENT_CLOSE) {
                 openBrackets--;
             }
             index++;
@@ -51,7 +51,30 @@ function Input() {
     
         return openBrackets === 0 ? index - 1 : -1;
     }
-    
+
+    function handleCaretPress(arr, cursorIndex) {
+
+        // if userInput only contains cursor, no action
+        if (arr <= 1) return arr;
+
+        // if ^ was pressed right in front of another ^, move cursor to right
+        if (arr[cursorIndex + 1] == '^') {
+            arr = swapItems(arr, cursorIndex, cursorIndex + 1);
+            arr = swapItems(arr, cursorIndex + 1, cursorIndex + 2);
+            if (arr[cursorIndex + 3] == EMPTY_EXPONENT) {
+                arr = deleteAt(arr, cursorIndex + 3)
+            }
+            return arr;
+        }
+
+        // otherwise, insert ^, EXPONENT_OPEN and EXPONENT_CLOSE
+        arr = insertAt(arr, cursorIndex, '^')
+        arr = insertAt(arr, cursorIndex + 1, EXPONENT_OPEN)
+        arr = insertAt(arr, cursorIndex + 3, EXPONENT_CLOSE)
+
+        return arr;
+    }
+
     function handleCharPress(arr, cursorIndex, item) {
         arr = insertAt(arr, cursorIndex, item);
         return arr;
@@ -59,16 +82,18 @@ function Input() {
 
     function handleArrowLeft(arr, cursorIndex) {
         if (cursorIndex > 0) { // cursor can't move left if it is at index 0
-            if (arr[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
+            if (arr[cursorIndex - 1] == EXPONENT_OPEN) {
                 arr = swapItems(arr, cursorIndex, cursorIndex - 1);
                 arr = swapItems(arr, cursorIndex - 1, cursorIndex - 2);
-                if (arr[cursorIndex + 1] == SQUARE_ROOT_CLOSE) {
-                    arr = insertAt(arr, cursorIndex + 1, EMPTY_SQUARE_ROOT);
+                if (arr[cursorIndex + 1] == EXPONENT_CLOSE) {
+                    arr = insertAt(arr, cursorIndex + 1, EMPTY_EXPONENT);
                 }
             } else {
                 arr = swapItems(arr, cursorIndex, cursorIndex - 1);
-                if (arr[cursorIndex] == SQUARE_ROOT_CLOSE && 
-                    arr[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
+                console.log(cursorIndex)
+                console.log(arr)
+                if (arr[cursorIndex] == EXPONENT_CLOSE && 
+                    arr[cursorIndex - 2] == EMPTY_EXPONENT) {
                     arr = deleteAt(arr, cursorIndex - 2)
                 }
             }
@@ -78,17 +103,17 @@ function Input() {
 
     function handleArrowRight(arr, cursorIndex) {
         if (cursorIndex < arr.length - 1) {
-            if (userInput[cursorIndex + 1] == '√') {
+            if (userInput[cursorIndex + 1] == '^') {
                 arr = swapItems(arr, cursorIndex, cursorIndex + 1);
                 arr = swapItems(arr, cursorIndex + 1, cursorIndex + 2);
-                if (arr[cursorIndex + 3] == EMPTY_SQUARE_ROOT) {
+                if (arr[cursorIndex + 3] == EMPTY_EXPONENT) {
                     arr = deleteAt(arr, cursorIndex + 3)
                 }
             } else {
                 arr = swapItems(arr, cursorIndex, cursorIndex + 1);
-                if (arr[cursorIndex] == SQUARE_ROOT_CLOSE && 
-                    arr[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
-                    arr = insertAt(arr, cursorIndex, EMPTY_SQUARE_ROOT)
+                if (arr[cursorIndex] == EXPONENT_CLOSE && 
+                    arr[cursorIndex - 1] == EXPONENT_OPEN) {
+                    arr = insertAt(arr, cursorIndex, EMPTY_EXPONENT)
                 }
             }
         }
@@ -97,41 +122,23 @@ function Input() {
 
     function handleBackspace(arr, cursorIndex) {
         if (cursorIndex > 0) {
-            if (arr[cursorIndex - 1] == SQUARE_ROOT_OPEN || arr[cursorIndex - 1] == SQUARE_ROOT_CLOSE) {
-                if (arr[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
-                    let closingIndex = findMatchingSquareRootClose(arr, cursorIndex - 1)
+            if (arr[cursorIndex - 1] == EXPONENT_OPEN || arr[cursorIndex - 1] == EXPONENT_CLOSE) {
+                if (arr[cursorIndex - 1] == EXPONENT_OPEN) {
+                    let closingIndex = findMatchingExponentClose(arr, cursorIndex - 1)
 
                     arr = deleteAt(arr, cursorIndex - 2)
                     arr = deleteAt(arr, cursorIndex - 2)
                     arr = deleteAt(arr, closingIndex - 2)
-                } else if (arr[cursorIndex - 1] == SQUARE_ROOT_CLOSE) {
+                } else if (arr[cursorIndex - 1] == EXPONENT_CLOSE) {
                     arr = swapItems(arr, cursorIndex, cursorIndex - 1);
-                    if (arr[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
-                        arr = deleteAt(arr, cursorIndex)
-                        arr = deleteAt(arr, cursorIndex - 4)
-                        arr = deleteAt(arr, cursorIndex - 4)
-                        arr = deleteAt(arr, cursorIndex - 4)
+                    if (arr[cursorIndex - 2] == EMPTY_EXPONENT) {
+                        arr = deleteAt(arr, cursorIndex - 2)
                     }
                 }
             } else {
                 arr = deleteAt(arr, cursorIndex - 1)
             }
         }
-        return arr;
-    }
-
-    function isSqrtPressed(arr, cursorIndex) {
-        let i = cursorIndex;
-        return arr[i - 3] == 's' && arr[i - 2] == 'q' && arr[i - 1] == 'r'
-    }
-
-    function handleSqrtPressed(arr, cursorIndex) {
-        arr = deleteAt(arr, cursorIndex - 3);
-        arr = deleteAt(arr, cursorIndex - 3);
-        arr = deleteAt(arr, cursorIndex - 3);
-        arr = insertAt(arr, cursorIndex - 3, '√');
-        arr = insertAt(arr, cursorIndex - 2, SQUARE_ROOT_OPEN);
-        arr = insertAt(arr, cursorIndex, SQUARE_ROOT_CLOSE);
         return arr;
     }
 
@@ -142,12 +149,11 @@ function Input() {
         let copy = [...userInput];
         const cursorIndex = copy.indexOf(CURSOR);
 
-        if (key.length === 1) {
-            if (key === 't' && isSqrtPressed(copy, cursorIndex)) {
-                copy = handleSqrtPressed(copy, cursorIndex);
-            } else {
-                copy = handleCharPress(copy, cursorIndex, key);
-            }
+        if (key === '^') {
+            copy = handleCaretPress(copy, cursorIndex);
+        }
+        else if (key.length === 1) {
+            copy = handleCharPress(copy, cursorIndex, key);
         }
         else if (key === 'ArrowLeft') {
             copy = handleArrowLeft(copy, cursorIndex);
@@ -176,7 +182,7 @@ function Input() {
             }
             res = '(' + res;
         } else {
-            while (i >= 0 && temp[i] != ')' && temp[i] != SQUARE_ROOT_CLOSE) {
+            while (i >= 0 && temp[i] != ')' && temp[i] != EXPONENT_CLOSE) {
                 const next = temp[i]
                 // res = next + res
                 res.splice(0, 0, next)
@@ -196,30 +202,15 @@ function Input() {
 
         while (count > 0) {
             let curr = copy[i]
-            if (curr == SQUARE_ROOT_OPEN) {
+            if (curr == EXPONENT_OPEN) {
                 count++;
             }
-            if (curr == SQUARE_ROOT_CLOSE) {
+            if (curr == EXPONENT_CLOSE) {
                 count--;
             }
             res.push(curr)
             i++
         }
-        return res;
-    }
-
-    function findRadicand(arr) {
-        let res = []
-        let closeIndex = findMatchingSquareRootClose(arr, 0)
-
-        for (let i = 1; i < closeIndex; i++) {
-            res.push(arr[i])
-        }
-
-        if (res.length == 1 && res[0] == 'cursor') {
-            res.push(EMPTY_SQUARE_ROOT)
-        }
-
         return res;
     }
 
@@ -232,27 +223,28 @@ function Input() {
             if (temp[i] == CURSOR) {
                 res.push({type : 'cursor'})
                 i++
-            } else if (temp[i] == EMPTY_SQUARE_ROOT) {
-                res.push({type : 'empty_square_root'})
+            } else if (temp[i] == EMPTY_EXPONENT) {
+                res.push({type : 'empty_exponent'})
                 i++
-            } else if (/^[a-z0-9()+*-]+$/i.test(temp[i])) {
+            } else if (/^[a-z0-9()+*-]+$/i.test(array[i])) {
                 res.push({
                     type: 'text',
-                    value: temp[i]
+                    value: array[i]
                 })
                 i++;
-            } else if (temp[i] == '√') {
-                let closeIndex = findMatchingSquareRootClose(temp, i + 1)
-                let jumpIndex = closeIndex - i;
+            } else if (temp[i] == '^') {
+                let base = processInput(findBase([...temp].slice(0, i)))
+                let children_0 = processInput(findChildren([...temp].slice(i + 1)))
 
-                let radicand = processInput(findRadicand([...temp].slice(i + 1)))
+                res.splice(res.length - base.length, base.length)
 
                 res.push({
-                    type: 'square-root',
-                    value: radicand
+                    type: 'exponent',
+                    value: base,
+                    children: children_0
                 })
 
-                i = i + jumpIndex + 1;
+                i += findChildren([...temp].slice(i + 1)).length;
             } else {
                 i++;
             }
@@ -286,18 +278,9 @@ function Input() {
                         </span>
                     );
 
-                case 'square-root':
+                case 'empty_exponent' :
                     return (
-                        <span key={index} className = "square-root">
-                            <span>√</span>
-                            <span>(</span>
-                            <span className='radicand'>{displayText(node.value)}</span>
-                            <span>)</span>
-                        </span>
-                    );
-                case 'empty_square_root' :
-                    return (
-                        <span key={index} className="empty-square-root"/>
+                        <span key={index} className="empty-exponent"/>
                     );
 
                 case 'cursor':
