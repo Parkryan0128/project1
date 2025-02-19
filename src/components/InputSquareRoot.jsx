@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import './Input.css'
 
-const SQUARE_ROOT_OPEN = "__SQUARE_ROOT_OPEN__";
-const SQUARE_ROOT_CLOSE = "__SQUARE_ROOT_CLOSE__";
+const SQUARE_ROOT_OPEN = "_SQUARE_ROOT_OPEN_";
+const SQUARE_ROOT_CLOSE = "_SQUARE_ROOT_CLOSE_";
 const CURSOR = 'cursor';
-const EMPTY_SQUARE_ROOT = '__EMPTY_SQUARE_ROOT__'
+const EMPTY_SQUARE_ROOT = '_EMPTY_SQUARE_ROOT_'
 
 function Input() {
     const [userInput, setUserInput] = useState([CURSOR]);
