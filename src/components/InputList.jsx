@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import './InputList.css'
 
-function InputList() {
+function InputList({ hidden, setHidden }) {
     const [rows, setRows] = useState([{index: 1, value: ""}]);
-    const [hidden, setHidden] = useState(false);
+    // const [hidden, setHidden] = useState(false);
 
     const addRows = () => {
         const newIndex = rows.length + 1;

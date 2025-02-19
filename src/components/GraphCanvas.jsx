@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-function GraphCanvas() {
+function GraphCanvas({ graphWidth }) {
     const canvasRef = useRef(null);
     const [width, setWidth] = useState(1000);
     const [height, setHeight] = useState(1000);
@@ -9,8 +9,13 @@ function GraphCanvas() {
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const [scale, setScale] = useState(100);
     const lastMousePos = useRef({ x: 0, y: 0 });
-    const isDragging = useRef(false)
+    const isDragging = useRef(false);
 
+    useEffect(() => {
+        setWidth(graphWidth);
+        console.log(width);
+    }, [graphWidth]);
+    
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
@@ -30,7 +35,7 @@ function GraphCanvas() {
         drawLabel(ctx, origin, width, height, scale);
         drawGraph(ctx, origin, width, height, scale, equation, position);
 
-    }, [equation, origin, scale]);
+    }, [equation, origin, scale, width]);
 
 
     useEffect(() => {
