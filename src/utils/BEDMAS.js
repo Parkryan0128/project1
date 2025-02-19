@@ -59,6 +59,25 @@ function convertConstant(constant) {
     }
 }
 
+function groupNums(arr) {
+    let result = [];
+    let temp = "";
+
+    for (let i = 0; i < arr.length; i++) {
+        if (isNumber(arr[i])) {
+            temp += arr[i];
+        } else {
+            if (temp) {
+                result.push(temp);
+                temp = ""; 
+            }
+            result.push(arr[i]); 
+        }
+    }
+
+    return result;
+}
+
 
 // helper function: inputs an array with single letter/number, and
 // outputs an array with grouped words (e.g. sqrt, sin, cos, etc)
@@ -66,15 +85,31 @@ function groupWords(input) {
     let result = [];
     // Temporary variable to collect letters
     let temp = "";
+    const openingBrackets = ["_EXPONENT_OPEN_", "_FRACTION_OPEN_", "_SQUARE_ROOT_OPEN_"]
+    const closingBrackets = ["_EXPONENT_CLOSE_", "_FRACTION_CLOSE_", "_SQUARE_ROOT_CLOSE_"]
 
     for (let i = 0; i < input.length; i++) {
         // Check if the current element is a letter and add to temp
-        if (/[a-zA-Z]/.test(input[i])) { 
+        if (/[a-zA-Z]/.test(input[i])) {
             temp += input[i]; 
             
             // if temp is a constant (e.g. pi or e), add to result
             if (isConstant(temp)) {
                 result.push(temp);
+                temp = '';
+            }
+
+            if (openingBrackets.includes(temp)) {
+                result.push("(");
+                temp = '';
+            }
+
+            if (closingBrackets.includes(temp)) {
+                result.push(")");
+                temp = '';
+            }
+
+            if (temp == 'cursor') {
                 temp = '';
             }
         } else {
@@ -88,14 +123,8 @@ function groupWords(input) {
         }
     }
 
-    // If there's anything left in temp, add it to the result
-    // if (temp) {
-    //     result.push(temp);
-    // }
-
-    return result;
+    return groupNums(result);
 }
-
 
 // converts a given infix to postfix expression
 export function infixToPostfix(str) {
@@ -115,7 +144,7 @@ export function infixToPostfix(str) {
         } else if (groupedStr[i] == '(') {
             stack.push(groupedStr[i]) // adding it to the stack
 
-        // checking if str is  a end of a parenthesis,
+        // checking if str is a end of a parenthesis,
         // if so, pop from the stack and enqueue to the queue
         // until '(' is found
         } else if (groupedStr[i] == ')') {
@@ -145,7 +174,7 @@ export function infixToPostfix(str) {
 
 
 // evaluates the given expression in an array
-export function evaluteExpression(expression) {
+export function evaluateExpression(expression) {
     let stack = new Stack()
     let postfix = infixToPostfix(expression)
 
@@ -190,3 +219,10 @@ export function evaluteExpression(expression) {
 // console.log(groupWords(statement))
 // console.log(infixToPostfix(statement))
 // console.log(evaluteExpression(statement))
+
+
+// test Exponents
+// const exponentsArray = ["1", "2", "+", "4", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]
+// console.log(groupWords(exponentsArray))
+// console.log(infixToPostfix(exponentsArray))
+// console.log(evaluateExpression(exponentsArray))
