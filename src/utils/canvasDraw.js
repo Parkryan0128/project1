@@ -113,6 +113,7 @@ export function drawGraph(ctx, origin, width, scale, equation) {
     ctx.beginPath();
     let wasValid = false;
 
+
     for (let i = 0; i <= width; i++) {
         const xValue = (i - origin.x) / scale;
         let yValue;
@@ -131,6 +132,7 @@ export function drawGraph(ctx, origin, width, scale, equation) {
             ctx.moveTo(i, canvasY);
         }
         wasValid = true;
+
     }
 
     ctx.stroke();
