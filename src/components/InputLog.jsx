@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import './Log.css';
+import './InputLog.css';
 
-const LOG_OPEN = '__LOG_OPEN__';
-const LOG_CLOSE = '__LOG_CLOSE__';
+const LOG_OPEN = '_LOG_OPEN_';
+const LOG_CLOSE = '_LOG_CLOSE_';
 const CURSOR = 'cursor';
 
 function Log() {
@@ -81,9 +81,9 @@ function Log() {
         const prevChar = copy[targetIndex];
 
         // Skip over LOG_OPEN and LOG_CLOSE
-        if ((prevChar === LOG_OPEN || prevChar === LOG_CLOSE)) {
-            targetIndex -= 1;
-        }
+        // if ((prevChar === LOG_OPEN || prevChar === LOG_CLOSE)) {
+        //     targetIndex -= 1;
+        // }
 
         const updated = insertAt(deleteAt(copy, cursorIndex), targetIndex, CURSOR);
         return updated;
@@ -183,7 +183,6 @@ function Log() {
         if (key.length === 1) {
             copy = handleCharPress(copy, cursorIndex, key);
             
-            console.log(cursorIndex);
             if (key === 'g' && cursorIndex >= 2 && copy[cursorIndex - 1] === 'o' && copy[cursorIndex - 2] === 'l') {
                 copy = handleLogPress(copy, cursorIndex + 1);
             } else if (key === 'o' && copy[cursorIndex - 1] === 'l' && copy[cursorIndex + 2] === 'g') {
@@ -252,7 +251,9 @@ function Log() {
                 case 'log':
                     return (
                         <span className="log" key={index}>
+                            <span>(</span>
                             <span className="log-content">{displayText(node.value)}</span>
+                            <span>)</span>
                         </span>
                     );
 
