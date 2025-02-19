@@ -11,7 +11,7 @@ import InputLog from './components/InputLog.jsx';
 
 function App() {
     return <div>
-        <InputLog/>
+      
       </div>
 }
 
