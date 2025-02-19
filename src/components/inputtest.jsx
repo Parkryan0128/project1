@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import './inputtest.css'
 import '../utils/BEDMAS.js'
-import { evaluteExpression } from '../utils/BEDMAS.js'
+import { evaluateExpression } from '../utils/BEDMAS.js'
 
 function Input() {
     let [userInput, setUserInput] = useState([])

@@ -13,7 +13,7 @@ function isNumber(str) {
 // helper function to determine if a given string
 // is a mathematical fucntion
 function isFunction(input) {
-    const mathFunctions = new Set(['sin', 'cos', 'tan', 'sqrt'])
+    const mathFunctions = new Set(['sin', 'cos', 'tan', 'sqrt', 'log'])
 
     const normalizedInput = input.toLowerCase()
 
@@ -40,6 +40,7 @@ function applyOperator(operator, a, b=NaN) {
         case 'cos': return Math.cos(a)
         case 'tan': return Math.tan(a)
         case 'abs': return Math.abs(a)
+        case 'log': return Math.log10(a)
     }
 }
 
@@ -74,6 +75,8 @@ function groupNums(arr) {
             result.push(arr[i]); 
         }
     }
+
+    result.push(temp);
 
     return result;
 }
@@ -212,6 +215,7 @@ export function evaluateExpression(expression) {
 // console.log(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
 // console.log(evaluateExpression(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
 // console.log(applyOperator('cos', 3))
+// console.log(Math.cos(3))
 
 // test 2
 // const statement = ['s','q','r','t','4','+','3', '*', 's', 'i', 'n','(','p', 'i', ')']
@@ -220,9 +224,15 @@ export function evaluateExpression(expression) {
 // console.log(infixToPostfix(statement))
 // console.log(evaluteExpression(statement))
 
-
 // test Exponents
 // const exponentsArray = ["1", "2", "+", "4", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]
 // console.log(groupWords(exponentsArray))
 // console.log(infixToPostfix(exponentsArray))
 // console.log(evaluateExpression(exponentsArray))
+
+// test Logarithm
+const logArray = ["l", "o", "g", "1", "2", "+", "4"]
+console.log(groupWords(logArray))
+console.log(infixToPostfix(logArray))
+console.log(evaluateExpression(logArray))
+console.log(Math.log10(12))

@@ -7,10 +7,12 @@ import { derivative, differentiate } from './utils/Derivative.js'; // Import der
 import InputFraction from './components/InputFraction.jsx'
 import InputSquareRoot from './components/InputSquareRoot.jsx';
 import InputIntegral from './components/InputIntegral.jsx';
+import Log from './components/Log.jsx'
 
 function App() {
     return <div>
-        <InputIntegral/>
+        {/* <InputIntegral/> */}
+        <Log/>
       </div>
 }
 
