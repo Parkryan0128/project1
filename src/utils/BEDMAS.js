@@ -36,11 +36,11 @@ function applyOperator(operator, a, b=NaN) {
         case '/': return math.divide(a,b);
         case '^': return math.exp(a,b);
         case '√': return Math.sqrt(a); // need to determine which symnbol to use
-        case 'sin': return Math.sin(a)
-        case 'cos': return Math.cos(a)
-        case 'tan': return Math.tan(a)
-        case 'abs': return Math.abs(a)
-        case 'log': return Math.log10(a)
+        case 'sin': return Math.sin(a);
+        case 'cos': return Math.cos(a);
+        case 'tan': return Math.tan(a);
+        case 'abs': return Math.abs(a);
+        case 'log': return Math.log10(a);
     }
 }
 
@@ -131,6 +131,17 @@ function groupWords(input) {
     }
 
     return groupNums(result);
+}
+
+export function makeExpression(arr) {
+    let res = '';
+    let temp = groupNums(groupWords(arr));
+
+    for (let i = 0; i < temp.length; i++) {
+        res += temp[i];
+    }
+
+    return res;
 }
 
 // converts a given infix to postfix expression
@@ -242,8 +253,9 @@ export function evaluateExpression(expression) {
 
 // test sqrt
 // const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '2', '^', "_EXPONENT_OPEN_", "2", "_EXPONENT_CLOSE_", '+', '3', '4', '*', '√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_', '_SQUARE_ROOT_CLOSE_', 'cursor']
-// const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_']
+// // const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_']
 
 // console.log(groupWords(sqrtArray))
+// console.log(makeExpression(sqrtArray))
 // console.log(infixToPostfix(sqrtArray))
 // console.log(evaluateExpression(sqrtArray))

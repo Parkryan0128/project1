@@ -11,8 +11,8 @@ import InputLog from './components/InputLog.jsx';
 
 function App() {
     return <div>
-
-      </div>
+        <Input/>
+    </div>
 }
 
 export default App
