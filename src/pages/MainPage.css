@@ -11,13 +11,24 @@ body, html {
 }
 
 .input-section {
-    width: 30%;
+    width: 30%;  /* Default */
+    position: relative;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
-/* When hidden, collapse the sidebar */
+.resizer {
+    width: 3px;
+    top: 0;
+    right: 0;
+    cursor:ew-resize;
+    height: 100%;
+    position: absolute;
+    background-color: #42b362;
+}
+
 .input-section.hidden {
-    width: 0;
+    width: 0 !important;  /* Ensure it fully hides */
     overflow: hidden;
 }
 
@@ -39,11 +50,6 @@ body, html {
     align-items: center;
     width: 100%;
     height: 100%;
-}
-
-.input-section.hidden {
-    width: 0;
-    overflow: hidden; /* Hide the input section completely */
 }
 
 /* Show button styling inside graph-section */
