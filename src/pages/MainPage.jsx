@@ -20,9 +20,9 @@ const MainPage = () => {
 
     // Log the equation array whenever it changes
     useEffect(() => {
-        console.log(typeof(equation));
+        console.log("Type of equation", typeof(equation));
         console.log("Current equations:", equation);
-        console.log(equation.length);
+        console.log("Lenght of equation array: ", equation.length);
     }, [equation]);
 
     // check if the input is a valid mathematical equation
@@ -79,38 +79,41 @@ const MainPage = () => {
         }
     };
 
-    useEffect(() => {
-        const newEquations = [...equation];
+    // useEffect(() => {
+    //     const newEquations = [...equation];
 
-        inputValue.forEach((row, index) => {
-            const input = row.value.replace(/\s+/g, ''); // Remove extra spaces
+    //     inputValue.forEach((row, index) => {
+    //         const input = row.value.replace(/\s+/g, ''); // Remove extra spaces
 
-            // Check if the input is just y (invalid)
-            if (input === 'y') {
-                console.log("Invalid input:", input);
-                delete newEquations[index]; // remove this equation
-                return; // skip further processing
-            }
+    //         // Check if the input is just y (invalid)
+    //         if (input === 'y') {
+    //             console.log("Invalid input:", input);
+    //             delete newEquations[index]; // remove this equation
+    //             return; // skip further processing
+    //         }
 
-            if (isValidEquation(input)) {
-                let formattedEquation = input;
-                if (!input.includes('=')) {
-                    formattedEquation = `y=${input}`; // Format as y = expression if no '='
-                }
+    //         if (isValidEquation(input)) {
+    //             let formattedEquation = input;
+    //             if (!input.includes('=')) {
+    //                 formattedEquation = `y=${input}`; // Format as y = expression if no '='
+    //             }
 
-                // Overwrite the equation at the corresponding index
-                newEquations[index] = formattedEquation;
-            } else {
-                // If the input is invalid, remove the equation at this index
-                delete newEquations[index];
-            }
-        });
+    //             // overwrite the equation at the corresponding index
+    //             newEquations[index] = formattedEquation;
+    //         } else {
+    //             console.log(index);
+    //             console.log("Removed: ", newEquations[index]);
+    //             // if the input is invalid, remove the equation at this index
+    //             delete newEquations[index];
+    //         }
+    //     });
 
-        // Remove undefined entries (from deleted rows)
-        const filteredEquations = newEquations.filter(eq => eq !== undefined);
-        console.log("TEST1");
-        setEquation(filteredEquations); // Update the equation array
-    }, [inputValue]);
+    //     // Remove undefined entries (from deleted rows)
+    //     const filteredEquations = newEquations.filter(eq => eq !== null);
+
+    //     setEquation(filteredEquations); // Update the equation array
+    // }, [inputValue]);
+    // Handle input changes and update equation state immediately
 
     useEffect(() => {
         if (hidden) {
@@ -124,7 +127,32 @@ const MainPage = () => {
 
     // handles input changes and updates the equation state dynamically
     const handleInputChange = (rows) => {
-        setInputValues(rows);
+        setInputValues(rows); // update inputValue state
+
+        // update equation array immediately
+        const newEquations = rows.map((row) => {
+            const input = row.value.replace(/\s+/g, ''); // remove extra spaces
+
+            // check if the input is just y (invalid)
+            if (input === 'y') {
+                console.log("Invalid input:", input);
+                return null; // skip this equation
+            }
+
+            if (isValidEquation(input)) {
+                let formattedEquation = input;
+                if (!input.includes('=')) {
+                    formattedEquation = `y=${input}`; // Format as y = expression if no =
+                }
+                return formattedEquation;
+            } else {
+                return null; // skip invalid equations
+            }
+        });
+
+        // filter out null entries (invalid or skipped equations)
+        const filteredEquations = newEquations.filter(eq => eq !== null);
+        setEquation(filteredEquations);
     };
 
     const handleMouseDown = (e) => {
@@ -176,16 +204,7 @@ const MainPage = () => {
             )}
 
             <div className='graph-section' style={{ width: graphWidth }}>
-                {/* Render all equations */}
-                {/* {equation.map((eq, index) => (
-                    <GraphCanvas
-                        key={index}
-                        graphWidth={graphWidth}
-                        graphEquation={eq}
-                    />
-                ))} */}
-                <GraphCanvas graphWidth={graphWidth} graphEquation={equation || 'y + 2 = x + 3'}/>
-                {/* <GraphCanvas graphWidth={graphWidth} graphEquation={equation} /> */}
+                <GraphCanvas graphWidth={graphWidth} graphEquation={equation}/>              
                 {hidden && (
                     <button className='input-list__show-btn' onClick={() => setHidden(false)}>
                         {'>>'}
