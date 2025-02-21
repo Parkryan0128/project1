@@ -27,6 +27,10 @@ const VALUE_CLOSE = '_INT_VALUE_BRACKET_CLOSE_';
 const LOG_OPEN = '_LOG_OPEN_';
 const LOG_CLOSE = '_LOG_CLOSE_';
 
+// Square root constants
+const SQUARE_ROOT_OPEN = "_SQUARE_ROOT_OPEN_";
+const SQUARE_ROOT_CLOSE = "_SQUARE_ROOT_CLOSE_";
+const EMPTY_SQUARE_ROOT = '_EMPTY_SQUARE_ROOT_'
 
 function Input() {
     // useStates
@@ -533,6 +537,54 @@ function Input() {
         }, endIndex+1];
     }
 
+    /*----------------------Handling Square Root--------------------*/
+
+    function findMatchingSquareRootClose(array, openIndex) {
+        let openBrackets = 1;
+        let index = openIndex + 1;
+    
+        while (index < array.length && openBrackets > 0) {
+            if (array[index] === SQUARE_ROOT_OPEN) {
+                openBrackets++;
+            } else if (array[index] === SQUARE_ROOT_CLOSE) {
+                openBrackets--;
+            }
+            index++;
+        }
+    
+        return openBrackets === 0 ? index - 1 : -1;
+    }
+
+    function isSqrtPressed(arr, cursorIndex) {
+        let i = cursorIndex;
+        return arr[i - 3] == 's' && arr[i - 2] == 'q' && arr[i - 1] == 'r'
+    }
+
+    function handleSqrtPressed(arr, cursorIndex) {
+        arr = deleteAt(arr, cursorIndex - 3);
+        arr = deleteAt(arr, cursorIndex - 3);
+        arr = deleteAt(arr, cursorIndex - 3);
+        arr = insertAt(arr, cursorIndex - 3, '√');
+        arr = insertAt(arr, cursorIndex - 2, SQUARE_ROOT_OPEN);
+        arr = insertAt(arr, cursorIndex, SQUARE_ROOT_CLOSE);
+        return arr;
+    }
+
+    function findRadicand(arr) {
+        let res = []
+        let closeIndex = findMatchingSquareRootClose(arr, 0)
+
+        for (let i = 1; i < closeIndex; i++) {
+            res.push(arr[i])
+        }
+
+        if (res.length == 1 && res[0] == 'cursor') {
+            res.push(EMPTY_SQUARE_ROOT)
+        }
+
+        return res;
+    }
+
 
     function handleKeyPressed(e) {
         e.preventDefault();
@@ -542,8 +594,23 @@ function Input() {
         let cursorIndex = copy.indexOf(CURSOR);
         const pairs = findParenPairs(copy);
 
+        let container = document.getElementById("input");
+        let range = document.createRange();
+        let selection = window.getSelection();
+        let spans = container.getElementsByTagName("span");
+
+        if ((e.ctrlKey || e.metaKey) && key === 'a') {
+            if (spans.length > 0) {
+                range.setStartBefore(spans[0]); // Start selection at the first span
+                range.setEndAfter(spans[spans.length - 1]); // End selection at the last span
+                selection.removeAllRanges(); // Clear any previous selection
+                selection.addRange(range); // Apply new selection
+            }
+
+        } 
+
         // if 'key' is non-arrow keys
-        if (/^[a-zA-Z0-9+\-*()=/^]$/.test(e.key)) {
+        else if (/^[a-zA-Z0-9+\-*()=/^]$/.test(e.key)) {
             if (key === '/') {
                 copy = handleFraction(copy, cursorIndex);
             } 
@@ -554,6 +621,9 @@ function Input() {
             else if (key === '^') {
                 copy = handleExponents(copy, cursorIndex)
             } 
+            else if (key === 't' && isSqrtPressed(copy, cursorIndex)) {
+                copy = handleSqrtPressed(copy, cursorIndex)
+            }
             else if (key === 't' && copy[cursorIndex-1] === 'n' && copy[cursorIndex-2] === 'i') {
                 copy = insertAt(copy, cursorIndex, key)
                 copy = handleIntegral(copy, cursorIndex)
@@ -589,9 +659,14 @@ function Input() {
 
             if (cursorIndex <= 0) return copy;
 
+            else if (selection.focusOffset > 1) {
+                copy = [CURSOR];
+                setUserInput(copy);
+                selection.removeAllRanges();
+            }
 
             // deleting fractions
-            if (prevChar === FRACTION_CLOSE) {
+            else if (prevChar === FRACTION_CLOSE) {
                 // Check if we have the typical pattern of empty fraction
                 // e.g. FRACTION_OPEN + FRACTION_CLOSE + '/' + FRACTION_OPEN + FRACTION_CLOSE
                 if (
@@ -628,6 +703,23 @@ function Input() {
                 }
 
                 setUserInput(copy);
+            }
+
+            // deleting square root
+            else if (prevChar == SQUARE_ROOT_OPEN) {
+                let closingIndex = findMatchingSquareRootClose(copy, cursorIndex - 1)
+
+                copy = deleteAt(copy, cursorIndex - 2)
+                copy = deleteAt(copy, cursorIndex - 2)
+                copy = deleteAt(copy, closingIndex - 2)
+            } else if (prevChar == SQUARE_ROOT_CLOSE) {
+                copy = swapItems(copy, cursorIndex, cursorIndex - 1);
+                if (copy[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
+                    copy = deleteAt(copy, cursorIndex)
+                    copy = deleteAt(copy, cursorIndex - 4)
+                    copy = deleteAt(copy, cursorIndex - 4)
+                    copy = deleteAt(copy, cursorIndex - 4)
+                }
             }
 
             // deleting integral
@@ -847,10 +939,21 @@ function Input() {
                 if (copy[cursorIndex + 3] == EMPTY_EXPONENT) {
                     copy = deleteAt(copy, cursorIndex + 3)
                 }
-            }
-            else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+            } else if (copy[cursorIndex] == EXPONENT_CLOSE && 
                 copy[cursorIndex - 1] == EXPONENT_OPEN) {
                     copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
+                }
+
+            // square root logic
+            else if (copy[cursorIndex + 1] == '√') {
+                copy = swapItems(copy, cursorIndex, cursorIndex + 1);
+                copy = swapItems(copy, cursorIndex + 1, cursorIndex + 2);
+                if (copy[cursorIndex + 3] == EMPTY_SQUARE_ROOT) {
+                    copy = deleteAt(copy, cursorIndex + 3)
+                }
+            } else if (copy[cursorIndex] == SQUARE_ROOT_CLOSE && 
+                copy[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
+                    copy = insertAt(copy, cursorIndex, EMPTY_SQUARE_ROOT) 
                 }
 
             // integral logic
@@ -909,6 +1012,18 @@ function Input() {
             else if (copy[cursorIndex] == EXPONENT_CLOSE && 
                 copy[cursorIndex - 2] == EMPTY_EXPONENT) {
                     copy = deleteAt(copy, cursorIndex - 2)
+                }
+
+            // square root logic
+            else if (prevChar == SQUARE_ROOT_OPEN) {
+                copy = swapItems(copy, cursorIndex, cursorIndex - 1);
+                copy = swapItems(copy, cursorIndex - 1, cursorIndex - 2);
+                if (copy[cursorIndex + 1] == SQUARE_ROOT_CLOSE) {
+                    copy = insertAt(copy, cursorIndex + 1, EMPTY_SQUARE_ROOT);
+                }
+            } else if (copy[cursorIndex] == SQUARE_ROOT_CLOSE && 
+                copy[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
+                    arr = deleteAt(arr, cursorIndex - 2)
                 }
 
             // integral logic
@@ -1001,7 +1116,6 @@ function Input() {
             }
         }
 
-
         setUserInput(copy);
     };
 
@@ -1031,9 +1145,7 @@ function Input() {
             else if (token === EMPTY_EXPONENT) {
                 result.push({type: 'empty_exponent'})
                 i++
-            }
-
-            else if (token === '^') {
+            } else if (token === '^') {
                 let base = processInput(findBase([...inputArr].slice(0, i)))
                 let children_0 = processInput(findChildren([...inputArr].slice(i + 1)))
 
@@ -1049,6 +1161,23 @@ function Input() {
                 i += findChildren([...inputArr].slice(i + 1)).length;
                 // console.log(base)
                 // console.log(children_0)
+            }
+
+            else if (token == EMPTY_SQUARE_ROOT) {
+                result.push({type : 'empty_square_root'})
+                i++
+            } else if (token === '√') {
+                let closeIndex = findMatchingSquareRootClose(inputArr, i + 1)
+                let jumpIndex = closeIndex - i;
+
+                let radicand = processInput(findRadicand([...inputArr].slice(i + 1)))
+
+                result.push({
+                    type: 'square-root',
+                    value: radicand
+                })
+
+                i = i + jumpIndex + 1;
             }
 
             else if (/^[a-zA-Z0-9+\-*()=]+$/i.test(token)) {
@@ -1099,6 +1228,21 @@ function Input() {
                         </span>
                     );
 
+                case 'square-root':
+                    return (
+                        <span key={index} className = "square-root">
+                        <span>√</span>
+                        <span>(</span>
+                        <span className='radicand'>{displayText(node.value)}</span>
+                        <span>)</span>
+                    </span>
+                    )
+
+                case 'empty_square_root':
+                    return (
+                        <span key={index} className="empty-square-root"/>
+                    );
+
                 case 'fraction':
                     return (<span className="fraction" key={index}>
                         <span className="numerator">{displayText(node.numerator)}</span>
@@ -1114,6 +1258,7 @@ function Input() {
                         <big>∫</big>
                         </span>
                         <span className='integral-value'>{displayText(node.value)}</span>
+                        <span>dx</span>
                         <span className='lower-bound'>{displayText(node.lowerBound)}</span>
                     </span>);
 
@@ -1138,6 +1283,7 @@ function Input() {
     return (
         <div
             tabIndex={0}
+            id='input'
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyPressed}
