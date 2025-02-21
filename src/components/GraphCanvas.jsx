@@ -60,7 +60,7 @@ function computeGraphPoints(width, origin, scale, equation) {
     return pts;
 }
 
-export default function GraphCanvas() {
+export default function GraphCanvas({ graphWidth, graphEquation }) {
     const canvasRef = useRef(null);
     const isDragging = useRef(false);
 
@@ -79,7 +79,6 @@ export default function GraphCanvas() {
 
     // For panning
     const lastMousePos = useRef({ x: 0, y: 0 });
-
     // Marker logic
     const [marker, setMarker] = useState({ active: false, x: 0, y: 0 });
     const [isMarkerDragging, setIsMarkerDragging] = useState(false);
@@ -135,6 +134,11 @@ export default function GraphCanvas() {
     // 7) Main drawing effect:
     //
     useEffect(() => {
+        setWidth(graphWidth);
+        console.log(width);
+    }, [graphWidth]);
+    
+    useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
 
@@ -151,6 +155,12 @@ export default function GraphCanvas() {
         drawGrid(ctx, width, height, origin, scale);
         drawAxis(ctx, origin, width, height);
         drawLabel(ctx, origin, width, height, scale);
+      
+        // Draw all graphs using the equations array
+        graphEquation.forEach((eq) => {
+            drawGraph(ctx, origin, width, height, scale, eq, position);
+        });
+    }, [graphEquation, origin, scale, width]);
 
         // 2) Partial Graph from 0..drawIndex
         ctx.beginPath();

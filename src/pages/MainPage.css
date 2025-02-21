@@ -1,0 +1,73 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent any scrollbars */
+}
+
+.graph-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.input-section {
+    width: 30%;  /* Default */
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.resizer {
+    width: 3px;
+    top: 0;
+    right: 0;
+    cursor:ew-resize;
+    height: 100%;
+    position: absolute;
+    background-color: #42b362;
+}
+
+.input-section.hidden {
+    width: 0 !important;  /* Ensure it fully hides */
+    overflow: hidden;
+}
+
+.graph-section {
+    flex: 1;
+    height: 100vh; /* Ensure the graph section takes full height */
+    width: 100vw;
+    overflow: hidden; /* Prevent scrolling within the graph section */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: width 0.3s ease;
+}
+
+/* Add a wrapper for the GraphCanvas to center it */
+.graph-canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Show button styling inside graph-section */
+.input-list__show-btn {
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    width: 45px;
+    height: 45px;
+    background-color: transparent;
+    color: rgb(117, 112, 112);
+    border: none;
+    font-size: 25px;
+    cursor: pointer;
+}
+
+/* Hover Effect */
+.input-list__show-btn:hover {
+    background-color: transparent;
+    color: black;
+}

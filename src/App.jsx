@@ -8,11 +8,13 @@ import InputFraction from './components/InputFraction.jsx'
 import InputSquareRoot from './components/InputSquareRoot.jsx';
 import InputIntegral from './components/InputIntegral.jsx';
 import InputLog from './components/InputLog.jsx';
+import Log from './components/Log.jsx'
+import MainPage from './pages/MainPage.jsx'
 
 function App() {
     return <div>
-        <Input/>
-    </div>
+        <MainPage/>
+      </div>
 }
 
 export default App
