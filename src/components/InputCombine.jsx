@@ -149,6 +149,11 @@ function Input() {
         let temp = [...array]
         let i = temp.length - 1
         let res = []
+        const limit = ['+', '-', '*', '(', ')', 
+            FRACTION_OPEN, FRACTION_CLOSE, 
+            UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE, 
+            EXPONENT_OPEN, EXPONENT_CLOSE, 
+            LOG_OPEN, LOG_CLOSE];
 
         if (temp[i] == ')') {
             while (i >= 0 && temp[i] != '(') {
@@ -159,7 +164,8 @@ function Input() {
             }
             res = '(' + res;
         } else {
-            while (i >= 0 && temp[i] != ')' && temp[i] != EXPONENT_CLOSE) {
+            // the second condition was temp[i] != ')'
+            while (i >= 0 && limit.includes(temp[i]) && temp[i] != EXPONENT_CLOSE) {
                 const next = temp[i]
                 // res = next + res
                 res.splice(0, 0, next)
@@ -179,10 +185,10 @@ function Input() {
 
         while (count > 0) {
             let curr = copy[i]
-            if (curr == EXPONENT_OPEN) {
+            if (curr === EXPONENT_OPEN) {
                 count++;
             }
-            if (curr == EXPONENT_CLOSE) {
+            else if (curr === EXPONENT_CLOSE) {
                 count--;
             }
             res.push(curr)
@@ -222,7 +228,11 @@ function Input() {
         An updated array of inputs with the fraction components added to it
         */
 
-        const limit = ['+', '-', '*', '(', ')', FRACTION_OPEN, FRACTION_CLOSE];
+        const limit = ['+', '-', '*', '(', ')', 
+            FRACTION_OPEN, FRACTION_CLOSE, 
+            UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE, 
+            EXPONENT_OPEN, EXPONENT_CLOSE, 
+            LOG_OPEN, LOG_CLOSE];
 
         // if userInput only contains cursor, no action
         if (arr.length === 1) {
@@ -830,6 +840,19 @@ function Input() {
                 setUserInput(copy);
             }
 
+            // exponent logic
+            else if (copy[cursorIndex + 1] == '^') {
+                copy = swapItems(copy, cursorIndex, cursorIndex + 1);
+                copy = swapItems(copy, cursorIndex + 1, cursorIndex + 2);
+                if (copy[cursorIndex + 3] == EMPTY_EXPONENT) {
+                    copy = deleteAt(copy, cursorIndex + 3)
+                }
+            }
+            else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+                copy[cursorIndex - 1] == EXPONENT_OPEN) {
+                    copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
+                }
+
             // integral logic
             else if (copy[cursorIndex+1] === 'i' && copy[cursorIndex+2] === 'n' && copy[cursorIndex+3] === 't') {
                 copy = insertAt(copy, cursorIndex+5, CURSOR)
@@ -844,6 +867,13 @@ function Input() {
                 copy.splice(cursorIndex,1)
                 setUserInput(copy)
             } 
+
+            // logarithm logic
+            else if ((copy[cursorIndex+1] === LOG_OPEN || copy[cursorIndex+1] === LOG_CLOSE)) {
+                copy = insertAt(copy, cursorIndex+2, CURSOR)
+                copy.splice(cursorIndex, 1)
+                setUserInput(copy)
+            }
             
             else {
                 copy = swapItems(copy, cursorIndex, cursorIndex+1)
@@ -868,6 +898,19 @@ function Input() {
                 setUserInput(copy);
             }
 
+            // exponent logic
+            else if (copy[cursorIndex - 1] == EXPONENT_OPEN) {
+                copy = swapItems(copy, cursorIndex, cursorIndex - 1);
+                copy = swapItems(copy, cursorIndex - 1, cursorIndex - 2);
+                if (copy[cursorIndex + 1] == EXPONENT_CLOSE) {
+                    copy = insertAt(copy, cursorIndex + 1, EMPTY_EXPONENT);
+                }
+            } 
+            else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+                copy[cursorIndex - 2] == EMPTY_EXPONENT) {
+                    copy = deleteAt(copy, cursorIndex - 2)
+                }
+
             // integral logic
             else if (copy[cursorIndex-1] === UPPER_OPEN) {
                 copy = insertAt(copy, cursorIndex-4, CURSOR)
@@ -884,20 +927,78 @@ function Input() {
                 cursorIndex = copy.lastIndexOf(CURSOR)
                 copy.splice(cursorIndex, 1)
                 setUserInput(copy)
-            } 
+            }
 
             else {
                 copy = swapItems(copy, cursorIndex-1, cursorIndex)
                 setUserInput(copy);
             }
         }
+        
 
         else if (key === "ArrowUp") {
+            let start = null;
+            let end = null;
+            for (let i=0; i< pairs.length; i++) {
+                if (cursorIndex > pairs[i][0] && cursorIndex < pairs[i][1]) {
+                    start = pairs[i][0];
+                    end = pairs[i][1];
+                    break;
+                }
+            }
+    
+            if (start != null && start > 1 && copy[start-1] == '/') {
+                copy = insertAt(deleteAt(copy, cursorIndex),start-2, CURSOR);
+            }
 
+            else if (cursorIndex > pairs[1][0] && cursorIndex < pairs[1][1]) {
+                const lower_diff = cursorIndex - pairs[1][0]
+
+                if (lower_diff > pairs[0][1]-pairs[0][0]) {
+                    copy = insertAt(copy, pairs[0][1], CURSOR)
+                    copy.splice(cursorIndex+1,1)
+                } else {
+                    copy = insertAt(copy, pairs[0][0]+lower_diff, CURSOR)
+                    copy.splice(cursorIndex+1, 1)
+                }
+            } else if (cursorIndex > pairs[2][0] && cursorIndex < pairs[2][1]) {
+                copy = insertAt(copy, pairs[0][1], CURSOR)
+                copy.splice(cursorIndex+1,1)
+            }
         }
 
         else if (key === "ArrowDown") {
 
+            let start = null;
+            let end = null;
+            for (let i=0; i< pairs.length; i++) {
+                if (cursorIndex > pairs[i][0] && cursorIndex < pairs[i][1]) {
+                    start = pairs[i][0];
+                    end = pairs[i][1];
+                    break;
+                }
+            }
+    
+            if (start != null && copy[end+1] == '/') {
+                copy = deleteAt(insertAt(copy,end+3, CURSOR), cursorIndex)
+            }
+
+            else if (cursorIndex > pairs[0][0] && cursorIndex < pairs[0][1]) {
+                const upper_diff = cursorIndex - pairs[0][0];
+                
+                if (upper_diff > pairs[1][1]-pairs[1][0]) {
+                    copy = insertAt(copy, pairs[1][1], CURSOR)
+                    copy.splice(cursorIndex, 1)
+                } else {
+                    copy = insertAt(copy, pairs[1][0]+upper_diff, CURSOR)
+                    copy.splice(cursorIndex,1)
+                }
+            } else if (cursorIndex > pairs[2][0] && cursorIndex < pairs[2][1]) {
+                copy = insertAt(copy, pairs[1][1], CURSOR)
+                copy.splice(cursorIndex+1,1)
+            } else {
+
+            }
         }
 
 
@@ -927,32 +1028,36 @@ function Input() {
                 i = i_temp;
             }
 
-            else if (/^[a-zA-Z0-9+\-*()=_/^]+$/i.test(token)) {
+            else if (token === EMPTY_EXPONENT) {
+                result.push({type: 'empty_exponent'})
+                i++
+            }
+
+            else if (token === '^') {
+                let base = processInput(findBase([...inputArr].slice(0, i)))
+                let children_0 = processInput(findChildren([...inputArr].slice(i + 1)))
+
+
+                result.splice(result.length - base.length, base.length)
+
+                result.push({
+                    type: 'exponent',
+                    value: base,
+                    children: children_0
+                })
+
+                i += findChildren([...inputArr].slice(i + 1)).length;
+                // console.log(base)
+                // console.log(children_0)
+            }
+
+            else if (/^[a-zA-Z0-9+\-*()=]+$/i.test(token)) {
 
                 if (token === 'i' && inputArr[i+1] === 'n' && inputArr[i+2] === 't') {
                     let [temp, i_temp] = processIntegral(inputArr, pairs, i);
                     result.push(temp);
                     i = i_temp;
                 }
-                
-                // else if (token === 'l' && inputArr[i+1] === 'o' && inputArr[i+2] === 'g') {
-                //     let endIndex;
-                //     pairs.forEach((item) => {
-                //         if (item[0] == i+3) {
-                //             endIndex = item[1];
-                //         }
-                //     })
-
-                //     const logContent = inputArr.slice(i+4, endIndex);
-
-                //     result.push({
-                //         type: 'log',
-                //         value: processInput(logContent)
-                //     });
-
-                //     i = endIndex + 1;
-                // }
-
 
                 else if (token === LOG_OPEN) {
                     let [temp, i_temp] = processLogarithm(inputArr, pairs, i);
@@ -967,21 +1072,6 @@ function Input() {
                     });
                     i++;
                 }
-            }
-
-            else if (token === '^') {
-                let base = processInput(findBase([...inputArr].slice(0, i)))
-                let children_0 = processInput(findChildren([...inputArr].slice(i + 1)))
-
-                result.splice(result.length - base.length, base.length)
-
-                result.push({
-                    type: 'exponent',
-                    value: base,
-                    children: children_0
-                })
-
-                i += findChildren([...inputArr].slice(i + 1)).length;
             }
 
             else {
