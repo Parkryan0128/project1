@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import './InputIntegral.css'
-import { index, leftShift } from 'mathjs'
+// import { index, leftShift } from 'mathjs'
 
 function InputIntegral() {
 

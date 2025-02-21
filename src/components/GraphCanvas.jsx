@@ -1,316 +1,436 @@
+// GraphCanvas.jsx
 import React, { useRef, useEffect, useState } from 'react';
+import { drawGrid, drawAxis, drawGraph, drawLabel } from '../utils/canvasDraw';
+import PlusLogo from '../assets/plus.svg';
+import MinusLogo from '../assets/minus.svg';
+import HomeLogo from '../assets/home.svg';
 
-function GraphCanvas({ graphWidth, graphEquation }) {
+// Single function for animated transitions
+function animateValue({
+    fromScale, toScale,
+    fromOrigin, toOrigin,
+    duration = 200,
+    onFrame
+}) {
+    const startTime = performance.now();
+    function step(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(1, elapsed / duration);
+
+        const currentScale = fromScale + (toScale - fromScale) * t;
+        const currentOrigin = {
+            x: fromOrigin.x + (toOrigin.x - fromOrigin.x) * t,
+            y: fromOrigin.y + (toOrigin.y - fromOrigin.y) * t
+        };
+
+        onFrame(currentScale, currentOrigin);
+
+        if (t < 1) {
+            requestAnimationFrame(step);
+        }
+    }
+    requestAnimationFrame(step);
+}
+
+function computeFunctionY(equation, x) {
+    const rhsExpression = equation.split('=')[1].trim();
+    const yFunction = new Function('x', `return ${rhsExpression}`);
+    try {
+        const val = yFunction(x);
+        if (!Number.isFinite(val)) return null;
+        return val;
+    } catch {
+        return null;
+    }
+}
+
+export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equation}) {
     const canvasRef = useRef(null);
-    const [width, setWidth] = useState(1000);
-    const [height, setHeight] = useState(1000);
-    const [equation, setEquation] = useState('y = x ** 3');
-    const [origin, setOrigin] = useState({ x: 500, y: 500 })
-    const [position, setPosition] = useState({ x: 0, y: 0 })
-    const [scale, setScale] = useState(100);
-    const lastMousePos = useRef({ x: 0, y: 0 });
     const isDragging = useRef(false);
+    // Default states
+    const defaultScale = 100;
+    const defaultOrigin = { x: graphWidth / 2, y: graphHeight / 2 };
+    const [selectedEquation, setSelectedEquation] = useState('');
+    const [origin, setOrigin] = useState({ ...defaultOrigin });
+    const [scale, setScale] = useState(defaultScale);
+    const lastMousePos = useRef({ x: 0, y: 0 });
+    const [marker, setMarker] = useState({
+        active: false,   // is a marker currently placed?
+        x: 0,            // math-space X coordinate
+        y: 0             // math-space Y coordinate
+    });
+    const [isMarkerDragging, setIsMarkerDragging] = useState(false);
 
-    useEffect(() => {
-        setWidth(graphWidth);
-        console.log(width);
-    }, [graphWidth]);
-    
+    function isMouseNearGraph(equationArray, mx, my, origin, scale, threshold) {
+        let minDist = threshold;       // track minimal distance found
+        let selectedEq = null;        // track which equation is closest
+        const xValue = (mx - origin.x) / scale;
+
+        for (let i = 0; i < equationArray.length; i++) {
+            const eq = equationArray[i];
+            const rhs = eq.split('=')[1].trim();
+            const yFunction = new Function('x', `return ${rhs}`);
+
+            let yVal;
+            try {
+                yVal = yFunction(xValue);
+                if (!Number.isFinite(yVal)) {
+                    continue;
+                }
+            } catch {
+                continue;
+            }
+
+            // Convert that yVal to canvas Y
+            const graphCanvasY = origin.y - yVal * scale;
+            // The actual distance from mouse to that curve
+            const dist = Math.abs(my - graphCanvasY);
+
+            if (dist < minDist) {
+                minDist = dist;
+                selectedEq = eq;
+            }
+        }
+
+        if (selectedEq && minDist <= threshold) {
+            return selectedEq
+        }
+
+        return null;
+    }
+
+    // ---- Zoom Animations ----
+    function animateZoom(factor) {
+        const targetScale = scale * factor;
+
+        // clamp if you want
+        let clampedScale = Math.max(2.0e-9, Math.min(targetScale, 5000000));
+
+        const anchor = { x: graphWidth / 2, y: graphHeight / 2 };
+        const newOrigin = {
+            x: anchor.x - factor * (anchor.x - origin.x),
+            y: anchor.y - factor * (anchor.y - origin.y)
+        };
+
+        animateValue({
+            fromScale: scale,
+            toScale: clampedScale,
+            fromOrigin: origin,
+            toOrigin: newOrigin,
+            duration: 150,
+            onFrame: (cs, co) => {
+                setScale(cs);
+                setOrigin(co);
+            }
+        });
+    }
+
+    function animateZoomOut() {
+        animateZoom(0.5);
+    }
+
+    function animateZoomIn() {
+        animateZoom(2);
+    }
+
+    function animateReset() {
+        animateValue({
+            fromScale: scale,
+            toScale: defaultScale,
+            fromOrigin: origin,
+            toOrigin: defaultOrigin,
+            duration: 150,
+            onFrame: (cs, co) => {
+                setScale(cs);
+                setOrigin(co);
+            }
+        });
+    }
+
+    // ---- Canvas Drawing ----
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, width, height);
-
+        // Handle HiDPI, always clear the canvas:
         const dpr = window.devicePixelRatio || 1;
-        if (dpr !== 1) {
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            canvas.style.width = `${width}px`;
-            canvas.style.height = `${height}px`;
-            ctx.scale(dpr, dpr);
+        canvas.width = graphWidth * dpr;
+        canvas.height = graphHeight * dpr;
+        canvas.style.width = `${graphWidth}px`;
+        canvas.style.height = `${graphHeight}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, graphWidth, graphHeight);
+
+        // Draw your grid, axes, labels, graph, etc.
+        drawGrid(ctx, graphWidth, graphHeight, origin, scale);
+        drawAxis(ctx, origin, graphWidth, graphHeight);
+        drawLabel(ctx, origin, graphWidth, graphHeight, scale);
+        drawGraph(ctx, origin, graphWidth, scale, equation);
+
+        // ----- Draw Marker if Active -----
+        if (marker.active) {
+            const markerCanvasX = origin.x + marker.x * scale;
+            const markerCanvasY = origin.y - marker.y * scale;
+
+            // Draw marker circle
+            ctx.beginPath();
+            ctx.arc(markerCanvasX, markerCanvasY, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+
+            // Label text and box
+            const labelText = `(${marker.x.toFixed(2)}, ${marker.y.toFixed(4)})`;
+            const labelX = markerCanvasX + 8;
+            const labelY = markerCanvasY - 8;
+
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+
+            const metrics = ctx.measureText(labelText);
+            const textWidth = metrics.width;
+            const lineHeight = 16;
+            const padding = 4;
+
+            // --- Draw shadowed white rectangle ---
+            ctx.save();  // save current state, so shadow & fillStyle won't affect later drawings
+
+            // Configure shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            // Draw rectangle behind text
+            ctx.fillStyle = 'white';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - padding,
+                textWidth + padding * 2,
+                lineHeight + padding * 2
+            );
+
+            // Turn off the shadow before drawing text
+            ctx.shadowColor = 'transparent';
+
+            // Now draw the text on top
+            ctx.fillStyle = 'black';
+            ctx.fillText(labelText, labelX, labelY);
+
+            ctx.restore(); // restore shadow settings, fill style, etc.
         }
-
-        drawGrid(ctx, width, height, origin, scale);
-        drawAxis(ctx, origin, width, height, scale);
-        drawLabel(ctx, origin, width, height, scale);
-        // Draw all graphs using the equations array
-        graphEquation.forEach((eq) => {
-            drawGraph(ctx, origin, width, height, scale, eq, position);
-        });
-    }, [graphEquation, origin, scale, width]);
-
+    }, [graphWidth, graphEquation, graphHeight, equation, origin, scale, marker]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
 
-        const handleMouseDown = (e) => {
-            isDragging.current = true;
-            lastMousePos.current = { x: e.clientX, y: e.clientY };
-        };
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const threshold = 10;
 
-        const handleMouseMove = (e) => {
-            if (!isDragging.current) return;
+            const eq = isMouseNearGraph(equation, mouseX, mouseY, origin, scale, threshold);
+            if (eq) {
+                // Start marker-drag mode
+                setIsMarkerDragging(true);
+                setSelectedEquation(eq);
+                // Snap the marker to the function at that X
+                const xValue = (mouseX - origin.x) / scale;
+                const yValue = computeFunctionY(eq, xValue);
+                if (yValue != null) {
+                    setMarker({
+                        active: true,
+                        x: xValue,
+                        y: yValue
+                    });
+                }
+            } else {
+                // Normal panning
+                isDragging.current = true;
+                lastMousePos.current = { x: e.clientX, y: e.clientY };
+            }
+        }
 
-            const deltaX = e.clientX - lastMousePos.current.x;
-            const deltaY = e.clientY - lastMousePos.current.y;
+        function handleMouseMove(e) {
+            if (isDragging.current) {
+                // Panning logic
+                const deltaX = e.clientX - lastMousePos.current.x;
+                const deltaY = e.clientY - lastMousePos.current.y;
+                setOrigin(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+                lastMousePos.current = { x: e.clientX, y: e.clientY };
+            } else if (isMarkerDragging) {
+                // Marker logic
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                // We only need the X for the marker to follow horizontally:
+                const xValue = (mouseX - origin.x) / scale;
+                const yValue = computeFunctionY(selectedEquation, xValue)
+                if (yValue != null) {
+                    setMarker({ active: true, x: xValue, y: yValue });
+                }
+            }
+        }
 
-            // Update the origin state to pan the graph
-            setOrigin((prev) => ({
-                x: prev.x + deltaX,
-                y: prev.y + deltaY,
-            }));
-
-            // Update the last mouse position
-            lastMousePos.current = { x: e.clientX, y: e.clientY };
-        };
-
-        const handleMouseUp = () => {
+        function handleMouseUp(e) {
             if (isDragging.current) {
                 isDragging.current = false;
             }
-        };
+            if (isMarkerDragging) {
+                setIsMarkerDragging(false);
+            }
+            setMarker({
+                active: false,
+                x: 0,
+                y: 0
+            })
+        }
 
-        const handleMouseLeave = () => {
+        function handleMouseLeave() {
             if (isDragging.current) {
                 isDragging.current = false;
             }
-        };
+            if (isMarkerDragging) {
+                setIsMarkerDragging(false);
+            }
+            setMarker({
+                active: false,
+                x: 0,
+                y: 0
+            })
+        }
 
-        // Attach event listeners
         canvas.addEventListener('mousedown', handleMouseDown);
         canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('mouseleave', handleMouseLeave);
 
-        // Set initial cursor style
-        canvas.style.cursor = 'grab';
-
-        // Clean up event listeners on component unmount
         return () => {
             canvas.removeEventListener('mousedown', handleMouseDown);
             canvas.removeEventListener('mousemove', handleMouseMove);
             canvas.removeEventListener('mouseup', handleMouseUp);
             canvas.removeEventListener('mouseleave', handleMouseLeave);
         };
-    }, [origin]);
+    }, [origin, scale, equation, isMarkerDragging]);
 
-
+    // ---- Wheel Zoom ----
     useEffect(() => {
         const canvas = canvasRef.current;
-        const handleWheel = (e) => {
-            e.preventDefault();
 
-            const zoomIntensity = 0.05; // Adjust for sensitivity
+        function handleWheel(e) {
+            e.preventDefault();
+            const zoomIntensity = 0.001;
             const delta = e.deltaY * zoomIntensity;
             let newScale = scale * (1 - delta);
-            console.log(newScale)
 
-            // Limit scale to prevent it from getting too small or too large
-            if (newScale < 20 || newScale > 1000) return;
+            // clamp
+            if (newScale < 2e-9 || newScale > 5e6) return;
 
-            // Get mouse position relative to canvas
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
-            // Calculate the new origin to zoom towards mouse position
+            // If near the origin, anchor on origin
+            const THRESHOLD_PX = 75;
+            const distX = Math.abs(mouseX - origin.x);
+            const distY = Math.abs(mouseY - origin.y);
+            let anchorX = mouseX;
+            let anchorY = mouseY;
+            if (distX < THRESHOLD_PX && distY < THRESHOLD_PX) {
+                anchorX = origin.x;
+                anchorY = origin.y;
+            }
+
             const zoomFactor = newScale / scale;
             const newOrigin = {
-                x: mouseX - zoomFactor * (mouseX - origin.x),
-                y: mouseY - zoomFactor * (mouseY - origin.y),
+                x: anchorX - zoomFactor * (anchorX - origin.x),
+                y: anchorY - zoomFactor * (anchorY - origin.y)
             };
             setScale(newScale);
             setOrigin(newOrigin);
-        };
+        }
 
-        canvas.addEventListener('wheel', handleWheel);
-
-        // Clean up
+        canvas.addEventListener('wheel', handleWheel, { passive: false });
         return () => {
-            canvas.removeEventListener('wheel', handleWheel);
+            canvas.removeEventListener('wheel', handleWheel, { passive: false });
         };
     }, [scale, origin]);
 
-
     return (
-        <div>
+        <div style={{ position: 'relative', graphWidth, graphHeight }}>
             <canvas
                 ref={canvasRef}
-                id="preview"
-                width={width} // Canvas width in pixels
-                height={height} // Canvas height in pixels
-                style={{ border: '1px solid #ccc' }}
+                width={graphWidth}
+                height={graphHeight}
+                style={{ border: '1px solid #ccc', display: 'block' }}
             />
+
+            {/* Zoom In Button */}
+            <button
+                style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    width: graphWidth / 25,
+                    height: graphWidth / 25,
+                    zIndex: 999, // ensure it stays above the canvas
+                    cursor: 'pointer',
+                    backgroundColor: "#E8E8E8",
+                    borderColor: "#F0F0F0",
+                    borderRadius: "5px"
+                }}
+                onClick={animateZoomIn}
+            >
+                <img
+                    style={{ width: "100%", height: "100%" }}
+                    src={PlusLogo}
+                    alt="Zoom In"
+                />
+            </button>
+
+            {/* Zoom Out Button */}
+            <button
+                style={{
+                    position: 'absolute',
+                    top: 10 + graphWidth / 25,
+                    right: 10,
+                    width: graphWidth / 25,
+                    height: graphWidth / 25,
+                    cursor: 'pointer',
+                    backgroundColor: "#E8E8E8",
+                    borderColor: "#F0F0F0",
+                    borderRadius: "5px"
+                }}
+                onClick={animateZoomOut}
+            >
+                <img
+                    style={{ width: "100%", height: "100%" }}
+                    src={MinusLogo}
+                    alt="Zoom Out"
+                />
+            </button>
+
+            {/* Reset Button */}
+            <button
+                style={{
+                    position: 'absolute',
+                    top: 10 + 2 * (graphWidth / 25) + 10,
+                    right: 10,
+                    width: graphWidth / 25,
+                    height: graphWidth / 25,
+                    cursor: 'pointer',
+                    backgroundColor: "#E8E8E8",
+                    borderColor: "#F0F0F0",
+                    borderRadius: "5px"
+                }}
+                onClick={animateReset}
+            >
+                <img
+                    style={{ width: "100%", height: "100%" }}
+                    src={HomeLogo}
+                    alt="Reset View"
+                />
+            </button>
         </div>
     );
 }
 
-const getGridSteps = (scale) => {
-    // Define thresholds for different scale ranges
-    if (scale >= 800) {
-        return { majorStep: 1, minorStep: 0.1 };
-    } else if (scale >= 400) {
-        return { majorStep: 1, minorStep: 0.2 }; // High zoom: more minor lines
-    } else if (scale >= 200) {
-        return { majorStep: 1, minorStep: 0.5 };
-    } else if (scale >= 100) {
-        return { majorStep: 1, minorStep: 0.5 };
-    } else if (scale >= 50) {
-        return { majorStep: 2, minorStep: 1 }; // Lower zoom: fewer major lines
-    } else if (scale >= 25) {
-        return { majorStep: 5, minorStep: 1 };
-    } else {
-        return { majorStep: 10, minorStep: 2 }; // Very low zoom: sparse grid
-    }
-};
-
-const drawGrid = (ctx, width, height, origin, scale) => {
-    const { majorStep, minorStep } = getGridSteps(scale);
-    const majorGridSpacing = majorStep * scale;
-    const minorGridSpacing = minorStep * scale;
-    ctx.strokeStyle = '#DCDCDC'; // Light grey for grid lines
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-
-    // Vertical minor grid lines
-    for (let x = origin.x % minorGridSpacing; x <= width; x += minorGridSpacing) {
-        ctx.moveTo(x + 0.5, 0);
-        ctx.lineTo(x + 0.5, height);
-    }
-    for (let x = origin.x % minorGridSpacing; x >= 0; x -= minorGridSpacing) {
-        ctx.moveTo(x + 0.5, 0);
-        ctx.lineTo(x + 0.5, height);
-    }
-
-    // Horizontal minor grid lines
-    for (let y = origin.y % minorGridSpacing; y <= height; y += minorGridSpacing) {
-        ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(width, y + 0.5);
-    }
-    for (let y = origin.y % minorGridSpacing; y >= 0; y -= minorGridSpacing) {
-        ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(width, y + 0.5);
-    }
-
-    ctx.stroke();
-
-    // Draw major grid lines (darker color)
-    ctx.strokeStyle = '#808080'; // Slightly darker grey for major grid lines
-    ctx.lineWidth = 0.5;
-
-    ctx.beginPath();
-
-    // Vertical major grid lines
-    for (let x = origin.x % majorGridSpacing; x <= width; x += majorGridSpacing) {
-        ctx.moveTo(x + 0.5, 0);
-        ctx.lineTo(x + 0.5, height);
-    }
-    for (let x = origin.x % majorGridSpacing; x >= 0; x -= majorGridSpacing) {
-        ctx.moveTo(x + 0.5, 0);
-        ctx.lineTo(x + 0.5, height);
-    }
-
-    // Horizontal major grid lines
-    for (let y = origin.y % majorGridSpacing; y <= height; y += majorGridSpacing) {
-        ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(width, y + 0.5);
-    }
-    for (let y = origin.y % majorGridSpacing; y >= 0; y -= majorGridSpacing) {
-        ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(width, y + 0.5);
-    }
-
-    ctx.stroke();
-}
-
-const drawAxis = (ctx, origin, width, height, scale) => {
-    ctx.beginPath();
-    ctx.moveTo(0, origin.y);
-    ctx.lineTo(width, origin.y);
-    ctx.moveTo(origin.x, 0);
-    ctx.lineTo(origin.x, height);
-    ctx.strokeStyle = 'black'; // Grey color for axes
-    ctx.lineWidth = 2; // Thickness of the axes
-    ctx.stroke();
-}
-
-
-const drawGraph = (ctx, origin, width, height, scale, equation, position) => {
-    const xMin = position.x - width / 2;
-    const xMax = position.x + width / 2;
-    const step = 0.01; // Step size for x-values
-
-    let firstPoint = true;
-
-    const rhsTest = equation.split('=')[1].trim();
-    let yFunction = new Function('x', `return ${rhsTest}`);
-
-    ctx.beginPath(); // Start a new path
-
-    for (let x = xMin; x <= xMax; x += step) {
-        let y;
-        try {
-            y = yFunction(x);
-            if (typeof y !== 'number' || !isFinite(y)) {
-                throw new Error('Non-finite y value');
-            }
-        } catch (err) {
-            continue;
-        }
-        // let y = yFunction(x)
-        // Convert mathematical coordinates to canvas coordinates
-
-
-        const canvasX = origin.x + x * scale;
-        const canvasY = origin.y - y * scale;
-
-        if (firstPoint) {
-            ctx.moveTo(canvasX, canvasY);
-            firstPoint = false;
-        } else {
-            ctx.lineTo(canvasX, canvasY);
-        }
-    }
-
-    ctx.stroke();
-}
-
-
-
-const drawLabel = (ctx, origin, width, height, scale) => {
-    const { majorStep, minorStep } = getGridSteps(scale);
-    ctx.fillStyle = '#000000'; // Black color for text
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = `12px Arial`;
-
-    // Calculate the range of labels to display on the X-axis
-    const xStartUnit = Math.ceil((-origin.x) / scale / majorStep) * majorStep;
-    const xEndUnit = Math.floor((width - origin.x) / scale / majorStep) * majorStep;
-
-    // Draw labels on the X-axis
-    for (let x = xStartUnit; x <= xEndUnit; x += majorStep) {
-        if (x === 0) continue; // Skip origin to prevent duplicate labeling
-        const canvasX = origin.x + x * scale;
-        const canvasY = origin.y + 15; // Position below the X-axis
-        ctx.fillText(x.toString(), canvasX, canvasY);
-    }
-
-    // Calculate the range of labels to display on the Y-axis
-    const yStartUnit = Math.ceil((-origin.y) / scale / majorStep) * majorStep;
-    const yEndUnit = Math.floor((height - origin.y) / scale / majorStep) * majorStep;
-
-    // Draw labels on the Y-axis
-    for (let y = yStartUnit; y <= yEndUnit; y += majorStep) {
-        if (y === 0) continue; // Skip origin to prevent duplicate labeling
-        const canvasY = origin.y + y * scale;
-        const canvasX = origin.x - 15; // Position to the left of the Y-axis
-        ctx.fillText((-y).toString(), canvasX, canvasY);
-    }
-
-    // Label at the origin
-    ctx.fillText('0', origin.x - 15, origin.y + 15);
-}
-
-
-export default GraphCanvas;

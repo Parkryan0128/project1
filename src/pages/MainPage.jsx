@@ -6,8 +6,8 @@ import './MainPage.css';
 const MainPage = () => {
     const [hidden, setHidden] = useState(false);
     const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.70);
+    const [graphHeight, setGraphHeight] = useState(window.innerHeight);
     const [inputValue, setInputValues] = useState([]);
-    // const [equation, setEquation] = useState('');
     const [equation, setEquation] = useState([]);
     const [inputWidth, setInputWidth] = useState(window.innerWidth * 0.30);
 
@@ -204,7 +204,16 @@ const MainPage = () => {
             )}
 
             <div className='graph-section' style={{ width: graphWidth }}>
-                <GraphCanvas graphWidth={graphWidth} graphEquation={equation}/>              
+                {/* Render all equations */}
+                {/* {equation.map((eq, index) => (
+                    <GraphCanvas
+                        key={index}
+                        graphWidth={graphWidth}
+                        graphEquation={eq}
+                    />
+                ))} */}
+                <GraphCanvas equation={equation} graphWidth={graphWidth} graphHeight={graphHeight} graphEquation={equation}/>
+                {/* <GraphCanvas graphWidth={graphWidth} graphEquation={equation} /> */}
                 {hidden && (
                     <button className='input-list__show-btn' onClick={() => setHidden(false)}>
                         {'>>'}

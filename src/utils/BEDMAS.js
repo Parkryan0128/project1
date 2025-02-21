@@ -13,7 +13,7 @@ function isNumber(str) {
 // helper function to determine if a given string
 // is a mathematical fucntion
 function isFunction(input) {
-    const mathFunctions = new Set(['sin', 'cos', 'tan', 'sqrt'])
+    const mathFunctions = new Set(['sin', 'cos', 'tan', '√', 'log', 'ln'])
 
     const normalizedInput = input.toLowerCase()
 
@@ -35,11 +35,13 @@ function applyOperator(operator, a, b=NaN) {
         case '*': return math.multiply(a,b);
         case '/': return math.divide(a,b);
         case '^': return math.exp(a,b);
-        case 'sqrt': return Math.sqrt(a); // need to determine which symnbol to use
-        case 'sin': return Math.sin(a)
-        case 'cos': return Math.cos(a)
-        case 'tan': return Math.tan(a)
-        case 'abs': return Math.abs(a)
+        case '√': return Math.sqrt(a);
+        case 'sin': return Math.sin(a);
+        case 'cos': return Math.cos(a);
+        case 'tan': return Math.tan(a);
+        case 'abs': return Math.abs(a);
+        case 'log': return Math.log10(a);
+        case 'ln': return Math.log(a);
     }
 }
 
@@ -59,6 +61,25 @@ function convertConstant(constant) {
     }
 }
 
+function groupNums(arr) {
+    let result = [];
+    let temp = "";
+
+    for (let i = 0; i < arr.length; i++) {
+        if (isNumber(arr[i])) {
+            temp += arr[i];
+        } else {
+            if (temp) {
+                result.push(temp);
+                temp = ""; 
+            }
+            result.push(arr[i]); 
+        }
+    }
+
+    return result;
+}
+
 
 // helper function: inputs an array with single letter/number, and
 // outputs an array with grouped words (e.g. sqrt, sin, cos, etc)
@@ -66,15 +87,37 @@ function groupWords(input) {
     let result = [];
     // Temporary variable to collect letters
     let temp = "";
+    const openingBrackets = ["_EXPONENT_OPEN_", "_FRACTION_OPEN_", "_SQUARE_ROOT_OPEN_", "_LOG_OPEN_", "_SQUARE_ROOT_OPEN_", "_LN_OPEN_"]
+    const closingBrackets = ["_EXPONENT_CLOSE_", "_FRACTION_CLOSE_", "_SQUARE_ROOT_CLOSE_", "_LOG_CLOSE_", "_SQUARE_ROOT_CLOSE_", "_LN_CLOSE_"]
+    const operator = ['cos', 'sin', 'tan', 'log', 'ln', '+', '-', '*', '/', '√']
 
     for (let i = 0; i < input.length; i++) {
         // Check if the current element is a letter and add to temp
-        if (/[a-zA-Z]/.test(input[i])) { 
-            temp += input[i]; 
+        if (/[a-zA-Z]/.test(input[i])) {
+            temp += input[i];
             
             // if temp is a constant (e.g. pi or e), add to result
             if (isConstant(temp)) {
                 result.push(temp);
+                temp = '';
+            }
+            
+            if (operator.includes(temp)) {
+                result.push(temp);
+                temp = '';
+            }
+
+            if (openingBrackets.includes(temp)) {
+                result.push("(");
+                temp = '';
+            }
+
+            if (closingBrackets.includes(temp)) {
+                result.push(")");
+                temp = '';
+            }
+
+            if (temp == 'cursor') {
                 temp = '';
             }
         } else {
@@ -88,14 +131,19 @@ function groupWords(input) {
         }
     }
 
-    // If there's anything left in temp, add it to the result
-    // if (temp) {
-    //     result.push(temp);
-    // }
-
-    return result;
+    return groupNums(result);
 }
 
+export function makeExpression(arr) {
+    let res = '';
+    let temp = groupNums(groupWords(arr));
+
+    for (let i = 0; i < temp.length; i++) {
+        res += temp[i];
+    }
+
+    return res;
+}
 
 // converts a given infix to postfix expression
 export function infixToPostfix(str) {
@@ -115,7 +163,7 @@ export function infixToPostfix(str) {
         } else if (groupedStr[i] == '(') {
             stack.push(groupedStr[i]) // adding it to the stack
 
-        // checking if str is  a end of a parenthesis,
+        // checking if str is a end of a parenthesis,
         // if so, pop from the stack and enqueue to the queue
         // until '(' is found
         } else if (groupedStr[i] == ')') {
@@ -145,7 +193,7 @@ export function infixToPostfix(str) {
 
 
 // evaluates the given expression in an array
-export function evaluteExpression(expression) {
+export function evaluateExpression(expression) {
     let stack = new Stack()
     let postfix = infixToPostfix(expression)
 
@@ -158,7 +206,7 @@ export function evaluteExpression(expression) {
             let a = convertConstant(postfix[i])
             stack.push(a)
 
-        } else if (postfix[i].length > 1) {
+        } else if (isFunction(postfix[i])) {
             const a = stack.pop()
             stack.push(applyOperator(postfix[i], a))
 
@@ -183,6 +231,7 @@ export function evaluteExpression(expression) {
 // console.log(infixToPostfix(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
 // console.log(evaluateExpression(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
 // console.log(applyOperator('cos', 3))
+// console.log(Math.cos(3))
 
 // test 2
 // const statement = ['s','q','r','t','4','+','3', '*', 's', 'i', 'n','(','p', 'i', ')']
@@ -190,3 +239,31 @@ export function evaluteExpression(expression) {
 // console.log(groupWords(statement))
 // console.log(infixToPostfix(statement))
 // console.log(evaluteExpression(statement))
+
+// test Exponents
+// const exponentsArray = ["1", "2", "+", "4", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]
+// console.log(groupWords(exponentsArray))
+// console.log(infixToPostfix(exponentsArray))
+// console.log(evaluateExpression(exponentsArray))
+
+// test Log
+// const logArray = ["l","o","g","_LOG_OPEN_", "1", "2", "^", "_EXPONENT_OPEN_", "2", "cursor", "_EXPONENT_CLOSE_", "+", "pi", "_LOG_CLOSE_"]
+// console.log(groupWords(logArray))
+// console.log(infixToPostfix(logArray))
+// console.log(evaluateExpression(logArray))
+
+// test sqrt
+// const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '2', '^', "_EXPONENT_OPEN_", "2", "_EXPONENT_CLOSE_", '+', '3', '4', '*', '√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_', '_SQUARE_ROOT_CLOSE_', 'cursor']
+// const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_']
+
+// console.log(groupWords(sqrtArray))
+// console.log(makeExpression(sqrtArray))
+// console.log(infixToPostfix(sqrtArray))
+// console.log(evaluateExpression(sqrtArray))
+
+//test ln
+// const lnArray = ['l', 'n', '_LN_OPEN_', 'e', '_LN_CLOSE_']
+// console.log(groupWords(lnArray))
+// console.log(makeExpression(lnArray))
+// console.log(infixToPostfix(lnArray))
+// console.log(evaluateExpression(lnArray))
