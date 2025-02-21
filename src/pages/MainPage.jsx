@@ -7,8 +7,8 @@ const MainPage = () => {
     const [hidden, setHidden] = useState(false);
     const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.70);
     const [inputValue, setInputValues] = useState([]);
-    const [equation, setEquation] = useState('');
-    // const [equation, setEquation] = useState([]);
+    // const [equation, setEquation] = useState('');
+    const [equation, setEquation] = useState([]);
     const [inputWidth, setInputWidth] = useState(window.innerWidth * 0.30);
 
     const sidebarRef = useRef(null);
@@ -20,8 +20,7 @@ const MainPage = () => {
     // check if the input is a valid mathematical equation
     const isValidEquation = (input) => {
         try {
-            input = input.trim(); // remove extra spaces
-
+            input = input.replace(/\s+/g, ''); // remove extra spaces
             // // allow y = expression or x = expression
             // if (input.startsWith("y=") || input.startsWith("x=")) {
             //     return true;
@@ -73,7 +72,7 @@ const MainPage = () => {
         setInputValues(rows);
 
         if (rows.length > 0) {
-            const lastInput = rows[rows.length - 1].value.trim();
+            const lastInput = rows[rows.length - 1].value.replace(/\s+/g, '');
             console.log("Processing input:", lastInput);
 
             if (isValidEquation(lastInput)) {
@@ -146,7 +145,7 @@ const MainPage = () => {
             )}
 
             <div className='graph-section' style={{ width: graphWidth }}>
-                <GraphCanvas graphWidth={graphWidth} graphEquation={equation || 'y = x ** 3'}/>
+                <GraphCanvas graphWidth={graphWidth} graphEquation={equation || 'y + 2 = x + 3'}/>
                 {/* <GraphCanvas graphWidth={graphWidth} graphEquation={equation} /> */}
                 {hidden && (
                     <button className='input-list__show-btn' onClick={() => setHidden(false)}>
