@@ -79,7 +79,9 @@
 
 .input-list__field {
     width: 100%;
-    font-size: 40px;
+    height: 100%;
+    padding: 13px;
+    font-size: 20px;
     background-color: white;
     border:none;
     border-right: 1px solid #6f6b6b;
