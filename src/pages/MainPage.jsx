@@ -7,8 +7,8 @@ const MainPage = () => {
     const [hidden, setHidden] = useState(false);
     const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.70);
     const [inputValue, setInputValues] = useState([]);
-    // const [equation, setEquation] = useState('');
-    const [equation, setEquation] = useState([]);
+    const [equation, setEquation] = useState('');
+    // const [equation, setEquation] = useState([]);
     const [inputWidth, setInputWidth] = useState(window.innerWidth * 0.30);
 
     const sidebarRef = useRef(null);
