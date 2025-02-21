@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { drawGrid, drawAxis, drawLabel } from '../utils/canvasDraw';
+import { drawGrid, drawAxis, drawLabel, drawGraph } from '../utils/canvasDraw';
 import PlusLogo from '../assets/plus.svg';
 import MinusLogo from '../assets/minus.svg';
 import HomeLogo from '../assets/home.svg';
@@ -158,9 +158,13 @@ export default function GraphCanvas({ graphWidth, graphEquation }) {
       
         // Draw all graphs using the equations array
         graphEquation.forEach((eq) => {
-            drawGraph(ctx, origin, width, height, scale, eq, position);
+            drawGraph(ctx, origin, width, scale, eq);
         });
     }, [graphEquation, origin, scale, width]);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
 
         // 2) Partial Graph from 0..drawIndex
         ctx.beginPath();
