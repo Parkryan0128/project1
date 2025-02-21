@@ -15,10 +15,6 @@ function GraphCanvas({ graphWidth, graphEquation }) {
         setWidth(graphWidth);
         console.log(width);
     }, [graphWidth]);
-
-    // useEffect(() => {
-    //     setEquation(graphEquation);
-    // }, [graphEquation]);
     
     useEffect(() => {
         const canvas = canvasRef.current;
