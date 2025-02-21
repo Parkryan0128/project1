@@ -32,11 +32,11 @@ const MainPage = () => {
                 return false;
             }
 
-            // ensure valid mathematical symbols
-            const validCharsRegex = /^[0-9xy+\-*/^()\s=]+$/;
-            if (!validCharsRegex.test(input)) {
-                return false;
-            }
+            // // ensure valid mathematical symbols
+            // const validCharsRegex = /^[0-9xy+\-*/^()\s=]+$/;
+            // if (!validCharsRegex.test(input)) {
+            //     return false;
+            // }
 
             // validate equation structure by evaluating the right-hand side
             const equationParts = input.split('=');
