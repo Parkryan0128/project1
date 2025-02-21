@@ -16,9 +16,9 @@ function GraphCanvas({ graphWidth, graphEquation }) {
         console.log(width);
     }, [graphWidth]);
 
-    useEffect(() => {
-        setEquation(graphEquation);
-    }, [graphEquation]);
+    // useEffect(() => {
+    //     setEquation(graphEquation);
+    // }, [graphEquation]);
     
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -37,9 +37,11 @@ function GraphCanvas({ graphWidth, graphEquation }) {
         drawGrid(ctx, width, height, origin, scale);
         drawAxis(ctx, origin, width, height, scale);
         drawLabel(ctx, origin, width, height, scale);
-        drawGraph(ctx, origin, width, height, scale, equation, position);
-
-    }, [equation, origin, scale, width]);
+        // Draw all graphs using the equations array
+        graphEquation.forEach((eq) => {
+            drawGraph(ctx, origin, width, height, scale, eq, position);
+        });
+    }, [graphEquation, origin, scale, width]);
 
 
     useEffect(() => {
