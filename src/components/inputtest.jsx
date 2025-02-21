@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import './inputtest.css'
 import '../utils/BEDMAS.js'
-import { evaluateExpression } from '../utils/BEDMAS.js'
+import { evaluateExpression as evaluateExpression } from '../utils/BEDMAS.js'
 
 function Input() {
     let [userInput, setUserInput] = useState([])
@@ -57,7 +57,7 @@ function Input() {
 
         // calculation
         if (e.key == 'Enter' && userInput.length > 0) {
-            console.log(evaluteExpression(userInput))
+            console.log(evaluateExpression(userInput))
         }
     }
 

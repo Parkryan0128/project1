@@ -27,7 +27,7 @@ export function integral(func, min, max, n) {
             throw new Error("Invalid function provided: " + error.message);
         }
     }
-
+    
     return h * sum; // approximate area under the curve
 }
 

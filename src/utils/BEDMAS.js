@@ -13,7 +13,7 @@ function isNumber(str) {
 // helper function to determine if a given string
 // is a mathematical fucntion
 function isFunction(input) {
-    const mathFunctions = new Set(['sin', 'cos', 'tan', 'sqrt', 'log'])
+    const mathFunctions = new Set(['sin', 'cos', 'tan', '√', 'log'])
 
     const normalizedInput = input.toLowerCase()
 
@@ -35,12 +35,12 @@ function applyOperator(operator, a, b=NaN) {
         case '*': return math.multiply(a,b);
         case '/': return math.divide(a,b);
         case '^': return math.exp(a,b);
-        case 'sqrt': return Math.sqrt(a); // need to determine which symnbol to use
-        case 'sin': return Math.sin(a)
-        case 'cos': return Math.cos(a)
-        case 'tan': return Math.tan(a)
-        case 'abs': return Math.abs(a)
-        case 'log': return Math.log10(a)
+        case '√': return Math.sqrt(a); // need to determine which symnbol to use
+        case 'sin': return Math.sin(a);
+        case 'cos': return Math.cos(a);
+        case 'tan': return Math.tan(a);
+        case 'abs': return Math.abs(a);
+        case 'log': return Math.log10(a);
     }
 }
 
@@ -88,8 +88,9 @@ function groupWords(input) {
     let result = [];
     // Temporary variable to collect letters
     let temp = "";
-    const openingBrackets = ["_EXPONENT_OPEN_", "_FRACTION_OPEN_", "_SQUARE_ROOT_OPEN_"]
-    const closingBrackets = ["_EXPONENT_CLOSE_", "_FRACTION_CLOSE_", "_SQUARE_ROOT_CLOSE_"]
+    const openingBrackets = ["_EXPONENT_OPEN_", "_FRACTION_OPEN_", "_SQUARE_ROOT_OPEN_", "_LOG_OPEN_", "_SQUARE_ROOT_OPEN_"]
+    const closingBrackets = ["_EXPONENT_CLOSE_", "_FRACTION_CLOSE_", "_SQUARE_ROOT_CLOSE_", "_LOG_CLOSE_", "_SQUARE_ROOT_CLOSE_"]
+    const operator = ['cos', 'sin', 'tan', 'log', '+', '-', '*', '/', '√']
 
     for (let i = 0; i < input.length; i++) {
         // Check if the current element is a letter and add to temp
@@ -98,6 +99,11 @@ function groupWords(input) {
             
             // if temp is a constant (e.g. pi or e), add to result
             if (isConstant(temp)) {
+                result.push(temp);
+                temp = '';
+            }
+            
+            if (operator.includes(temp)) {
                 result.push(temp);
                 temp = '';
             }
@@ -127,6 +133,17 @@ function groupWords(input) {
     }
 
     return groupNums(result);
+}
+
+export function makeExpression(arr) {
+    let res = '';
+    let temp = groupNums(groupWords(arr));
+
+    for (let i = 0; i < temp.length; i++) {
+        res += temp[i];
+    }
+
+    return res;
 }
 
 // converts a given infix to postfix expression
@@ -190,7 +207,7 @@ export function evaluateExpression(expression) {
             let a = convertConstant(postfix[i])
             stack.push(a)
 
-        } else if (postfix[i].length > 1) {
+        } else if (isFunction(postfix[i])) {
             const a = stack.pop()
             stack.push(applyOperator(postfix[i], a))
 
@@ -230,9 +247,17 @@ export function evaluateExpression(expression) {
 // console.log(infixToPostfix(exponentsArray))
 // console.log(evaluateExpression(exponentsArray))
 
-// test Logarithm
-const logArray = ["l", "o", "g", "1", "2", "+", "4"]
-console.log(groupWords(logArray))
-console.log(infixToPostfix(logArray))
-console.log(evaluateExpression(logArray))
-console.log(Math.log10(12))
+// test Log
+// const logArray = ["l","o","g","_LOG_OPEN_", "1", "2", "^", "_EXPONENT_OPEN_", "2", "cursor", "_EXPONENT_CLOSE_", "+", "pi", "_LOG_CLOSE_"]
+// console.log(groupWords(logArray))
+// console.log(infixToPostfix(logArray))
+// console.log(evaluateExpression(logArray))
+
+// test sqrt
+// const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '2', '^', "_EXPONENT_OPEN_", "2", "_EXPONENT_CLOSE_", '+', '3', '4', '*', '√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_', '_SQUARE_ROOT_CLOSE_', 'cursor']
+// // const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_']
+
+// console.log(groupWords(sqrtArray))
+// console.log(makeExpression(sqrtArray))
+// console.log(infixToPostfix(sqrtArray))
+// console.log(evaluateExpression(sqrtArray))
