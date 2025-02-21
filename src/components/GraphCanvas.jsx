@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-function GraphCanvas({ graphWidth }) {
+function GraphCanvas({ graphWidth, graphEquation }) {
     const canvasRef = useRef(null);
     const [width, setWidth] = useState(1000);
     const [height, setHeight] = useState(1000);
@@ -15,6 +15,10 @@ function GraphCanvas({ graphWidth }) {
         setWidth(graphWidth);
         console.log(width);
     }, [graphWidth]);
+
+    useEffect(() => {
+        setEquation(graphEquation);
+    }, [graphEquation]);
     
     useEffect(() => {
         const canvas = canvasRef.current;
