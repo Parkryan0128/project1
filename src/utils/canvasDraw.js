@@ -107,35 +107,37 @@ export function drawAxis(ctx, origin, width, height) {
 
 // Graph function y = f(x)
 export function drawGraph(ctx, origin, width, scale, equation) {
-    const rhsExpression = equation.split('=')[1].trim();
-    const yFunction = new Function('x', `return ${rhsExpression}`);
-
-    ctx.beginPath();
-    let wasValid = false;
-
-
-    for (let i = 0; i <= width; i++) {
-        const xValue = (i - origin.x) / scale;
-        let yValue;
-        try {
-            yValue = yFunction(xValue);
-            if (!Number.isFinite(yValue)) throw new Error('Invalid y');
-        } catch {
-            wasValid = false;
-            continue;
+    for (let j =0; j < equation.length; j ++) {
+        const rhsExpression = equation[j].split('=')[1].trim();
+        const yFunction = new Function('x', `return ${rhsExpression}`);
+    
+        ctx.beginPath();
+        let wasValid = false;
+    
+    
+        for (let i = 0; i <= width; i++) {
+            const xValue = (i - origin.x) / scale;
+            let yValue;
+            try {
+                yValue = yFunction(xValue);
+                if (!Number.isFinite(yValue)) throw new Error('Invalid y');
+            } catch {
+                wasValid = false;
+                continue;
+            }
+            const canvasY = origin.y - yValue * scale;
+    
+            if (wasValid) {
+                ctx.lineTo(i, canvasY);
+            } else {
+                ctx.moveTo(i, canvasY);
+            }
+            wasValid = true;
+    
         }
-        const canvasY = origin.y - yValue * scale;
-
-        if (wasValid) {
-            ctx.lineTo(i, canvasY);
-        } else {
-            ctx.moveTo(i, canvasY);
-        }
-        wasValid = true;
-
+    
+        ctx.stroke();
     }
-
-    ctx.stroke();
 }
 
 // Axis labels
