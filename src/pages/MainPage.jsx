@@ -7,8 +7,8 @@ const MainPage = () => {
     const [hidden, setHidden] = useState(false);
     const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.70);
     const [inputValue, setInputValues] = useState([]);
-    const [equation, setEquation] = useState('');
-    // const [equation, setEquation] = useState([]);
+    // const [equation, setEquation] = useState('');
+    const [equation, setEquation] = useState([]);
     const [inputWidth, setInputWidth] = useState(window.innerWidth * 0.30);
 
     const sidebarRef = useRef(null);
@@ -16,6 +16,14 @@ const MainPage = () => {
     const startX = useRef(0);
     const startWidth = useRef(0);
     const isResizing = useRef(false);
+
+
+    // Log the equation array whenever it changes
+    useEffect(() => {
+        console.log(typeof(equation));
+        console.log("Current equations:", equation);
+        console.log(equation.length);
+    }, [equation]);
 
     // check if the input is a valid mathematical equation
     const isValidEquation = (input) => {
@@ -44,7 +52,21 @@ const MainPage = () => {
             }
 
             if (equationParts.length === 2) {
-                const rhs = equationParts[1].trim();
+                const lhs = equationParts[0].trim(); // Left-hand side
+                const rhs = equationParts[1].trim(); // Right-hand side
+
+                // Check if LHS and RHS contain the same variable in an invalid way
+                if (lhs === 'x' && rhs.includes('x')) {
+                    return false; // invalid: x = x + 2
+                }
+                if (lhs === 'y' && rhs.includes('y')) {
+                    return false; // invalid: y = y + 2
+                }
+
+                if (rhs === '') {
+                    return false; // invalid if right-hand side is empty
+                }
+
                 new Function('x', `return ${rhs}`); // validate right-hand expression
             } else {
                 // if no '=', assume implicit y = expression
@@ -56,6 +78,39 @@ const MainPage = () => {
             return false; // invalid expression
         }
     };
+
+    useEffect(() => {
+        const newEquations = [...equation];
+
+        inputValue.forEach((row, index) => {
+            const input = row.value.replace(/\s+/g, ''); // Remove extra spaces
+
+            // Check if the input is just y (invalid)
+            if (input === 'y') {
+                console.log("Invalid input:", input);
+                delete newEquations[index]; // remove this equation
+                return; // skip further processing
+            }
+
+            if (isValidEquation(input)) {
+                let formattedEquation = input;
+                if (!input.includes('=')) {
+                    formattedEquation = `y=${input}`; // Format as y = expression if no '='
+                }
+
+                // Overwrite the equation at the corresponding index
+                newEquations[index] = formattedEquation;
+            } else {
+                // If the input is invalid, remove the equation at this index
+                delete newEquations[index];
+            }
+        });
+
+        // Remove undefined entries (from deleted rows)
+        const filteredEquations = newEquations.filter(eq => eq !== undefined);
+        console.log("TEST1");
+        setEquation(filteredEquations); // Update the equation array
+    }, [inputValue]);
 
     useEffect(() => {
         if (hidden) {
@@ -70,30 +125,6 @@ const MainPage = () => {
     // handles input changes and updates the equation state dynamically
     const handleInputChange = (rows) => {
         setInputValues(rows);
-
-        if (rows.length > 0) {
-            const lastInput = rows[rows.length - 1].value.replace(/\s+/g, '');
-            console.log("Processing input:", lastInput);
-
-            if (isValidEquation(lastInput)) {
-                console.log("Valid equation detected");
-
-                if (lastInput.includes('=')) {
-                    // Keep valid "y=" or "x=" format
-                    setEquation(lastInput);
-                } else if (lastInput.includes('x')) {
-                    // If it contains x but no '=', assume y = expression
-                    setEquation(`y=${lastInput}`);
-                } else {
-                    setEquation('');
-                }
-            } else {
-                console.log("Invalid equation");
-                setEquation('');
-            }
-        } else {
-            setEquation('');
-        }
     };
 
     const handleMouseDown = (e) => {
@@ -145,6 +176,14 @@ const MainPage = () => {
             )}
 
             <div className='graph-section' style={{ width: graphWidth }}>
+                {/* Render all equations */}
+                {/* {equation.map((eq, index) => (
+                    <GraphCanvas
+                        key={index}
+                        graphWidth={graphWidth}
+                        graphEquation={eq}
+                    />
+                ))} */}
                 <GraphCanvas graphWidth={graphWidth} graphEquation={equation || 'y + 2 = x + 3'}/>
                 {/* <GraphCanvas graphWidth={graphWidth} graphEquation={equation} /> */}
                 {hidden && (
