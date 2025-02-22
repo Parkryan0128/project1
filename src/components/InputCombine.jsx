@@ -32,6 +32,9 @@ const SQUARE_ROOT_OPEN = "_SQUARE_ROOT_OPEN_";
 const SQUARE_ROOT_CLOSE = "_SQUARE_ROOT_CLOSE_";
 const EMPTY_SQUARE_ROOT = '_EMPTY_SQUARE_ROOT_'
 
+
+/*----------------------------Functions----------------------*/
+
 function Input() {
     // useStates
     const [userInput, setUserInput] = useState([CURSOR]);
@@ -154,7 +157,7 @@ function Input() {
         let i = temp.length - 1
         let res = []
         const limit = ['+', '-', '*', '(', ')', 
-            FRACTION_OPEN, FRACTION_CLOSE, 
+            // FRACTION_OPEN, FRACTION_CLOSE, 
             UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE, 
             EXPONENT_OPEN, EXPONENT_CLOSE, 
             LOG_OPEN, LOG_CLOSE];
@@ -166,10 +169,11 @@ function Input() {
                 res.splice(0, 0, next)
                 i--
             }
-            res = '(' + res;
+            // res = '(' + res;
+            res.splice(0, 0, "(");
         } else {
             // the second condition was temp[i] != ')'
-            while (i >= 0 && limit.includes(temp[i]) && temp[i] != EXPONENT_CLOSE) {
+            while (i >= 0 && !limit.includes(temp[i]) && temp[i] != EXPONENT_CLOSE) {
                 const next = temp[i]
                 // res = next + res
                 res.splice(0, 0, next)
@@ -437,7 +441,8 @@ function Input() {
                 }
             })
 
-            inputArr.splice(cursorIndex-4, 3)
+            // inputArr.splice(cursorIndex-4, 3)
+            inputArr.splice(upperStart-3, 3)
             inputArr = deleteAt(inputArr, upperStart-3)
             inputArr = deleteAt(inputArr, upperEnd-4)
             inputArr = deleteAt(inputArr, lowerStart-5)
@@ -468,7 +473,8 @@ function Input() {
                 }
             })
 
-            inputArr.splice(cursorIndex-6, 3)
+            // inputArr.splice(cursorIndex-6, 3)
+            inputArr.splice(upperStart-3, 3)
             inputArr = deleteAt(inputArr, upperStart-3)
             inputArr = deleteAt(inputArr, upperEnd-4)
             inputArr = deleteAt(inputArr, lowerStart-5)
@@ -498,7 +504,8 @@ function Input() {
                 }
             })
 
-            inputArr.splice(cursorIndex-8, 3)
+            // inputArr.splice(cursorIndex-8, 3)
+            inputArr.splice(upperStart-3, 3)
             inputArr = deleteAt(inputArr, upperStart-3)
             inputArr = deleteAt(inputArr, upperEnd-4)
             inputArr = deleteAt(inputArr, lowerStart-5)
@@ -594,7 +601,7 @@ function Input() {
         let cursorIndex = copy.indexOf(CURSOR);
         const pairs = findParenPairs(copy);
 
-        let container = document.getElementById("input");
+        let container = document.getElementById("input0");
         let range = document.createRange();
         let selection = window.getSelection();
         let spans = container.getElementsByTagName("span");
@@ -1061,8 +1068,19 @@ function Input() {
                     break;
                 }
             }
+
+            if (copy[cursorIndex + 1] == '^') {
+                copy = swapItems(copy, cursorIndex, cursorIndex + 1);
+                copy = swapItems(copy, cursorIndex + 1, cursorIndex + 2);
+                if (copy[cursorIndex + 3] == EMPTY_EXPONENT) {
+                    copy = deleteAt(copy, cursorIndex + 3)
+                }
+            } else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+                copy[cursorIndex - 1] == EXPONENT_OPEN) {
+                    copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
+                }
     
-            if (start != null && start > 1 && copy[start-1] == '/') {
+            else if (start != null && start > 1 && copy[start-1] == '/') {
                 copy = insertAt(deleteAt(copy, cursorIndex),start-2, CURSOR);
             }
 
@@ -1093,10 +1111,22 @@ function Input() {
                     break;
                 }
             }
+
+            if (copy[cursorIndex - 1] == EXPONENT_OPEN) {
+                copy = swapItems(copy, cursorIndex, cursorIndex - 1);
+                copy = swapItems(copy, cursorIndex - 1, cursorIndex - 2);
+                if (copy[cursorIndex + 1] == EXPONENT_CLOSE) {
+                    copy = insertAt(copy, cursorIndex + 1, EMPTY_EXPONENT);
+                }
+            } 
+            else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+                copy[cursorIndex - 2] == EMPTY_EXPONENT) {
+                    copy = deleteAt(copy, cursorIndex - 2)
+                }
     
-            if (start != null && copy[end+1] == '/') {
-                copy = deleteAt(insertAt(copy,end+3, CURSOR), cursorIndex)
-            }
+            // else if (start != null && copy[end+1] == '/') {
+            //     copy = deleteAt(insertAt(copy,end+3, CURSOR), cursorIndex)
+            // }
 
             else if (cursorIndex > pairs[0][0] && cursorIndex < pairs[0][1]) {
                 const upper_diff = cursorIndex - pairs[0][0];
@@ -1111,11 +1141,10 @@ function Input() {
             } else if (cursorIndex > pairs[2][0] && cursorIndex < pairs[2][1]) {
                 copy = insertAt(copy, pairs[1][1], CURSOR)
                 copy.splice(cursorIndex+1,1)
-            } else {
-
             }
-        }
 
+        }
+        console.log(pairs)
         setUserInput(copy);
     };
 
@@ -1283,7 +1312,7 @@ function Input() {
     return (
         <div
             tabIndex={0}
-            id='input'
+            id='input0'
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyPressed}
