@@ -370,10 +370,9 @@ export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equ
                     position: 'absolute',
                     top: 10,
                     right: 10,
-                    width: graphWidth / 25,
-                    height: graphWidth / 25,
+                    width: 40,
+                    height: 40,
                     zIndex: 999, // ensure it stays above the canvas
-                    cursor: 'pointer',
                     backgroundColor: "#E8E8E8",
                     borderColor: "#F0F0F0",
                     borderRadius: "5px"
@@ -391,11 +390,10 @@ export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equ
             <button
                 style={{
                     position: 'absolute',
-                    top: 10 + graphWidth / 25,
+                    top: 50,
                     right: 10,
-                    width: graphWidth / 25,
-                    height: graphWidth / 25,
-                    cursor: 'pointer',
+                    width: 40,
+                    height: 40,
                     backgroundColor: "#E8E8E8",
                     borderColor: "#F0F0F0",
                     borderRadius: "5px"
@@ -413,11 +411,10 @@ export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equ
             <button
                 style={{
                     position: 'absolute',
-                    top: 10 + 2 * (graphWidth / 25) + 10,
+                    top: 100,
                     right: 10,
-                    width: graphWidth / 25,
-                    height: graphWidth / 25,
-                    cursor: 'pointer',
+                    width: 40,
+                    height: 40,
                     backgroundColor: "#E8E8E8",
                     borderColor: "#F0F0F0",
                     borderRadius: "5px"
