@@ -211,6 +211,7 @@ function Input() {
             res.push(curr)
             i++
         }
+
         return res;
     }
 
@@ -235,6 +236,8 @@ function Input() {
             } else if (temp[i] == '^') {
                 let base = processInput(findBase([...temp].slice(0, i)))
                 let children_0 = processInput(findChildren([...temp].slice(i + 1)))
+                console.log(findChildren([...temp].slice(i + 1)))
+                console.log(children_0)
 
                 res.splice(res.length - base.length, base.length)
 
@@ -249,8 +252,11 @@ function Input() {
                 i++;
             }
         }
+        
         return res;
     }
+
+    
 
     // Recursively render the nested structure from processedinput
     function displayText(nodeList) {

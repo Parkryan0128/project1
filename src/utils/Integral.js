@@ -31,17 +31,16 @@ export function integral(func, min, max, n) {
     return h * sum; // approximate area under the curve
 }
 
-/*
-    test case
-    const f = 'sin(x)'; // Function to integrate
-    const a = 2; // Lower limit
-    const b = 4; // Upper limit
-    const n = 10000; // Number of subintervals
 
-    try {
-        const result = integral(f, a, b, n);
-        console.log(`The area under the curve is approximately ${result}`);
-    } catch (error) {
-        console.error("Error:", error.message);
-    }
-*/
+    // //test case
+    // const f = 'x'; // Function to integrate
+    // const a = 1; // Lower limit
+    // const b = 3; // Upper limit
+    // const n = 10000; // Number of subintervals
+
+    // try {
+    //     const result = integral(f, a, b, n);
+    //     console.log(`The area under the curve is approximately ${result}`);
+    // } catch (error) {
+    //     console.error("Error:", error.message);
+    // }

@@ -422,6 +422,7 @@ function InputIntegral() {
                         </span>
                         <span className='integral-value'>{renderInput(item.value)}</span>
                         <span className='lower-bound'>{renderInput(item.lowerBound)}</span>
+                        
                     </span>
                 )
             }
