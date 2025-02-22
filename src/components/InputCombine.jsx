@@ -96,15 +96,15 @@ function Input() {
 
     // finds all the parenthesis pairs and returns array
     // e.g. [[0, 2],[3, 4]] => 0 and 2 are pairs, 3 and 4 are pairs
-    function findParenPairs(str) {
+    function findParenPairs(str, type) {
         const stack = [];
         const pairs = [];
 
         for (let i = 0; i < str.length; i++) {
             const char = str[i];
-            if (char.endsWith("OPEN_")) {
+            if (char.endsWith("OPEN_") && char.startsWith(type)) {
                 stack.push(i);
-            } else if (char.endsWith("CLOSE_")) { 
+            } else if (char.endsWith("CLOSE_") && char.startsWith(type)) { 
                 const openIndex = stack.pop();
                 pairs.push([openIndex, i]);
             }
@@ -304,7 +304,7 @@ function Input() {
 
     // Removes fraction based on the case
     function deleteFraction(arr, i) {
-        const pairs = findParenPairs(arr);
+        const pairs = findParenPairs(arr, "_FRACTION");
 
         // If there's a slash immediately before i, that implies this FRACTION_OPEN
         // is for the denominator. We have to remove the entire fraction from that side.
@@ -599,7 +599,11 @@ function Input() {
         const key = e.key;
         let copy = [...userInput];
         let cursorIndex = copy.indexOf(CURSOR);
-        const pairs = findParenPairs(copy);
+        // const pairs = findParenPairs(copy);
+
+        const int_pairs = findParenPairs(copy, "_INT")
+        const frac_pairs = findParenPairs(copy, "_FRACTION")
+        const log_pairs = findParenPairs(copy, "_LOG")
 
         let container = document.getElementById("input0");
         let range = document.createRange();
@@ -731,13 +735,13 @@ function Input() {
 
             // deleting integral
             else if (prevChar === UPPER_OPEN) {
-                copy = deleteIntegral(copy, pairs, cursorIndex, cursorIndex-1, undefined, undefined)
+                copy = deleteIntegral(copy, int_pairs, cursorIndex, cursorIndex-1, undefined, undefined)
             } else if (prevChar === LOWER_OPEN) {
-                copy = deleteIntegral(copy, pairs, cursorIndex, undefined, cursorIndex-1, undefined)
+                copy = deleteIntegral(copy, int_pairs, cursorIndex, undefined, cursorIndex-1, undefined)
                 setUserInput(copy);
             } else if (prevChar === VALUE_OPEN &&
                 cursorIndex+1 < copy.length-1) {
-                    copy = deleteIntegral(copy, pairs, cursorIndex, undefined, undefined, cursorIndex-1);
+                    copy = deleteIntegral(copy, int_pairs, cursorIndex, undefined, undefined, cursorIndex-1);
                     setUserInput(copy);
             }
 
@@ -885,7 +889,7 @@ function Input() {
                 let logCloseIndex;
     
                 // Find the matching LOG_CLOSE for this LOG_OPEN
-                pairs.forEach(([openIdx, closeIdx]) => {
+                log_pairs.forEach(([openIdx, closeIdx]) => {
                     if (openIdx === cursorIndex - 1) {
                         logCloseIndex = closeIdx;
                     }
@@ -900,7 +904,7 @@ function Input() {
                 let logOpenIndex;
     
                 // Find a pair of LOG_OPEN and LOG_CLOSE
-                pairs.forEach(([openIdx, closeIdx]) => {
+                log_pairs.forEach(([openIdx, closeIdx]) => {
                     if (openIdx === cursorIndex + 3 || openIdx === cursorIndex + 2 || openIdx === cursorIndex + 1) {
                         logOpenIndex = openIdx;
                         logCloseIndex = closeIdx;
@@ -1061,10 +1065,10 @@ function Input() {
         else if (key === "ArrowUp") {
             let start = null;
             let end = null;
-            for (let i=0; i< pairs.length; i++) {
-                if (cursorIndex > pairs[i][0] && cursorIndex < pairs[i][1]) {
-                    start = pairs[i][0];
-                    end = pairs[i][1];
+            for (let i=0; i< frac_pairs.length; i++) {
+                if (cursorIndex > frac_pairs[i][0] && cursorIndex < frac_pairs[i][1]) {
+                    start = frac_pairs[i][0];
+                    end = frac_pairs[i][1];
                     break;
                 }
             }
@@ -1084,18 +1088,18 @@ function Input() {
                 copy = insertAt(deleteAt(copy, cursorIndex),start-2, CURSOR);
             }
 
-            else if (cursorIndex > pairs[1][0] && cursorIndex < pairs[1][1]) {
-                const lower_diff = cursorIndex - pairs[1][0]
+            else if (cursorIndex > int_pairs[1][0] && cursorIndex < int_pairs[1][1]) {
+                const lower_diff = cursorIndex - int_pairs[1][0]
 
-                if (lower_diff > pairs[0][1]-pairs[0][0]) {
-                    copy = insertAt(copy, pairs[0][1], CURSOR)
+                if (lower_diff > int_pairs[0][1]-int_pairs[0][0]) {
+                    copy = insertAt(copy, int_pairs[0][1], CURSOR)
                     copy.splice(cursorIndex+1,1)
                 } else {
-                    copy = insertAt(copy, pairs[0][0]+lower_diff, CURSOR)
+                    copy = insertAt(copy, int_pairs[0][0]+lower_diff, CURSOR)
                     copy.splice(cursorIndex+1, 1)
                 }
-            } else if (cursorIndex > pairs[2][0] && cursorIndex < pairs[2][1]) {
-                copy = insertAt(copy, pairs[0][1], CURSOR)
+            } else if (cursorIndex > int_pairs[2][0] && cursorIndex < int_pairs[2][1]) {
+                copy = insertAt(copy, int_pairs[0][1], CURSOR)
                 copy.splice(cursorIndex+1,1)
             }
         }
@@ -1104,10 +1108,10 @@ function Input() {
 
             let start = null;
             let end = null;
-            for (let i=0; i< pairs.length; i++) {
-                if (cursorIndex > pairs[i][0] && cursorIndex < pairs[i][1]) {
-                    start = pairs[i][0];
-                    end = pairs[i][1];
+            for (let i=0; i< frac_pairs.length; i++) {
+                if (cursorIndex > frac_pairs[i][0] && cursorIndex < frac_pairs[i][1]) {
+                    start = frac_pairs[i][0];
+                    end = frac_pairs[i][1];
                     break;
                 }
             }
@@ -1124,34 +1128,40 @@ function Input() {
                     copy = deleteAt(copy, cursorIndex - 2)
                 }
     
-            // else if (start != null && copy[end+1] == '/') {
-            //     copy = deleteAt(insertAt(copy,end+3, CURSOR), cursorIndex)
-            // }
+            else if (start != null && copy[end+1] == '/') {
+                copy = deleteAt(insertAt(copy,end+3, CURSOR), cursorIndex)
+            }
 
-            else if (cursorIndex > pairs[0][0] && cursorIndex < pairs[0][1]) {
-                const upper_diff = cursorIndex - pairs[0][0];
+            else if (cursorIndex > int_pairs[0][0] && cursorIndex < int_pairs[0][1]) {
+                const upper_diff = cursorIndex - int_pairs[0][0];
                 
-                if (upper_diff > pairs[1][1]-pairs[1][0]) {
-                    copy = insertAt(copy, pairs[1][1], CURSOR)
+                if (upper_diff > int_pairs[1][1]-int_pairs[1][0]) {
+                    copy = insertAt(copy, int_pairs[1][1], CURSOR)
                     copy.splice(cursorIndex, 1)
                 } else {
-                    copy = insertAt(copy, pairs[1][0]+upper_diff, CURSOR)
+                    copy = insertAt(copy, int_pairs[1][0]+upper_diff, CURSOR)
                     copy.splice(cursorIndex,1)
                 }
-            } else if (cursorIndex > pairs[2][0] && cursorIndex < pairs[2][1]) {
-                copy = insertAt(copy, pairs[1][1], CURSOR)
+            } else if (cursorIndex > int_pairs[2][0] && cursorIndex < int_pairs[2][1]) {
+                copy = insertAt(copy, int_pairs[1][1], CURSOR)
                 copy.splice(cursorIndex+1,1)
             }
 
         }
-        console.log(pairs)
+        console.log(frac_pairs);
         setUserInput(copy);
     };
 
     function processInput(inputArr) {
         const result = [];
         let i = 0;
-        const pairs = findParenPairs(inputArr);
+        // const pairs = findParenPairs(inputArr);
+
+        const int_pairs = findParenPairs(inputArr, "_INT")
+        const frac_pairs = findParenPairs(inputArr, "_FRACTION")
+        const log_pairs = findParenPairs(inputArr, "_LOG")
+
+
 
 
         while (i < inputArr.length) {
@@ -1166,7 +1176,7 @@ function Input() {
             }
 
             else if (token === FRACTION_OPEN) {
-                let [temp, i_temp] = processFraction(inputArr, pairs, i);
+                let [temp, i_temp] = processFraction(inputArr, frac_pairs, i);
                 result.push(temp);
                 i = i_temp;
             }
@@ -1212,13 +1222,13 @@ function Input() {
             else if (/^[a-zA-Z0-9+\-*()=]+$/i.test(token)) {
 
                 if (token === 'i' && inputArr[i+1] === 'n' && inputArr[i+2] === 't') {
-                    let [temp, i_temp] = processIntegral(inputArr, pairs, i);
+                    let [temp, i_temp] = processIntegral(inputArr, int_pairs, i);
                     result.push(temp);
                     i = i_temp;
                 }
 
                 else if (token === LOG_OPEN) {
-                    let [temp, i_temp] = processLogarithm(inputArr, pairs, i);
+                    let [temp, i_temp] = processLogarithm(inputArr, log_pairs, i);
                     result.push(temp);
                     i = i_temp;
                 }
