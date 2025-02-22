@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import PlusIcon from '../assets/plus-toolbar.png';
+import DoubleLeftIcon from '../assets/double_left.png';
+import RemoveIcon from '../assets/x.png';
 import './InputList.css'
 
 function InputList({ hidden, setHidden, onInputChange }) {
@@ -53,7 +56,9 @@ function InputList({ hidden, setHidden, onInputChange }) {
                         value={row.value}
                         onChange={(e) => handleInputChange(row.index, e.target.value)}
                     />
-                    <button className='input-list__remove-btn' onClick={() => removeRows(row.index)}>X</button>
+                    <button className='input-list__remove-btn' onClick={() => removeRows(row.index)}>
+                        <img src={RemoveIcon} alt="Remove Inputfield" style={{ width: '70%', height: '70%' }} draggable="false"/>
+                    </button>
                 </div>
             </div> 
         );
@@ -79,30 +84,17 @@ function InputList({ hidden, setHidden, onInputChange }) {
         setHidden(true)
     }
 
-    const isShown = () => {
-        setHidden(false)
-    }
-
-    const renderShowBtn = () => {
-        if (hidden) {
-            return (
-                <button className='input-list__show-btn' onClick={isShown}>
-                    {'>>'}
-                </button>
-            );
-        }
-        return null;
-    };
-
     return (
         <div className='input-list'>    
             <div className={hidden ? 'input-list__row--hidden' : 'input-list__row--display'}>
                 <div className='input-list__main-container'>
                     <div className='input-list__container'> 
                         <div className='input-list__tool-bar'>
-                            <button className='input-list__btn' onClick={addRows}>+</button>
+                            <button className='input-list__btn' onClick={addRows}>
+                                <img src={PlusIcon} alt="Add Row" style={{ width: '50%', height: '50%' }} draggable="false"/>
+                            </button>
                             <button className='input-list__btn' onClick={isHidden}>
-                                {'<<'}
+                                <img src={DoubleLeftIcon} alt="Hide Menu Bar" style={{ width: '50%', height: '50%' }} draggable="false"/>
                             </button>
                         </div>
                     </div>
@@ -112,7 +104,6 @@ function InputList({ hidden, setHidden, onInputChange }) {
 
                 </div>
             </div>
-            {renderShowBtn()}
         </div>
     );
 }

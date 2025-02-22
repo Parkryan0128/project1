@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import InputList from '../components/InputList';
 import GraphCanvas from '../components/GraphCanvas';
+import DoubleRightIcon from '../assets/double_right.png';
 import './MainPage.css';
 
 const MainPage = () => {
@@ -17,33 +18,15 @@ const MainPage = () => {
     const startWidth = useRef(0);
     const isResizing = useRef(false);
 
-
-    // Log the equation array whenever it changes
-    useEffect(() => {
-        console.log("Type of equation", typeof(equation));
-        console.log("Current equations:", equation);
-        console.log("Lenght of equation array: ", equation.length);
-    }, [equation]);
-
     // check if the input is a valid mathematical equation
     const isValidEquation = (input) => {
         try {
             input = input.replace(/\s+/g, ''); // remove extra spaces
-            // // allow y = expression or x = expression
-            // if (input.startsWith("y=") || input.startsWith("x=")) {
-            //     return true;
-            // }
 
             // ensure input includes a valid variable (x or y)
             if (!input.includes('x') && !input.includes('y')) {
                 return false;
             }
-
-            // // ensure valid mathematical symbols
-            // const validCharsRegex = /^[0-9xy+\-*/^()\s=]+$/;
-            // if (!validCharsRegex.test(input)) {
-            //     return false;
-            // }
 
             // validate equation structure by evaluating the right-hand side
             const equationParts = input.split('=');
@@ -78,42 +61,6 @@ const MainPage = () => {
             return false; // invalid expression
         }
     };
-
-    // useEffect(() => {
-    //     const newEquations = [...equation];
-
-    //     inputValue.forEach((row, index) => {
-    //         const input = row.value.replace(/\s+/g, ''); // Remove extra spaces
-
-    //         // Check if the input is just y (invalid)
-    //         if (input === 'y') {
-    //             console.log("Invalid input:", input);
-    //             delete newEquations[index]; // remove this equation
-    //             return; // skip further processing
-    //         }
-
-    //         if (isValidEquation(input)) {
-    //             let formattedEquation = input;
-    //             if (!input.includes('=')) {
-    //                 formattedEquation = `y=${input}`; // Format as y = expression if no '='
-    //             }
-
-    //             // overwrite the equation at the corresponding index
-    //             newEquations[index] = formattedEquation;
-    //         } else {
-    //             console.log(index);
-    //             console.log("Removed: ", newEquations[index]);
-    //             // if the input is invalid, remove the equation at this index
-    //             delete newEquations[index];
-    //         }
-    //     });
-
-    //     // Remove undefined entries (from deleted rows)
-    //     const filteredEquations = newEquations.filter(eq => eq !== null);
-
-    //     setEquation(filteredEquations); // Update the equation array
-    // }, [inputValue]);
-    // Handle input changes and update equation state immediately
 
     useEffect(() => {
         if (hidden) {
@@ -204,19 +151,10 @@ const MainPage = () => {
             )}
 
             <div className='graph-section' style={{ width: graphWidth }}>
-                {/* Render all equations */}
-                {/* {equation.map((eq, index) => (
-                    <GraphCanvas
-                        key={index}
-                        graphWidth={graphWidth}
-                        graphEquation={eq}
-                    />
-                ))} */}
                 <GraphCanvas equation={equation} graphWidth={graphWidth} graphHeight={graphHeight} graphEquation={equation}/>
-                {/* <GraphCanvas graphWidth={graphWidth} graphEquation={equation} /> */}
                 {hidden && (
                     <button className='input-list__show-btn' onClick={() => setHidden(false)}>
-                        {'>>'}
+                        <img src={DoubleRightIcon} alt="Show Menu Bar" style={{ width: '50%', height: '50%' }} draggable="false"/>
                     </button>
                 )}
             </div>
