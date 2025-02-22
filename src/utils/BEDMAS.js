@@ -436,7 +436,7 @@ export function returnOutput(arr) {
 //     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
 //     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
 //     '_INT_VALUE_BRACKET_OPEN_', 'x', 'cursor', '_INT_VALUE_BRACKET_CLOSE_',
-//     '+', 'f', '\'', '(', '2', ')', '*', '2'
+//     '+', 'f', '\'', '(', 'x', ')', '*', '2'
 // ]
 
 // console.log(handleMiJuckBoon(miJuckBoonArray))

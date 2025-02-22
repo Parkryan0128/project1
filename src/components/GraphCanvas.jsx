@@ -1,13 +1,17 @@
+// GraphCanvas.jsx
 import React, { useRef, useEffect, useState } from 'react';
-import { drawGrid, drawAxis, drawLabel } from '../utils/canvasDraw';
+import { drawGrid, drawAxis, drawGraph, drawLabel } from '../utils/canvasDraw';
 import PlusLogo from '../assets/plus.svg';
 import MinusLogo from '../assets/minus.svg';
 import HomeLogo from '../assets/home.svg';
 
-//
-// 1) Helper to animate scale/origin transitions
-//
-function animateValue({ fromScale, toScale, fromOrigin, toOrigin, duration = 200, onFrame }) {
+// Single function for animated transitions
+function animateValue({
+    fromScale, toScale,
+    fromOrigin, toOrigin,
+    duration = 200,
+    onFrame
+}) {
     const startTime = performance.now();
     function step(now) {
         const elapsed = now - startTime;
@@ -20,6 +24,7 @@ function animateValue({ fromScale, toScale, fromOrigin, toOrigin, duration = 200
         };
 
         onFrame(currentScale, currentOrigin);
+
         if (t < 1) {
             requestAnimationFrame(step);
         }
@@ -27,9 +32,6 @@ function animateValue({ fromScale, toScale, fromOrigin, toOrigin, duration = 200
     requestAnimationFrame(step);
 }
 
-//
-// 2) Evaluate y for "y = f(x)"
-//
 function computeFunctionY(equation, x) {
     const rhsExpression = equation.split('=')[1].trim();
     const yFunction = new Function('x', `return ${rhsExpression}`);
@@ -42,313 +44,74 @@ function computeFunctionY(equation, x) {
     }
 }
 
-//
-// 3) Precompute an array of (canvasX, canvasY) points along the width
-//
-function computeGraphPoints(width, origin, scale, equation) {
-    const pts = [];
-    for (let i = 0; i < width; i++) {
-        const xValue = (i - origin.x) / scale;
-        const yValue = computeFunctionY(equation, xValue);
-        if (yValue == null) {
-            pts.push(null); // invalid => break the line
-        } else {
-            const canvasY = origin.y - yValue * scale;
-            pts.push([i, canvasY]);
-        }
-    }
-    return pts;
-}
-
-export default function GraphCanvas() {
+export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equation}) {
     const canvasRef = useRef(null);
     const isDragging = useRef(false);
-
-    // Canvas size
-    const [width, setWidth] = useState(1000);
-    const [height, setHeight] = useState(1000);
-
     // Default states
     const defaultScale = 100;
-    const defaultOrigin = { x: width / 2, y: height / 2 };
-
-    // Equation, scale, origin
-    const [equation, setEquation] = useState('y = x**3');
-    const [scale, setScale] = useState(defaultScale);
+    const defaultOrigin = { x: graphWidth / 2, y: graphHeight / 2 };
+    const [selectedEquation, setSelectedEquation] = useState('');
     const [origin, setOrigin] = useState({ ...defaultOrigin });
-
-    // For panning
+    const [scale, setScale] = useState(defaultScale);
     const lastMousePos = useRef({ x: 0, y: 0 });
-
-    // Marker logic
-    const [marker, setMarker] = useState({ active: false, x: 0, y: 0 });
+    const [marker, setMarker] = useState({
+        active: false,   // is a marker currently placed?
+        x: 0,            // math-space X coordinate
+        y: 0             // math-space Y coordinate
+    });
     const [isMarkerDragging, setIsMarkerDragging] = useState(false);
 
-    //
-    // 4) Animated drawing states
-    //
-    const [points, setPoints] = useState([]);     // entire array of [canvasX, canvasY]
-    const [drawIndex, setDrawIndex] = useState(0); // how many points are currently drawn
+    function isMouseNearGraph(equationArray, mx, my, origin, scale, threshold) {
+        let minDist = threshold;       // track minimal distance found
+        let selectedEq = null;        // track which equation is closest
+        const xValue = (mx - origin.x) / scale;
 
-    //
-    // 5) Recompute points WITHOUT animation if scale/origin changes.
-    //    => We immediately show the full curve.
-    //
-    useEffect(() => {
-        const pts = computeGraphPoints(width, origin, scale, equation);
-        setPoints(pts);
-        // Show entire curve at once
-        setDrawIndex(pts.length);
-    }, [scale, origin, width, height]);
-    // NOTE: we do NOT include `equation` here, so changing eqn won't trigger this.
+        for (let i = 0; i < equationArray.length; i++) {
+            const eq = equationArray[i];
+            const rhs = eq.split('=')[1].trim();
+            const yFunction = new Function('x', `return ${rhs}`);
 
-    //
-    // 6) Recompute points WITH animation if equation changes
-    //    => "hand-draw" from left to right quickly
-    //
-    useEffect(() => {
-        const pts = computeGraphPoints(width, origin, scale, equation);
-        setPoints(pts);
-        setDrawIndex(0);
-
-        // Animate from 0 to pts.length
-        let i = 0;
-        // We'll skip e.g. 3 points each step to speed it up
-        const skip = 3;
-        const timerId = setInterval(() => {
-            i += skip;
-            setDrawIndex(prev => {
-                const nextVal = prev + skip;
-                if (nextVal >= pts.length) {
-                    clearInterval(timerId);
-                    return pts.length; // clamp
+            let yVal;
+            try {
+                yVal = yFunction(xValue);
+                if (!Number.isFinite(yVal)) {
+                    continue;
                 }
-                return nextVal;
-            });
-        }, 3); // every 5 ms we move forward skip points => quite fast
-
-        return () => clearInterval(timerId);
-    }, [equation, width, height]);
-    // NOTE: no origin/scale here => we only animate on eqn changes
-
-    //
-    // 7) Main drawing effect:
-    //
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-
-        // Clear & handle HiDPI
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, width, height);
-
-        // 1) Grid, Axis, Labels
-        drawGrid(ctx, width, height, origin, scale);
-        drawAxis(ctx, origin, width, height);
-        drawLabel(ctx, origin, width, height, scale);
-
-        // 2) Partial Graph from 0..drawIndex
-        ctx.beginPath();
-        let first = true;
-        for (let i = 0; i < drawIndex; i++) {
-            const pt = points[i];
-            if (!pt) {
-                // invalid => break the stroke
-                first = true;
+            } catch {
                 continue;
             }
-            const [cx, cy] = pt;
-            if (first) {
-                ctx.moveTo(cx, cy);
-                first = false;
-            } else {
-                ctx.lineTo(cx, cy);
+
+            // Convert that yVal to canvas Y
+            const graphCanvasY = origin.y - yVal * scale;
+            // The actual distance from mouse to that curve
+            const dist = Math.abs(my - graphCanvasY);
+
+            if (dist < minDist) {
+                minDist = dist;
+                selectedEq = eq;
             }
         }
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        ctx.stroke();
 
-        // 3) Marker
-        if (marker.active) {
-            const markerCanvasX = origin.x + marker.x * scale;
-            const markerCanvasY = origin.y - marker.y * scale;
-
-            ctx.beginPath();
-            ctx.arc(markerCanvasX, markerCanvasY, 4, 0, 2 * Math.PI);
-            ctx.fillStyle = 'red';
-            ctx.fill();
-
-            const labelText = `(${marker.x.toFixed(2)}, ${marker.y.toFixed(6)})`;
-            const labelX = markerCanvasX + 8;
-            const labelY = markerCanvasY - 8;
-
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-
-            const metrics = ctx.measureText(labelText);
-            const textWidth = metrics.width;
-            const lineHeight = 16;
-            const padding = 4;
-
-            ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-
-            ctx.fillStyle = 'white';
-            ctx.fillRect(labelX - padding, labelY - padding, textWidth + padding * 2, lineHeight + padding * 2);
-
-            ctx.shadowColor = 'transparent';
-            ctx.fillStyle = 'black';
-            ctx.fillText(labelText, labelX, labelY);
-            ctx.restore();
+        if (selectedEq && minDist <= threshold) {
+            return selectedEq
         }
-    }, [width, height, points, drawIndex, origin, scale, marker]);
 
-    //
-    // 8) Mouse events: Panning + Marker
-    //
-    function isMouseNearGraph(equation, mx, my, origin, scale, threshold) {
-        const xVal = (mx - origin.x) / scale;
-        const yVal = computeFunctionY(equation, xVal);
-        if (yVal == null) return false;
-        const graphCanvasY = origin.y - yVal * scale;
-        const dist = Math.abs(my - graphCanvasY);
-        return dist <= threshold;
+        return null;
     }
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-
-        function handleMouseDown(e) {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            if (isMouseNearGraph(equation, mouseX, mouseY, origin, scale, 20)) {
-                setIsMarkerDragging(true);
-                const xVal = (mouseX - origin.x) / scale;
-                const yVal = computeFunctionY(equation, xVal);
-                if (yVal != null) {
-                    setMarker({ active: true, x: xVal, y: yVal });
-                }
-            } else {
-                // Pan
-                isDragging.current = true;
-                lastMousePos.current = { x: e.clientX, y: e.clientY };
-            }
-        }
-
-        function handleMouseMove(e) {
-            if (isDragging.current) {
-                const deltaX = e.clientX - lastMousePos.current.x;
-                const deltaY = e.clientY - lastMousePos.current.y;
-                setOrigin(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
-                lastMousePos.current = { x: e.clientX, y: e.clientY };
-            } else if (isMarkerDragging) {
-                const rect = canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const xVal = (mouseX - origin.x) / scale;
-                const yVal = computeFunctionY(equation, xVal);
-                if (yVal != null) {
-                    setMarker({ active: true, x: xVal, y: yVal });
-                }
-            }
-        }
-
-        function handleMouseUp() {
-            if (isDragging.current) {
-                isDragging.current = false;
-            }
-            if (isMarkerDragging) {
-                setIsMarkerDragging(false);
-            }
-            // if you want marker to disappear:
-            setMarker({ active: false, x: 0, y: 0 });
-        }
-
-        function handleMouseLeave() {
-            if (isDragging.current) {
-                isDragging.current = false;
-            }
-            if (isMarkerDragging) {
-                setIsMarkerDragging(false);
-            }
-            // setMarker({ active: false, x: 0, y: 0 });
-        }
-
-        canvas.addEventListener('mousedown', handleMouseDown);
-        canvas.addEventListener('mousemove', handleMouseMove);
-        canvas.addEventListener('mouseup', handleMouseUp);
-        canvas.addEventListener('mouseleave', handleMouseLeave);
-
-        return () => {
-            canvas.removeEventListener('mousedown', handleMouseDown);
-            canvas.removeEventListener('mousemove', handleMouseMove);
-            canvas.removeEventListener('mouseup', handleMouseUp);
-            canvas.removeEventListener('mouseleave', handleMouseLeave);
-        };
-    }, [origin, scale, equation, isMarkerDragging]);
-
-    //
-    // 9) Wheel zoom
-    //
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        function handleWheel(e) {
-            e.preventDefault();
-            const zoomIntensity = 0.001;
-            const delta = e.deltaY * zoomIntensity;
-            let newScale = scale * (1 - delta);
-
-            if (newScale < 2e-9 || newScale > 5e6) return;
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            const THRESHOLD_PX = 75;
-            const distX = Math.abs(mouseX - origin.x);
-            const distY = Math.abs(mouseY - origin.y);
-            let anchorX = mouseX, anchorY = mouseY;
-            if (distX < THRESHOLD_PX && distY < THRESHOLD_PX) {
-                anchorX = origin.x;
-                anchorY = origin.y;
-            }
-            const zoomFactor = newScale / scale;
-            const newOrigin = {
-                x: anchorX - zoomFactor * (anchorX - origin.x),
-                y: anchorY - zoomFactor * (anchorY - origin.y)
-            };
-            setScale(newScale);
-            setOrigin(newOrigin);
-        }
-
-        canvas.addEventListener('wheel', handleWheel, { passive: false });
-        return () => {
-            canvas.removeEventListener('wheel', handleWheel, { passive: false });
-        };
-    }, [scale, origin]);
-
-    //
-    // 10) Zoom In/Out/Reset Buttons
-    //
+    // ---- Zoom Animations ----
     function animateZoom(factor) {
         const targetScale = scale * factor;
-        const clampedScale = Math.max(2e-9, Math.min(targetScale, 5e6));
 
-        const anchor = { x: width / 2, y: height / 2 };
+        // clamp if you want
+        let clampedScale = Math.max(2.0e-9, Math.min(targetScale, 5000000));
+
+        const anchor = { x: graphWidth / 2, y: graphHeight / 2 };
         const newOrigin = {
             x: anchor.x - factor * (anchor.x - origin.x),
             y: anchor.y - factor * (anchor.y - origin.y)
         };
+
         animateValue({
             fromScale: scale,
             toScale: clampedScale,
@@ -384,10 +147,220 @@ export default function GraphCanvas() {
         });
     }
 
+    // ---- Canvas Drawing ----
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        // Handle HiDPI, always clear the canvas:
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = graphWidth * dpr;
+        canvas.height = graphHeight * dpr;
+        canvas.style.width = `${graphWidth}px`;
+        canvas.style.height = `${graphHeight}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, graphWidth, graphHeight);
+
+        // Draw your grid, axes, labels, graph, etc.
+        drawGrid(ctx, graphWidth, graphHeight, origin, scale);
+        drawAxis(ctx, origin, graphWidth, graphHeight);
+        drawLabel(ctx, origin, graphWidth, graphHeight, scale);
+        drawGraph(ctx, origin, graphWidth, scale, equation);
+
+        // ----- Draw Marker if Active -----
+        if (marker.active) {
+            const markerCanvasX = origin.x + marker.x * scale;
+            const markerCanvasY = origin.y - marker.y * scale;
+
+            // Draw marker circle
+            ctx.beginPath();
+            ctx.arc(markerCanvasX, markerCanvasY, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+
+            // Label text and box
+            const labelText = `(${marker.x.toFixed(2)}, ${marker.y.toFixed(4)})`;
+            const labelX = markerCanvasX + 8;
+            const labelY = markerCanvasY - 8;
+
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+
+            const metrics = ctx.measureText(labelText);
+            const textWidth = metrics.width;
+            const lineHeight = 16;
+            const padding = 4;
+
+            // --- Draw shadowed white rectangle ---
+            ctx.save();  // save current state, so shadow & fillStyle won't affect later drawings
+
+            // Configure shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            // Draw rectangle behind text
+            ctx.fillStyle = 'white';
+            ctx.fillRect(
+                labelX - padding,
+                labelY - padding,
+                textWidth + padding * 2,
+                lineHeight + padding * 2
+            );
+
+            // Turn off the shadow before drawing text
+            ctx.shadowColor = 'transparent';
+
+            // Now draw the text on top
+            ctx.fillStyle = 'black';
+            ctx.fillText(labelText, labelX, labelY);
+
+            ctx.restore(); // restore shadow settings, fill style, etc.
+        }
+    }, [graphWidth, graphEquation, graphHeight, equation, origin, scale, marker]);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const threshold = 10;
+
+            const eq = isMouseNearGraph(equation, mouseX, mouseY, origin, scale, threshold);
+            if (eq) {
+                // Start marker-drag mode
+                setIsMarkerDragging(true);
+                setSelectedEquation(eq);
+                // Snap the marker to the function at that X
+                const xValue = (mouseX - origin.x) / scale;
+                const yValue = computeFunctionY(eq, xValue);
+                if (yValue != null) {
+                    setMarker({
+                        active: true,
+                        x: xValue,
+                        y: yValue
+                    });
+                }
+            } else {
+                // Normal panning
+                isDragging.current = true;
+                lastMousePos.current = { x: e.clientX, y: e.clientY };
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (isDragging.current) {
+                // Panning logic
+                const deltaX = e.clientX - lastMousePos.current.x;
+                const deltaY = e.clientY - lastMousePos.current.y;
+                setOrigin(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+                lastMousePos.current = { x: e.clientX, y: e.clientY };
+            } else if (isMarkerDragging) {
+                // Marker logic
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                // We only need the X for the marker to follow horizontally:
+                const xValue = (mouseX - origin.x) / scale;
+                const yValue = computeFunctionY(selectedEquation, xValue)
+                if (yValue != null) {
+                    setMarker({ active: true, x: xValue, y: yValue });
+                }
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (isDragging.current) {
+                isDragging.current = false;
+            }
+            if (isMarkerDragging) {
+                setIsMarkerDragging(false);
+            }
+            setMarker({
+                active: false,
+                x: 0,
+                y: 0
+            })
+        }
+
+        function handleMouseLeave() {
+            if (isDragging.current) {
+                isDragging.current = false;
+            }
+            if (isMarkerDragging) {
+                setIsMarkerDragging(false);
+            }
+            setMarker({
+                active: false,
+                x: 0,
+                y: 0
+            })
+        }
+
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mouseleave', handleMouseLeave);
+
+        return () => {
+            canvas.removeEventListener('mousedown', handleMouseDown);
+            canvas.removeEventListener('mousemove', handleMouseMove);
+            canvas.removeEventListener('mouseup', handleMouseUp);
+            canvas.removeEventListener('mouseleave', handleMouseLeave);
+        };
+    }, [origin, scale, equation, isMarkerDragging]);
+
+    // ---- Wheel Zoom ----
+    useEffect(() => {
+        const canvas = canvasRef.current;
+
+        function handleWheel(e) {
+            e.preventDefault();
+            const zoomIntensity = 0.001;
+            const delta = e.deltaY * zoomIntensity;
+            let newScale = scale * (1 - delta);
+
+            // clamp
+            if (newScale < 2e-9 || newScale > 5e6) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // If near the origin, anchor on origin
+            const THRESHOLD_PX = 75;
+            const distX = Math.abs(mouseX - origin.x);
+            const distY = Math.abs(mouseY - origin.y);
+            let anchorX = mouseX;
+            let anchorY = mouseY;
+            if (distX < THRESHOLD_PX && distY < THRESHOLD_PX) {
+                anchorX = origin.x;
+                anchorY = origin.y;
+            }
+
+            const zoomFactor = newScale / scale;
+            const newOrigin = {
+                x: anchorX - zoomFactor * (anchorX - origin.x),
+                y: anchorY - zoomFactor * (anchorY - origin.y)
+            };
+            setScale(newScale);
+            setOrigin(newOrigin);
+        }
+
+        canvas.addEventListener('wheel', handleWheel, { passive: false });
+        return () => {
+            canvas.removeEventListener('wheel', handleWheel, { passive: false });
+        };
+    }, [scale, origin]);
+
     return (
-        <div style={{ position: 'relative', width, height }}>
+        <div style={{ position: 'relative', graphWidth, graphHeight }}>
             <canvas
                 ref={canvasRef}
+                width={graphWidth}
+                height={graphHeight}
                 style={{ border: '1px solid #ccc', display: 'block' }}
             />
 
@@ -397,53 +370,64 @@ export default function GraphCanvas() {
                     position: 'absolute',
                     top: 10,
                     right: 10,
-                    width: width / 25,
-                    height: width / 25,
-                    cursor: 'pointer',
+                    width: 40,
+                    height: 40,
+                    zIndex: 999, // ensure it stays above the canvas
                     backgroundColor: "#E8E8E8",
                     borderColor: "#F0F0F0",
                     borderRadius: "5px"
                 }}
                 onClick={animateZoomIn}
             >
-                <img style={{ width: "100%", height: "100%" }} src={PlusLogo} alt="Zoom In" />
+                <img
+                    style={{ width: "100%", height: "100%" }}
+                    src={PlusLogo}
+                    alt="Zoom In"
+                />
             </button>
 
             {/* Zoom Out Button */}
             <button
                 style={{
                     position: 'absolute',
-                    top: 10 + width / 25,
+                    top: 50,
                     right: 10,
-                    width: width / 25,
-                    height: width / 25,
-                    cursor: 'pointer',
+                    width: 40,
+                    height: 40,
                     backgroundColor: "#E8E8E8",
                     borderColor: "#F0F0F0",
                     borderRadius: "5px"
                 }}
                 onClick={animateZoomOut}
             >
-                <img style={{ width: "100%", height: "100%" }} src={MinusLogo} alt="Zoom Out" />
+                <img
+                    style={{ width: "100%", height: "100%" }}
+                    src={MinusLogo}
+                    alt="Zoom Out"
+                />
             </button>
 
             {/* Reset Button */}
             <button
                 style={{
                     position: 'absolute',
-                    top: 10 + 2 * (width / 25) + 10,
+                    top: 100,
                     right: 10,
-                    width: width / 25,
-                    height: width / 25,
-                    cursor: 'pointer',
+                    width: 40,
+                    height: 40,
                     backgroundColor: "#E8E8E8",
                     borderColor: "#F0F0F0",
                     borderRadius: "5px"
                 }}
                 onClick={animateReset}
             >
-                <img style={{ width: "100%", height: "100%" }} src={HomeLogo} alt="Reset View" />
+                <img
+                    style={{ width: "100%", height: "100%" }}
+                    src={HomeLogo}
+                    alt="Reset View"
+                />
             </button>
         </div>
     );
 }
+

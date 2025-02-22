@@ -25,7 +25,7 @@
     color:rgb(117, 112, 112);
     border: none;
     font-size: 25px;
-    margin: 5px;
+    margin: 0px;
     cursor: pointer;
 }
 
@@ -46,6 +46,7 @@
 
 .input-list__row {
     display: flex;
+    width: 100%;
     align-items: center;
     background-color: #e2dddd;
     border-top: 1px solid #6f6b6b;
@@ -71,12 +72,16 @@
 
 .input-list__wrapper {
     position: relative;
+    display: flex;
+    align-items: center;
     flex: 1;
 }
 
 .input-list__field {
-    width: 99.7%;
-    font-size: 40px;
+    width: 100%;
+    height: 100%;
+    padding: 13px;
+    font-size: 20px;
     background-color: white;
     border:none;
     border-right: 1px solid #6f6b6b;

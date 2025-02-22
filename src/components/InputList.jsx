@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import './InputList.css'
 
-function InputList() {
+function InputList({ hidden, setHidden, onInputChange }) {
     const [rows, setRows] = useState([{index: 1, value: ""}]);
-    const [hidden, setHidden] = useState(false);
 
     const addRows = () => {
         const newIndex = rows.length + 1;
@@ -11,14 +10,15 @@ function InputList() {
     };
 
     const removeRows = (index) => {
-        const filteredRows = rows.filter(row => row.index !== index);
-        const updatedRows = updateIndexNumber(filteredRows);
+        let updatedRows = rows.filter(row => row.index !== index);
+        updatedRows = updateIndexNumber(updatedRows);
 
         if (updatedRows.length === 0) {
-            setRows([{index: 1, value: ""}]);
-        } else {
-            setRows(updatedRows);
+            updatedRows = [{index: 1, value: ""}];
         }
+        
+        setRows(updatedRows);
+        onInputChange(updatedRows);
     };
 
     const updateIndexNumber = (rows) => {
@@ -34,6 +34,10 @@ function InputList() {
         );
         
         setRows(updatedRows);
+
+        if (onInputChange) {
+            onInputChange(updatedRows);
+        }
     };
 
     const generateInputRows = rows.map((row) => {
