@@ -2,51 +2,52 @@ import React, { useState } from 'react';
 import PlusIcon from '../assets/plus-toolbar.png';
 import DoubleLeftIcon from '../assets/double_left.png';
 import RemoveIcon from '../assets/x.png';
+import Input from '../components/Input.jsx'
 import './InputList.css'
 
-function InputList({ hidden, setHidden, onInputChange }) {
-    const [rows, setRows] = useState([{index: 1, value: ""}]);
+function InputList({ hidden, setHidden, onInputChange, equation, setEquation }) {
+    // const [rows, setRows] = useState([{index: 1, value: ""}]);
 
     const addRows = () => {
-        const newIndex = rows.length + 1;
-        setRows([...rows, {index: newIndex, value: ""}]);
+        setEquation([...equation, {expression: "", color: "black"}]);
     };
 
-    const removeRows = (index) => {
-        let updatedRows = rows.filter(row => row.index !== index);
-        updatedRows = updateIndexNumber(updatedRows);
+    // const removeRows = (index) => {
+    //     let updatedRows = rows.filter(row => row.index !== index);
+    //     updatedRows = updateIndexNumber(updatedRows);
 
-        if (updatedRows.length === 0) {
-            updatedRows = [{index: 1, value: ""}];
-        }
+    //     if (updatedRows.length === 0) {
+    //         updatedRows = [{index: 1, value: ""}];
+    //     }
         
-        setRows(updatedRows);
-        onInputChange(updatedRows);
-    };
+    //     setRows(updatedRows);
+    //     onInputChange(updatedRows);
+    // };
 
-    const updateIndexNumber = (rows) => {
-        return rows.map((row, idx) => ({
-            ...row,
-            index: idx + 1,
-        }));
-    };
+    // const updateIndexNumber = (rows) => {
+    //     return rows.map((row, idx) => ({
+    //         ...row,
+    //         index: idx + 1,
+    //     }));
+    // };
 
-    const handleInputChange = (index, newValue) => {
-        const updatedRows = rows.map(row =>
-            row.index === index ? {...row, value: newValue} : row
-        );
+    // const handleInputChange = (index, newValue) => {
+    //     const updatedRows = rows.map(row =>
+    //         row.index === index ? {...row, value: newValue} : row
+    //     );
         
-        setRows(updatedRows);
+    //     setRows(updatedRows);
 
-        if (onInputChange) {
-            onInputChange(updatedRows);
-        }
-    };
+    //     if (onInputChange) {
+    //         onInputChange(updatedRows);
+    //     }
+    // };
 
-    const generateInputRows = rows.map((row) => {
+    const generateInputRows = equation.map((item, index) => {
         return (
-            <div className='input-list__row' key={row.index}>
-                <div className='input-list__index'>{row.index}</div>
+            <div className='input-list__row' key={index}>
+                <Input setEquation={setEquation} equation={equation} index={index}/>
+                {/* <div className='input-list__index'>{row.index}</div>
 
                 <div className='input-list__wrapper'>
                     <input
@@ -59,13 +60,13 @@ function InputList({ hidden, setHidden, onInputChange }) {
                     <button className='input-list__remove-btn' onClick={() => removeRows(row.index)}>
                         <img src={RemoveIcon} alt="Remove Inputfield" style={{ width: '70%', height: '70%' }} draggable="false"/>
                     </button>
-                </div>
+                </div> */}
             </div> 
         );
     });
 
     const prepareSingleInputRow = () => {
-        const lastIndex = rows.length + 1;
+        const lastIndex = equation.length + 1;
 
         return (
             <div className='input-list__row' key={lastIndex}>

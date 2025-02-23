@@ -9,7 +9,8 @@ const MainPage = () => {
     const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.70);
     const [graphHeight, setGraphHeight] = useState(window.innerHeight);
     const [inputValue, setInputValues] = useState([]);
-    const [equation, setEquation] = useState([]);
+    const [equation, setEquation] = useState([{ expression: "y = x", color: "black" },
+        { expression: "y = x**2", color: "red" }]);
     const [inputWidth, setInputWidth] = useState(window.innerWidth * 0.30);
 
     const sidebarRef = useRef(null);
@@ -99,7 +100,7 @@ const MainPage = () => {
 
         // filter out null entries (invalid or skipped equations)
         const filteredEquations = newEquations.filter(eq => eq !== null);
-        setEquation(filteredEquations);
+        // setEquation(filteredEquations);
     };
 
     const handleMouseDown = (e) => {
@@ -145,13 +146,13 @@ const MainPage = () => {
         <div className='graph-layout'>
             {!hidden && (
                 <div className='input-section' ref={sidebarRef} style={{ width: inputWidth }}>
-                    <InputList hidden={hidden} setHidden={setHidden} setGraphWidth={setGraphWidth} onInputChange={handleInputChange} inputValue={inputValue}/>
+                    <InputList setEquation={setEquation} equation={equation} hidden={hidden} setHidden={setHidden} setGraphWidth={setGraphWidth} onInputChange={handleInputChange} inputValue={inputValue}/>
                     <div className="resizer" ref={resizerRef} onMouseDown={handleMouseDown} />
                 </div>
             )}
 
             <div className='graph-section' style={{ width: graphWidth }}>
-                <GraphCanvas equation={equation} graphWidth={graphWidth} graphHeight={graphHeight} graphEquation={equation}/>
+                <GraphCanvas equation={equation} graphWidth={graphWidth} graphHeight={graphHeight}/>
                 {hidden && (
                     <button className='input-list__show-btn' onClick={() => setHidden(false)}>
                         <img src={DoubleRightIcon} alt="Show Menu Bar" style={{ width: '50%', height: '50%' }} draggable="false"/>

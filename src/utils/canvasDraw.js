@@ -107,8 +107,8 @@ export function drawAxis(ctx, origin, width, height) {
 
 // Graph function y = f(x)
 export function drawGraph(ctx, origin, width, scale, equation) {
-    for (let j =0; j < equation.length; j ++) {
-        const rhsExpression = equation[j].split('=')[1].trim();
+    for (let j=0; j < equation.length; j ++) {
+        const rhsExpression = (equation[j].expression).split('=')[1].trim();
         const yFunction = new Function('x', `return ${rhsExpression}`);
     
         ctx.beginPath();

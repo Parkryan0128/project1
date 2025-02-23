@@ -44,7 +44,7 @@ function computeFunctionY(equation, x) {
     }
 }
 
-export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equation}) {
+export default function GraphCanvas({equation, graphWidth, graphHeight}) {
     const canvasRef = useRef(null);
     const isDragging = useRef(false);
     // Default states
@@ -67,7 +67,7 @@ export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equ
         const xValue = (mx - origin.x) / scale;
 
         for (let i = 0; i < equationArray.length; i++) {
-            const eq = equationArray[i];
+            const eq = equationArray[i].expression;
             const rhs = eq.split('=')[1].trim();
             const yFunction = new Function('x', `return ${rhs}`);
 
@@ -218,7 +218,7 @@ export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equ
 
             ctx.restore(); // restore shadow settings, fill style, etc.
         }
-    }, [graphWidth, graphEquation, graphHeight, equation, origin, scale, marker]);
+    }, [graphWidth, graphHeight, equation, origin, scale, marker]);
 
     useEffect(() => {
         const canvas = canvasRef.current;

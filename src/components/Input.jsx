@@ -35,7 +35,7 @@ const EMPTY_SQUARE_ROOT = '_EMPTY_SQUARE_ROOT_'
 
 /*----------------------------Functions----------------------*/
 
-function Input() {
+function Input({ equation, setEquation, index }) {
     // useStates
     const [userInput, setUserInput] = useState([CURSOR]);
     const [isFocused, setIsFocused] = useState(false);
@@ -48,8 +48,11 @@ function Input() {
         */
 
             setProcessedInput(processInput(userInput));
-            console.log(userInput);
-            console.log(processInput(userInput));
+            let copy = equation;
+            // copy[index] = {
+
+            // }
+            console.log(copy[index])
         }, [userInput]);
 
     /*----------------------------Helper Functions----------------------*/
