@@ -141,12 +141,18 @@ function handleJuckBoon(arr) {
 }
 
 // helper to handle MiBoon. result is either numerical value or expression containing x
-function handleMiBoon(arr) {
-    let eq = functions.get(arr[0]);
-    if (isNumber(arr[3])) {
-        return Derivative.derivative(eq, arr[3]).toString();
+function handleMiBoon(func, derivCount, inTermsOf) {
+    let res;
+    if (isNumber(inTermsOf) && derivCount == 1) {
+        res = Derivative.derivative(func, inTermsOf).toString();
     } else {
-        return Derivative.derivative(eq).toString();
+        res = Derivative.derivative(func).toString();
+    }
+
+    if (derivCount == 1) {
+        return res;
+    } else {
+        return handleMiBoon(res, derivCount - 1, inTermsOf);
     }
 }
 
@@ -167,10 +173,29 @@ function handleMiJuckBoon(arr) {
                 }
         } else if (arr[i] == '\'') {
             res.pop();
-            let miBoonRes = handleMiBoon([...arr].splice(i - 1))
+
+            let x = i - 1;
+            let temp = [];
+
+            while (arr[x] != ')') {
+                temp.push(arr[x]);
+                x++;
+            }
+
+            let func = functions.get(temp[0]);
+            let derivCount = 0;
+            let inTermsOf = temp[temp.length - 1];
+
+            for (let j = 0; j < temp.length; j++) {
+                if (temp[j] == '\'') derivCount++;
+            }
+
+            let miBoonRes = handleMiBoon(func, derivCount, inTermsOf);
+            // console.log('below is miBoonRes')
+            // console.log(miBoonRes)
 
             res.push(miBoonRes);
-            i += 3;
+            i += temp.length - 1;
         } else {
             res.push(arr[i]);
         }
@@ -533,55 +558,63 @@ export function returnOutput(arr) {
 //     '√', '(', '4', ')'
 // ];
 
-const everythingArray = [
-    'i', 'n', 't', 
-    '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
-    '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
-    '_INT_VALUE_BRACKET_OPEN_', 'x', '_INT_VALUE_BRACKET_CLOSE_',
-    '+', 
-    'f', '\'', '(', '2', ')',
-    '*', 
-    's', 'i', 'n', '(', '1', ')', 
-    '/', 
-    'c', 'o', 's', '(', '1', ')', 
-    '-', 
-    'l', 'o', 'g', "_LOG_OPEN_", '10', "_LOG_CLOSE_", 
-    '^', 
-    "_EXPONENT_OPEN_",
-    'l', 'n', "_LN_OPEN_", '2', "_LN_CLOSE_", 
-    "_EXPONENT_CLOSE_",
-    '*', 
-    'e', '^', "_EXPONENT_OPEN_", '2', "_EXPONENT_CLOSE_",
-    '+', 
-    'p', 'i', 
-    '-', 
-    'e',
-    '+',
-    't', 'a', 'n', '(', '1', ')',
-    '-',
-    'a', 'r', 'c', 's', 'i', 'n', '(', '0.5', ')',
-    '+',
-    'a', 'r', 'c', 'c', 'o', 's', '(', '0.5', ')',
-    '-',
-    'a', 'r', 'c', 't', 'a', 'n', '(', '1', ')',
-    '+',
-    'c', 's', 'c', '(', '1', ')',
-    '-',
-    's', 'e', 'c', '(', '1', ')',
-    '+',
-    'c', 'o', 't', '(', '1', ')',
-    '+',
-    '√', '(', '4', ')'
-];
+// const everythingArray = [
+//     'i', 'n', 't', 
+//     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+//     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
+//     '_INT_VALUE_BRACKET_OPEN_', 'x', '_INT_VALUE_BRACKET_CLOSE_',
+//     '+', 
+//     'f', '\'', '(', '2', ')',
+//     '*', 
+//     's', 'i', 'n', '(', '1', ')', 
+//     '/', 
+//     'c', 'o', 's', '(', '1', ')', 
+//     '-', 
+//     'l', 'o', 'g', "_LOG_OPEN_", '10', "_LOG_CLOSE_", 
+//     '^', 
+//     "_EXPONENT_OPEN_",
+//     'l', 'n', "_LN_OPEN_", '2', "_LN_CLOSE_", 
+//     "_EXPONENT_CLOSE_",
+//     '*', 
+//     'e', '^', "_EXPONENT_OPEN_", '2', "_EXPONENT_CLOSE_",
+//     '+', 
+//     'p', 'i', 
+//     '-', 
+//     'e',
+//     '+',
+//     't', 'a', 'n', '(', '1', ')',
+//     '-',
+//     'a', 'r', 'c', 's', 'i', 'n', '(', '0.5', ')',
+//     '+',
+//     'a', 'r', 'c', 'c', 'o', 's', '(', '0.5', ')',
+//     '-',
+//     'a', 'r', 'c', 't', 'a', 'n', '(', '1', ')',
+//     '+',
+//     'c', 's', 'c', '(', '1', ')',
+//     '-',
+//     's', 'e', 'c', '(', '1', ')',
+//     '+',
+//     'c', 'o', 't', '(', '1', ')',
+//     '+',
+//     '√', '(', '4', ')'
+// ];
 
-console.log(groupWords(everythingArray))
-console.log(infixToPostfix(everythingArray))
-console.log(evaluateExpression(everythingArray))
-console.log(returnOutput(everythingArray))
+// console.log(groupWords(everythingArray))
+// console.log(infixToPostfix(everythingArray))
+// console.log(evaluateExpression(everythingArray))
+// console.log(returnOutput(everythingArray))
 
-console.log(precedence('pi'))
-console.log(returnOutput([
-    'p','i',
-    '-',
-    'e'
-]))
+// console.log(precedence('pi'))
+// console.log(returnOutput([
+//     'p','i',
+//     '-',
+//     'e'
+// ]))
+
+// console.log(returnOutput([
+//     'f', 
+//     '\'',
+//     '\'', 
+//     '\'', '(', 'x', ')', 
+//     '+', 'p', 'i'
+// ]))
