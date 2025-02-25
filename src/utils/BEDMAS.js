@@ -32,7 +32,9 @@ function isFunction(input) {
 // helper function to return the precedence of a given operator
 function precedence(operator) {
     if (operator == '+' || operator == '-') return 1
-    if (operator == '*' || operator == '/' || operator == '^' || isFunction(operator)) return 2
+    if (operator == '*' || operator == '/') return 2
+    if (operator == '^') return 3
+    if (isFunction(operator)) return 4
     return 0
 }
 
@@ -61,7 +63,7 @@ function applyOperator(operator, a, b=NaN) {
         case 'log': return Math.log10(a);
         case 'ln': return Math.log(a);
 
-        case 'int': return ;
+        // case 'int': return ;
     }
 }
 
@@ -279,7 +281,7 @@ function infixToPostfix(infix) {
         // if the precedence of the first item in the stack is greater than
         // the precedence of str, then pop from the stack and enqueue to the queue
         } else {
-            while (!stack.isEmpty() && precedence(stack.peek()) > precedence(groupedStr[i])) {
+            while (!stack.isEmpty() && precedence(stack.peek()) >= precedence(groupedStr[i])) {
                 queue.enqueue(stack.pop())
             }
             stack.push(groupedStr[i])
@@ -349,9 +351,7 @@ export function returnOutput(arr) {
     function containsX(arr) {
         return arr.some(element => element.includes('x'));
     }
-    // console.log(arr)
     let temp = handleMiJuckBoon([...arr]);
-    // console.log(temp)
 
     if (containsX(temp)) {
         return makeExpression(arr);
@@ -359,6 +359,8 @@ export function returnOutput(arr) {
     
     return evaluateExpression(arr);
 }
+
+// test suite
 
 
 // 1. Take in an array of letters ex) '3x+2' = ['3','x','+','2']
@@ -531,7 +533,55 @@ export function returnOutput(arr) {
 //     '√', '(', '4', ')'
 // ];
 
-// console.log(returnOutput(everythingArray))
-// console.log(makeExpression(everythingArrayOnlyNums))
-// console.log(returnOutput(everythingArrayOnlyNums))
+const everythingArray = [
+    'i', 'n', 't', 
+    '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+    '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
+    '_INT_VALUE_BRACKET_OPEN_', 'x', '_INT_VALUE_BRACKET_CLOSE_',
+    '+', 
+    'f', '\'', '(', '2', ')',
+    '*', 
+    's', 'i', 'n', '(', '1', ')', 
+    '/', 
+    'c', 'o', 's', '(', '1', ')', 
+    '-', 
+    'l', 'o', 'g', "_LOG_OPEN_", '10', "_LOG_CLOSE_", 
+    '^', 
+    "_EXPONENT_OPEN_",
+    'l', 'n', "_LN_OPEN_", '2', "_LN_CLOSE_", 
+    "_EXPONENT_CLOSE_",
+    '*', 
+    'e', '^', "_EXPONENT_OPEN_", '2', "_EXPONENT_CLOSE_",
+    '+', 
+    'p', 'i', 
+    '-', 
+    'e',
+    '+',
+    't', 'a', 'n', '(', '1', ')',
+    '-',
+    'a', 'r', 'c', 's', 'i', 'n', '(', '0.5', ')',
+    '+',
+    'a', 'r', 'c', 'c', 'o', 's', '(', '0.5', ')',
+    '-',
+    'a', 'r', 'c', 't', 'a', 'n', '(', '1', ')',
+    '+',
+    'c', 's', 'c', '(', '1', ')',
+    '-',
+    's', 'e', 'c', '(', '1', ')',
+    '+',
+    'c', 'o', 't', '(', '1', ')',
+    '+',
+    '√', '(', '4', ')'
+];
 
+console.log(groupWords(everythingArray))
+console.log(infixToPostfix(everythingArray))
+console.log(evaluateExpression(everythingArray))
+console.log(returnOutput(everythingArray))
+
+console.log(precedence('pi'))
+console.log(returnOutput([
+    'p','i',
+    '-',
+    'e'
+]))
