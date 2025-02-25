@@ -81,6 +81,7 @@ function convertConstant(constant) {
     }
 }
 
+// helper function to group separated numbers to a single string
 function groupNums(arr) {
     let result = [];
     let temp = '';
@@ -102,6 +103,7 @@ function groupNums(arr) {
     return result;
 }
 
+// helper to handle JuckBoon. result is numerical string
 function handleJuckBoon(arr) {
     let max = '';
     let min = '';
@@ -133,14 +135,11 @@ function handleJuckBoon(arr) {
 
     const res = Integral.integral(value, min, max, 50000)
     const roundedRes = parseFloat(res.toFixed(4))
-
-
     return roundedRes.toString();
 }
 
+// helper to handle MiBoon. result is either numerical value or expression containing x
 function handleMiBoon(arr) {
-    // f ' ( x )
-    // f ' ( 2 )
     let eq = functions.get(arr[0]);
     if (isNumber(arr[3])) {
         return Derivative.derivative(eq, arr[3]).toString();
@@ -149,6 +148,7 @@ function handleMiBoon(arr) {
     }
 }
 
+// helper to check if arr contains any MiJuckBoon, and handles
 function handleMiJuckBoon(arr) {
     let res = []
 
@@ -157,7 +157,7 @@ function handleMiJuckBoon(arr) {
             arr[i + 1] == 'n' &&
             arr[i + 2] == 't') {
                 // case JuckBoon
-                let juckBoonRes = handleJuckBoon(arr.slice(i));
+                let juckBoonRes = handleJuckBoon([...arr].slice(i));
                 res.push(juckBoonRes);
 
                 while (i < arr.length && arr[i] !== "_INT_VALUE_BRACKET_CLOSE_") {
@@ -165,7 +165,7 @@ function handleMiJuckBoon(arr) {
                 }
         } else if (arr[i] == '\'') {
             res.pop();
-            let miBoonRes = handleMiBoon(arr.splice(i - 1))
+            let miBoonRes = handleMiBoon([...arr].splice(i - 1))
 
             res.push(miBoonRes);
             i += 3;
@@ -349,8 +349,9 @@ export function returnOutput(arr) {
     function containsX(arr) {
         return arr.some(element => element.includes('x'));
     }
-
+    // console.log(arr)
     let temp = handleMiJuckBoon([...arr]);
+    // console.log(temp)
 
     if (containsX(temp)) {
         return makeExpression(arr);
@@ -436,7 +437,11 @@ export function returnOutput(arr) {
 //     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
 //     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
 //     '_INT_VALUE_BRACKET_OPEN_', 'x', 'cursor', '_INT_VALUE_BRACKET_CLOSE_',
-//     '+', 'f', '\'', '(', 'x', ')', '*', '2'
+//     '+', 'f', '\'', '(', 
+//     'x', 
+//     // '2',
+//     ')', '*', '2'
+
 // ]
 
 // console.log(handleMiJuckBoon(miJuckBoonArray))
@@ -444,3 +449,89 @@ export function returnOutput(arr) {
 // console.log(handleMiJuckBoon(miJuckBoonArray))
 // console.log(makeExpression(miJuckBoonArray))
 // console.log(returnOutput(miJuckBoonArray))
+
+
+// test everything
+
+// const everythingArray = [
+//     'i', 'n', 't', 
+//     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+//     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
+//     '_INT_VALUE_BRACKET_OPEN_', 'x', '_INT_VALUE_BRACKET_CLOSE_',
+//     '+', 
+//     'f', '\'', '(', '2', ')',
+//     '*', 
+//     's', 'i', 'n', '(', 'x', ')', 
+//     '/', 
+//     'c', 'o', 's', '(', 'x', ')', 
+//     '-', 
+//     'l', 'o', 'g', '(', 'x', ')', 
+//     '+', 
+//     'l', 'n', '(', 'x', ')', 
+//     '*', 
+//     'e', '^', 'x', 
+//     '+', 
+//     'p', 'i', 
+//     '-', 
+//     'e',
+//     '+',
+//     't', 'a', 'n', '(', 'x', ')',
+//     '-',
+//     'a', 'r', 'c', 's', 'i', 'n', '(', 'x', ')',
+//     '+',
+//     'a', 'r', 'c', 'c', 'o', 's', '(', 'x', ')',
+//     '-',
+//     'a', 'r', 'c', 't', 'a', 'n', '(', 'x', ')',
+//     '+',
+//     'c', 's', 'c', '(', 'x', ')',
+//     '-',
+//     's', 'e', 'c', '(', 'x', ')',
+//     '+',
+//     'c', 'o', 't', '(', 'x', ')',
+//     '+',
+//     '√', '(', 'x', ')'
+// ];
+
+// const everythingArrayOnlyNums = [
+//     'i', 'n', 't', 
+//     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+//     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
+//     '_INT_VALUE_BRACKET_OPEN_', '2', '_INT_VALUE_BRACKET_CLOSE_', 
+//     '+', 
+//     'f', '\'', '(', '2', ')',
+//     '*', 
+//     's', 'i', 'n', '(', '1', ')', 
+//     '/', 
+//     'c', 'o', 's', '(', '1', ')', 
+//     '-', 
+//     'l', 'o', 'g', '(', '10', ')', 
+//     '+', 
+//     'l', 'n', '(', '2', ')', 
+//     '*', 
+//     'e', '^', '2', 
+//     '+', 
+//     'p', 'i', 
+//     '-', 
+//     'e',
+//     '+',
+//     't', 'a', 'n', '(', '1', ')',
+//     '-',
+//     'a', 'r', 'c', 's', 'i', 'n', '(', '0.5', ')',
+//     '+',
+//     'a', 'r', 'c', 'c', 'o', 's', '(', '0.5', ')',
+//     '-',
+//     'a', 'r', 'c', 't', 'a', 'n', '(', '1', ')',
+//     '+',
+//     'c', 's', 'c', '(', '1', ')',
+//     '-',
+//     's', 'e', 'c', '(', '1', ')',
+//     '+',
+//     'c', 'o', 't', '(', '1', ')',
+//     '+',
+//     '√', '(', '4', ')'
+// ];
+
+// console.log(returnOutput(everythingArray))
+// console.log(makeExpression(everythingArrayOnlyNums))
+// console.log(returnOutput(everythingArrayOnlyNums))
+
