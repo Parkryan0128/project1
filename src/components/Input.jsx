@@ -1268,6 +1268,9 @@ function Input() {
                         </span>
                     );
 
+                case 'empty_exponent':
+                    return (<span key={index} className="empty-exponent"/>)
+
                 case 'square-root':
                     return (
                         <span key={index} className = "square-root">
@@ -1293,13 +1296,15 @@ function Input() {
                 
                 case 'integral':
                     return (<span className='integral' key={index}>
-                        <span className='upper-bound'>{displayText(node.upperBound)}</span>
-                        <span className='integral-sign'>
-                        <big>∫</big>
+                        <span className='integral-group'>
+                            <span className='upper-bound'>{displayText(node.upperBound)}</span>
+                            <span className='integral-sign'><big>∫</big></span>
+                            <span className='lower-bound'>{displayText(node.lowerBound)}</span>
                         </span>
-                        <span className='integral-value'>{displayText(node.value)}</span>
-                        <span>dx</span>
-                        <span className='lower-bound'>{displayText(node.lowerBound)}</span>
+                        <span className='integral-container'>
+                            <span className='integral-value'>{displayText(node.value)}</span>
+                            <span className='dx'>dx</span>
+                        </span>
                     </span>);
 
                 case 'log':
@@ -1327,12 +1332,12 @@ function Input() {
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyPressed}
-            style={{
-                border: isFocused ? '2px solid blue' : '1px solid gray',
-                padding: '8px',
-                minHeight: '40px',
-                outline: 'none', // Removes default focus outline
-            }}
+            // style={{
+            //     border: isFocused ? '2px solid blue' : '1px solid gray',
+            //     padding: '8px',
+            //     minHeight: '40px',
+            //     outline: 'none', // Removes default focus outline
+            // }}
         >
             {displayText(processedInput)}
             {/* If you want a visible cursor, you could map the "cursor" token to an actual cursor element. */}

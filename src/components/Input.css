@@ -33,32 +33,59 @@
     background: none;
   }
 
-  .integral {
+  /* .integral {
     display: inline-block;
     align-items: center;
     margin: 0 5px;
     font-size: 1em;
-  }
-  
-  .upper-bound {
-    font-size: 0.8em;
-    display: flex;
-    justify-content: center;
+  } */
+
+  .integral {
+    display: inline-flex;
+    /* flex-direction: column; */
     align-items: center;
+    margin: 0 8px;
+    font-size: 1em;
+    position: relative;
   }
-  
-  .lower-bound {
-    font-size: 0.8em;
+
+  .integral-group {
     display: flex;
-    bottom: -10px; right: -50px;
-    justify-content: center;
-    align-self: center;
-  }
+    flex-direction: column;
+    align-items: center;
+}
+
+.upper-bound, .lower-bound {
+  font-size: 0.8em;
+  min-width: 20px;
+  text-align: center;
+  display: inline-block;
+}
   
-  .integral-sign {
-    font-size: 2em;
-    font-weight: bold;
-  }
+.integral-sign {
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1;
+  display: inline-block;
+  justify-content: center;
+}
+
+.integral-container {
+  /* display: flex; */
+  align-items: center;
+}
+
+.integral-value {
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dx {
+  margin-left: 8px;
+  font-style: italic;
+  vertical-align: middle;
+}
 
   .log {
     font-style: normal;
@@ -66,6 +93,29 @@
 
 .log-content {
     font-style: normal;
+}
+
+#input0 {
+  border: 1px solid gray;
+  padding: 8px;
+  min-height: 40px;
+  max-width: 600px;  /* Adjust as needed */
+  overflow-x: auto;  /* Enables horizontal scrolling */
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+/* Scrollbar styles (for Webkit browsers like Chrome) */
+#input0::-webkit-scrollbar {
+  height: 6px;
+  cursor: pointer;
+}
+
+#input0::-webkit-scrollbar-thumb {
+  background: gray;
+  border-radius: 3px;
+  cursor: pointer;
 }
   
   
