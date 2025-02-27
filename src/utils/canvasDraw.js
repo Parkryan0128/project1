@@ -105,38 +105,83 @@ export function drawAxis(ctx, origin, width, height) {
     ctx.stroke();
 }
 
+export function isValidEquation(input) {
+    try {
+        input = input.replace(/\s+/g, ''); // remove extra spaces
+
+        // ensure input includes a valid variable (x or y)
+        if (!input.includes('x') && !input.includes('y')) {
+            return false;
+        }
+
+        // validate equation structure by evaluating the right-hand side
+        const equationParts = input.split('=');
+        if (equationParts.length > 2) {
+            return false; // invalid if multiple `=`
+        }
+
+        if (equationParts.length === 2) {
+            const lhs = equationParts[0].trim(); // Left-hand side
+            const rhs = equationParts[1].trim(); // Right-hand side
+
+            // Check if LHS and RHS contain the same variable in an invalid way
+            if (lhs === 'x' && rhs.includes('x')) {
+                return false; // invalid: x = x + 2
+            }
+            if (lhs === 'y' && rhs.includes('y')) {
+                return false; // invalid: y = y + 2
+            }
+
+            if (rhs === '') {
+                return false; // invalid if right-hand side is empty
+            }
+
+            new Function('x', `return ${rhs}`); // validate right-hand expression
+        } else {
+            // if no '=', assume implicit y = expression
+            new Function('x', `return ${input}`);
+        }
+
+        return true; // if all checks pass, it's valid
+    } catch (err) {
+        return false; // invalid expression
+    }
+};
+
 // Graph function y = f(x)
 export function drawGraph(ctx, origin, width, scale, equation) {
-    for (let j=0; j < equation.length; j ++) {
-        const rhsExpression = (equation[j].expression).split('=')[1].trim();
-        const yFunction = new Function('x', `return ${rhsExpression}`);
+    for (let j = 0; j < equation.length; j++) {
+        if (isValidEquation(equation[j].expression)) {
+            const rhsExpression = (equation[j].expression).split('=')[1].trim();
+            const yFunction = new Function('x', `return ${rhsExpression}`);
     
-        ctx.beginPath();
-        let wasValid = false;
+            ctx.beginPath();
+            let wasValid = false;
     
     
-        for (let i = 0; i <= width; i++) {
-            const xValue = (i - origin.x) / scale;
-            let yValue;
-            try {
-                yValue = yFunction(xValue);
-                if (!Number.isFinite(yValue)) throw new Error('Invalid y');
-            } catch {
-                wasValid = false;
-                continue;
+            for (let i = 0; i <= width; i++) {
+                const xValue = (i - origin.x) / scale;
+                let yValue;
+                try {
+                    yValue = yFunction(xValue);
+                    if (!Number.isFinite(yValue)) throw new Error('Invalid y');
+                } catch {
+                    wasValid = false;
+                    continue;
+                }
+                const canvasY = origin.y - yValue * scale;
+    
+                if (wasValid) {
+                    ctx.lineTo(i, canvasY);
+                } else {
+                    ctx.moveTo(i, canvasY);
+                }
+                wasValid = true;
+    
             }
-            const canvasY = origin.y - yValue * scale;
     
-            if (wasValid) {
-                ctx.lineTo(i, canvasY);
-            } else {
-                ctx.moveTo(i, canvasY);
-            }
-            wasValid = true;
-    
+            ctx.stroke();
         }
-    
-        ctx.stroke();
     }
 }
 
