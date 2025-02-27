@@ -35,22 +35,29 @@ const EMPTY_SQUARE_ROOT = '_EMPTY_SQUARE_ROOT_'
 
 /*----------------------------Functions----------------------*/
 
-function Input() {
+function Input({ equation, setEquation, index }) {
     // useStates
     const [userInput, setUserInput] = useState([CURSOR]);
     const [isFocused, setIsFocused] = useState(false);
     const [processedInput, setProcessedInput] = useState([]);
 
     useEffect(() => {
-        /*
-        Everytime userInput changes (aka user types on the input slot),
-        we are processing the input as objects and setting it using useState
-        */
+        // Convert userInput array to a single string
+        const rawString = userInput.filter((item) => item != "cursor").join(""); // or parse it better
+        let expressionString = rawString.replace();
+        // If the user never typed '=', assume "y = <rawString>"
+        if (!rawString.includes('=')) {
+            expressionString = 'y=' + rawString;
+        }
 
-            setProcessedInput(processInput(userInput));
-            console.log(userInput);
-            console.log(processInput(userInput));
-        }, [userInput]);
+        const copy = [...equation]; // create a new array reference
+        copy[index] = {
+            expression: expressionString,
+            color: copy[index]?.color || 'black'
+        };
+        setEquation(copy);
+        setProcessedInput(processInput(userInput));
+    }, [userInput]);
 
     /*----------------------------Helper Functions----------------------*/
 
@@ -104,7 +111,7 @@ function Input() {
             const char = str[i];
             if (char.endsWith("OPEN_") && char.startsWith(type)) {
                 stack.push(i);
-            } else if (char.endsWith("CLOSE_") && char.startsWith(type)) { 
+            } else if (char.endsWith("CLOSE_") && char.startsWith(type)) {
                 const openIndex = stack.pop();
                 pairs.push([openIndex, i]);
             }
@@ -133,12 +140,12 @@ function Input() {
         // if (arr.length <= 1) return arr;
 
         // if '^' was pressed right in front of another ^, move cursor to right
-        if (arr[cursorIndex+1] === '^') {
-            arr = swapItems(arr, cursorIndex, cursorIndex+1);
-            arr = swapItems(arr, cursorIndex+1, cursorIndex+2);
+        if (arr[cursorIndex + 1] === '^') {
+            arr = swapItems(arr, cursorIndex, cursorIndex + 1);
+            arr = swapItems(arr, cursorIndex + 1, cursorIndex + 2);
 
-            if (arr[cursorIndex+3] === EMPTY_EXPONENT) {
-                arr = deleteAt(arr, cursorIndex+3);
+            if (arr[cursorIndex + 3] === EMPTY_EXPONENT) {
+                arr = deleteAt(arr, cursorIndex + 3);
             }
 
             return arr;
@@ -156,10 +163,10 @@ function Input() {
         let temp = [...array]
         let i = temp.length - 1
         let res = []
-        const limit = ['+', '-', '*', '(', ')', 
+        const limit = ['+', '-', '*', '(', ')',
             // FRACTION_OPEN, FRACTION_CLOSE, 
-            UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE, 
-            EXPONENT_OPEN, EXPONENT_CLOSE, 
+            UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE,
+            EXPONENT_OPEN, EXPONENT_CLOSE,
             LOG_OPEN, LOG_CLOSE];
 
         if (temp[i] == ')') {
@@ -209,7 +216,7 @@ function Input() {
     function findMatchingExponentClose(array, openIndex) {
         let openBrackets = 1;
         let index = openIndex + 1;
-    
+
         while (index < array.length && openBrackets > 0) {
             if (array[index] === EXPONENT_OPEN) {
                 openBrackets++;
@@ -218,7 +225,7 @@ function Input() {
             }
             index++;
         }
-    
+
         return openBrackets === 0 ? index - 1 : -1;
     }
 
@@ -237,10 +244,10 @@ function Input() {
         An updated array of inputs with the fraction components added to it
         */
 
-        const limit = ['+', '-', '*', '(', ')', 
-            FRACTION_OPEN, FRACTION_CLOSE, 
-            UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE, 
-            EXPONENT_OPEN, EXPONENT_CLOSE, 
+        const limit = ['+', '-', '*', '(', ')',
+            FRACTION_OPEN, FRACTION_CLOSE,
+            UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE,
+            EXPONENT_OPEN, EXPONENT_CLOSE,
             LOG_OPEN, LOG_CLOSE];
 
         // if userInput only contains cursor, no action
@@ -359,19 +366,19 @@ function Input() {
             updated = deleteAt(updated, i); // FRACTION_OPEN of numerator
             return updated;
         }
-    }    
+    }
 
     /*----------------------Handling Integral--------------------*/
 
     function handleIntegral(arr, cursorIndex) {
-        arr = insertAt(arr, cursorIndex+1, UPPER_OPEN);
-        arr = insertAt(arr, cursorIndex+2, CURSOR);
-        arr = insertAt(arr, cursorIndex+3, UPPER_CLOSE);
-        arr = insertAt(arr, cursorIndex+4, LOWER_OPEN);
-        arr = insertAt(arr, cursorIndex+5, LOWER_CLOSE);
-        arr = insertAt(arr, cursorIndex+6, VALUE_OPEN);
-        arr = insertAt(arr, cursorIndex+7, VALUE_CLOSE);
-        arr.splice(cursorIndex+8, 1);
+        arr = insertAt(arr, cursorIndex + 1, UPPER_OPEN);
+        arr = insertAt(arr, cursorIndex + 2, CURSOR);
+        arr = insertAt(arr, cursorIndex + 3, UPPER_CLOSE);
+        arr = insertAt(arr, cursorIndex + 4, LOWER_OPEN);
+        arr = insertAt(arr, cursorIndex + 5, LOWER_CLOSE);
+        arr = insertAt(arr, cursorIndex + 6, VALUE_OPEN);
+        arr = insertAt(arr, cursorIndex + 7, VALUE_CLOSE);
+        arr.splice(cursorIndex + 8, 1);
 
         return arr;
     }
@@ -384,7 +391,7 @@ function Input() {
             }
         })
 
-        const upper = inputArr.slice(i+4, end)
+        const upper = inputArr.slice(i + 4, end)
         i = end + 1
 
         pairs.forEach((item) => {
@@ -393,7 +400,7 @@ function Input() {
             }
         })
 
-        const lower = inputArr.slice(i+1, end)
+        const lower = inputArr.slice(i + 1, end)
         i = end + 1
 
         pairs.forEach((item) => {
@@ -402,15 +409,15 @@ function Input() {
             }
         })
 
-        const value = inputArr.slice(i+1, end)
-    
+        const value = inputArr.slice(i + 1, end)
+
 
         return [{
             type: 'integral',
             value: processInput(value),
             upperBound: processInput(upper),
             lowerBound: processInput(lower)
-        }, end+1];
+        }, end + 1];
     }
 
     function deleteIntegral(inputArr, pairs, cursorIndex, upper_start, lower_start, value_start) {
@@ -443,13 +450,13 @@ function Input() {
             })
 
             // inputArr.splice(cursorIndex-4, 3)
-            inputArr.splice(upperStart-3, 3)
-            inputArr = deleteAt(inputArr, upperStart-3)
-            inputArr = deleteAt(inputArr, upperEnd-4)
-            inputArr = deleteAt(inputArr, lowerStart-5)
-            inputArr = deleteAt(inputArr, lowerEnd-6)
-            inputArr = deleteAt(inputArr, valueStart-7)
-            inputArr = deleteAt(inputArr, valueEnd-8)
+            inputArr.splice(upperStart - 3, 3)
+            inputArr = deleteAt(inputArr, upperStart - 3)
+            inputArr = deleteAt(inputArr, upperEnd - 4)
+            inputArr = deleteAt(inputArr, lowerStart - 5)
+            inputArr = deleteAt(inputArr, lowerEnd - 6)
+            inputArr = deleteAt(inputArr, valueStart - 7)
+            inputArr = deleteAt(inputArr, valueEnd - 8)
 
             return inputArr;
 
@@ -475,16 +482,16 @@ function Input() {
             })
 
             // inputArr.splice(cursorIndex-6, 3)
-            inputArr.splice(upperStart-3, 3)
-            inputArr = deleteAt(inputArr, upperStart-3)
-            inputArr = deleteAt(inputArr, upperEnd-4)
-            inputArr = deleteAt(inputArr, lowerStart-5)
-            inputArr = deleteAt(inputArr, lowerEnd-6)
-            inputArr = deleteAt(inputArr, valueStart-7)
-            inputArr = deleteAt(inputArr, valueEnd-8)
+            inputArr.splice(upperStart - 3, 3)
+            inputArr = deleteAt(inputArr, upperStart - 3)
+            inputArr = deleteAt(inputArr, upperEnd - 4)
+            inputArr = deleteAt(inputArr, lowerStart - 5)
+            inputArr = deleteAt(inputArr, lowerEnd - 6)
+            inputArr = deleteAt(inputArr, valueStart - 7)
+            inputArr = deleteAt(inputArr, valueEnd - 8)
 
             return inputArr;
-        } else if (valueStart !== null && cursorIndex+1) {
+        } else if (valueStart !== null && cursorIndex + 1) {
             pairs.forEach((item) => {
                 if (item[0] === valueStart) {
                     valueEnd = item[1]
@@ -506,25 +513,25 @@ function Input() {
             })
 
             // inputArr.splice(cursorIndex-8, 3)
-            inputArr.splice(upperStart-3, 3)
-            inputArr = deleteAt(inputArr, upperStart-3)
-            inputArr = deleteAt(inputArr, upperEnd-4)
-            inputArr = deleteAt(inputArr, lowerStart-5)
-            inputArr = deleteAt(inputArr, lowerEnd-6)
-            inputArr = deleteAt(inputArr, valueStart-7)
-            inputArr = deleteAt(inputArr, valueEnd-8)
+            inputArr.splice(upperStart - 3, 3)
+            inputArr = deleteAt(inputArr, upperStart - 3)
+            inputArr = deleteAt(inputArr, upperEnd - 4)
+            inputArr = deleteAt(inputArr, lowerStart - 5)
+            inputArr = deleteAt(inputArr, lowerEnd - 6)
+            inputArr = deleteAt(inputArr, valueStart - 7)
+            inputArr = deleteAt(inputArr, valueEnd - 8)
 
             return inputArr;
         }
     }
 
     /*----------------------Handling Logarithm--------------------*/
-    
+
     function handleLogarithm(arr, cursorIndex) {
-        arr = insertAt(arr, cursorIndex+1, LOG_OPEN);
-        arr = insertAt(arr, cursorIndex+2, CURSOR)
-        arr = insertAt(arr, cursorIndex+3, LOG_CLOSE);
-        arr.splice(cursorIndex+4, 1);
+        arr = insertAt(arr, cursorIndex + 1, LOG_OPEN);
+        arr = insertAt(arr, cursorIndex + 2, CURSOR)
+        arr = insertAt(arr, cursorIndex + 3, LOG_CLOSE);
+        arr.splice(cursorIndex + 4, 1);
 
         return arr;
     }
@@ -542,7 +549,7 @@ function Input() {
         return [{
             type: 'log',
             value: processInput(logContent),
-        }, endIndex+1];
+        }, endIndex + 1];
     }
 
     /*----------------------Handling Square Root--------------------*/
@@ -550,7 +557,7 @@ function Input() {
     function findMatchingSquareRootClose(array, openIndex) {
         let openBrackets = 1;
         let index = openIndex + 1;
-    
+
         while (index < array.length && openBrackets > 0) {
             if (array[index] === SQUARE_ROOT_OPEN) {
                 openBrackets++;
@@ -559,7 +566,7 @@ function Input() {
             }
             index++;
         }
-    
+
         return openBrackets === 0 ? index - 1 : -1;
     }
 
@@ -619,47 +626,47 @@ function Input() {
                 selection.addRange(range); // Apply new selection
             }
 
-        } 
+        }
 
         // if 'key' is non-arrow keys
         else if (/^[a-zA-Z0-9+\-*()=/^]$/.test(e.key)) {
             if (key === '/') {
                 copy = handleFraction(copy, cursorIndex);
-            } 
+            }
             // else if (copy.length === 1) {
             //     copy = insertAt(copy, cursorIndex, key)
             //     setUserInput(copy)
             // }
             else if (key === '^') {
                 copy = handleExponents(copy, cursorIndex)
-            } 
+            }
             else if (key === 't' && isSqrtPressed(copy, cursorIndex)) {
                 copy = handleSqrtPressed(copy, cursorIndex)
             }
-            else if (key === 't' && copy[cursorIndex-1] === 'n' && copy[cursorIndex-2] === 'i') {
+            else if (key === 't' && copy[cursorIndex - 1] === 'n' && copy[cursorIndex - 2] === 'i') {
                 copy = insertAt(copy, cursorIndex, key)
                 copy = handleIntegral(copy, cursorIndex)
             }
-            else if (key === 'g' && copy[cursorIndex-1] === 'o' && copy[cursorIndex-2] === 'l') {
+            else if (key === 'g' && copy[cursorIndex - 1] === 'o' && copy[cursorIndex - 2] === 'l') {
                 copy = insertAt(copy, cursorIndex, key)
                 copy = handleLogarithm(copy, cursorIndex)
-            } else if (key === 'o' && copy[cursorIndex-1] === 'l' && copy[cursorIndex+2] === 'g') {
+            } else if (key === 'o' && copy[cursorIndex - 1] === 'l' && copy[cursorIndex + 2] === 'g') {
                 copy = insertAt(copy, cursorIndex, key)
-                copy = swapItems(copy, cursorIndex+1, cursorIndex+2)
-                copy = handleLogarithm(copy, cursorIndex+1)
-            } else if (key === 'l' && copy[cursorIndex+2] === 'o' && copy[cursorIndex+3] === 'g') {
+                copy = swapItems(copy, cursorIndex + 1, cursorIndex + 2)
+                copy = handleLogarithm(copy, cursorIndex + 1)
+            } else if (key === 'l' && copy[cursorIndex + 2] === 'o' && copy[cursorIndex + 3] === 'g') {
                 copy = insertAt(copy, cursorIndex, key)
-                copy = insertAt(copy, cursorIndex+4, CURSOR)
-                copy.splice(cursorIndex+1, 1)
-                copy = handleLogarithm(copy, cursorIndex+2)
-            } else if (key === 'n' && copy[cursorIndex-1] === 'l') {
+                copy = insertAt(copy, cursorIndex + 4, CURSOR)
+                copy.splice(cursorIndex + 1, 1)
+                copy = handleLogarithm(copy, cursorIndex + 2)
+            } else if (key === 'n' && copy[cursorIndex - 1] === 'l') {
                 copy = insertAt(copy, cursorIndex, key)
                 copy = handleLogarithm(copy, cursorIndex)
-            } else if (key === 'l' && copy[cursorIndex+1] === 'n') {
+            } else if (key === 'l' && copy[cursorIndex + 1] === 'n') {
                 copy = insertAt(copy, cursorIndex, key)
-                copy = insertAt(copy, cursorIndex+3, CURSOR)
+                copy = insertAt(copy, cursorIndex + 3, CURSOR)
                 copy.splice(cursorIndex, 1)
-                copy = handleLogarithm(copy, cursorIndex+1)
+                copy = handleLogarithm(copy, cursorIndex + 1)
             }
             else {
                 copy = insertAt(copy, cursorIndex, key)
@@ -667,7 +674,7 @@ function Input() {
         }
 
         else if (key === "Backspace") {
-            const prevChar = copy[cursorIndex-1];
+            const prevChar = copy[cursorIndex - 1];
 
             if (cursorIndex <= 0) return copy;
 
@@ -695,7 +702,7 @@ function Input() {
 
                 setUserInput(copy);
             } else if (prevChar === FRACTION_OPEN) {
-                copy = deleteFraction(copy, cursorIndex-1)
+                copy = deleteFraction(copy, cursorIndex - 1)
                 setUserInput(copy)
             }
 
@@ -736,14 +743,14 @@ function Input() {
 
             // deleting integral
             else if (prevChar === UPPER_OPEN) {
-                copy = deleteIntegral(copy, int_pairs, cursorIndex, cursorIndex-1, undefined, undefined)
+                copy = deleteIntegral(copy, int_pairs, cursorIndex, cursorIndex - 1, undefined, undefined)
             } else if (prevChar === LOWER_OPEN) {
-                copy = deleteIntegral(copy, int_pairs, cursorIndex, undefined, cursorIndex-1, undefined)
+                copy = deleteIntegral(copy, int_pairs, cursorIndex, undefined, cursorIndex - 1, undefined)
                 setUserInput(copy);
             } else if (prevChar === VALUE_OPEN &&
-                cursorIndex+1 < copy.length-1) {
-                    copy = deleteIntegral(copy, int_pairs, cursorIndex, undefined, undefined, cursorIndex-1);
-                    setUserInput(copy);
+                cursorIndex + 1 < copy.length - 1) {
+                copy = deleteIntegral(copy, int_pairs, cursorIndex, undefined, undefined, cursorIndex - 1);
+                setUserInput(copy);
             }
 
             // else if (prevChar === UPPER_OPEN) {
@@ -868,7 +875,7 @@ function Input() {
             // then we move the cursor to the upperbound
             else if (prevChar === VALUE_OPEN) {
                 copy = insertAt(copy, copy.indexOf(UPPER_CLOSE), CURSOR)
-                copy.splice(cursorIndex+1, 1)
+                copy.splice(cursorIndex + 1, 1)
                 setUserInput(copy)
             }
 
@@ -888,14 +895,14 @@ function Input() {
             } else if (prevChar === LOG_OPEN) {
 
                 let logCloseIndex;
-    
+
                 // Find the matching LOG_CLOSE for this LOG_OPEN
                 log_pairs.forEach(([openIdx, closeIdx]) => {
                     if (openIdx === cursorIndex - 1) {
                         logCloseIndex = closeIdx;
                     }
                 });
-    
+
                 copy = deleteAt(copy, logCloseIndex);
                 copy.splice(cursorIndex - 2, 2);
 
@@ -903,7 +910,7 @@ function Input() {
             } else if ('l' === prevChar || 'o' === prevChar || 'g' === prevChar) {
                 let logCloseIndex;
                 let logOpenIndex;
-    
+
                 // Find a pair of LOG_OPEN and LOG_CLOSE
                 log_pairs.forEach(([openIdx, closeIdx]) => {
                     if (openIdx === cursorIndex + 3 || openIdx === cursorIndex + 2 || openIdx === cursorIndex + 1) {
@@ -911,7 +918,7 @@ function Input() {
                         logCloseIndex = closeIdx;
                     }
                 });
-    
+
                 if (logOpenIndex !== undefined && logCloseIndex !== undefined) {
                     copy = deleteAt(copy, logCloseIndex);
                     copy = deleteAt(copy, logOpenIndex);
@@ -922,15 +929,15 @@ function Input() {
             }
 
             else {
-                copy.splice(cursorIndex-1, 1)
+                copy.splice(cursorIndex - 1, 1)
                 setUserInput(copy)
             }
-            
-            
+
+
         }
 
         else if (key === "ArrowRight") {
-            if (cursorIndex >= copy.length-1) {
+            if (cursorIndex >= copy.length - 1) {
                 setUserInput(copy)
             }
 
@@ -951,10 +958,10 @@ function Input() {
                 if (copy[cursorIndex + 3] == EMPTY_EXPONENT) {
                     copy = deleteAt(copy, cursorIndex + 3)
                 }
-            } else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+            } else if (copy[cursorIndex] == EXPONENT_CLOSE &&
                 copy[cursorIndex - 1] == EXPONENT_OPEN) {
-                    copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
-                }
+                copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
+            }
 
             // square root logic
             else if (copy[cursorIndex + 1] == '√') {
@@ -963,46 +970,46 @@ function Input() {
                 if (copy[cursorIndex + 3] == EMPTY_SQUARE_ROOT) {
                     copy = deleteAt(copy, cursorIndex + 3)
                 }
-            } else if (copy[cursorIndex] == SQUARE_ROOT_CLOSE && 
+            } else if (copy[cursorIndex] == SQUARE_ROOT_CLOSE &&
                 copy[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
-                    copy = insertAt(copy, cursorIndex, EMPTY_SQUARE_ROOT) 
-                }
+                copy = insertAt(copy, cursorIndex, EMPTY_SQUARE_ROOT)
+            }
 
             // integral logic
-            else if (copy[cursorIndex+1] === 'i' && copy[cursorIndex+2] === 'n' && copy[cursorIndex+3] === 't') {
-                copy = insertAt(copy, cursorIndex+5, CURSOR)
+            else if (copy[cursorIndex + 1] === 'i' && copy[cursorIndex + 2] === 'n' && copy[cursorIndex + 3] === 't') {
+                copy = insertAt(copy, cursorIndex + 5, CURSOR)
                 copy.splice(cursorIndex, 1)
                 setUserInput(copy)
-            } else if (copy[cursorIndex+1] ===UPPER_CLOSE) {
-                copy = insertAt(copy, cursorIndex+3, CURSOR)
+            } else if (copy[cursorIndex + 1] === UPPER_CLOSE) {
+                copy = insertAt(copy, cursorIndex + 3, CURSOR)
                 copy.splice(cursorIndex, 1)
                 setUserInput(copy)
-            } else if (copy[cursorIndex+1] === LOWER_CLOSE) {
-                copy = insertAt(copy, cursorIndex+3, CURSOR)
-                copy.splice(cursorIndex,1)
-                setUserInput(copy)
-            } 
-
-            // logarithm logic
-            else if ((copy[cursorIndex+1] === LOG_OPEN || copy[cursorIndex+1] === LOG_CLOSE)) {
-                copy = insertAt(copy, cursorIndex+2, CURSOR)
+            } else if (copy[cursorIndex + 1] === LOWER_CLOSE) {
+                copy = insertAt(copy, cursorIndex + 3, CURSOR)
                 copy.splice(cursorIndex, 1)
                 setUserInput(copy)
             }
-            
+
+            // logarithm logic
+            else if ((copy[cursorIndex + 1] === LOG_OPEN || copy[cursorIndex + 1] === LOG_CLOSE)) {
+                copy = insertAt(copy, cursorIndex + 2, CURSOR)
+                copy.splice(cursorIndex, 1)
+                setUserInput(copy)
+            }
+
             else {
-                copy = swapItems(copy, cursorIndex, cursorIndex+1)
+                copy = swapItems(copy, cursorIndex, cursorIndex + 1)
                 setUserInput(copy)
             }
         }
 
         else if (key === "ArrowLeft") {
-            const prevChar = copy[cursorIndex-1]
+            const prevChar = copy[cursorIndex - 1]
 
             if (cursorIndex <= 0) {
                 setUserInput(copy)
-            } 
-            
+            }
+
             // fraction logic
             else if (
                 cursorIndex > 3 &&
@@ -1020,11 +1027,11 @@ function Input() {
                 if (copy[cursorIndex + 1] == EXPONENT_CLOSE) {
                     copy = insertAt(copy, cursorIndex + 1, EMPTY_EXPONENT);
                 }
-            } 
-            else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+            }
+            else if (copy[cursorIndex] == EXPONENT_CLOSE &&
                 copy[cursorIndex - 2] == EMPTY_EXPONENT) {
-                    copy = deleteAt(copy, cursorIndex - 2)
-                }
+                copy = deleteAt(copy, cursorIndex - 2)
+            }
 
             // square root logic
             else if (prevChar == SQUARE_ROOT_OPEN) {
@@ -1033,40 +1040,40 @@ function Input() {
                 if (copy[cursorIndex + 1] == SQUARE_ROOT_CLOSE) {
                     copy = insertAt(copy, cursorIndex + 1, EMPTY_SQUARE_ROOT);
                 }
-            } else if (copy[cursorIndex] == SQUARE_ROOT_CLOSE && 
+            } else if (copy[cursorIndex] == SQUARE_ROOT_CLOSE &&
                 copy[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
-                    arr = deleteAt(arr, cursorIndex - 2)
-                }
+                arr = deleteAt(arr, cursorIndex - 2)
+            }
 
             // integral logic
-            else if (copy[cursorIndex-1] === UPPER_OPEN) {
-                copy = insertAt(copy, cursorIndex-4, CURSOR)
+            else if (copy[cursorIndex - 1] === UPPER_OPEN) {
+                copy = insertAt(copy, cursorIndex - 4, CURSOR)
                 cursorIndex = copy.lastIndexOf(CURSOR)
                 copy.splice(cursorIndex, 1)
                 setUserInput(copy)
-            } else if (copy[cursorIndex-1] === LOWER_OPEN) {
-                copy = insertAt(copy, cursorIndex-2, CURSOR)
+            } else if (copy[cursorIndex - 1] === LOWER_OPEN) {
+                copy = insertAt(copy, cursorIndex - 2, CURSOR)
                 cursorIndex = copy.lastIndexOf(CURSOR)
                 copy.splice(cursorIndex, 1)
                 setUserInput(copy)
-            } else if (copy[cursorIndex-1] === VALUE_OPEN) {
-                copy = insertAt(copy, cursorIndex-2, CURSOR)
+            } else if (copy[cursorIndex - 1] === VALUE_OPEN) {
+                copy = insertAt(copy, cursorIndex - 2, CURSOR)
                 cursorIndex = copy.lastIndexOf(CURSOR)
                 copy.splice(cursorIndex, 1)
                 setUserInput(copy)
             }
 
             else {
-                copy = swapItems(copy, cursorIndex-1, cursorIndex)
+                copy = swapItems(copy, cursorIndex - 1, cursorIndex)
                 setUserInput(copy);
             }
         }
-        
+
 
         else if (key === "ArrowUp") {
             let start = null;
             let end = null;
-            for (let i=0; i< frac_pairs.length; i++) {
+            for (let i = 0; i < frac_pairs.length; i++) {
                 if (cursorIndex > frac_pairs[i][0] && cursorIndex < frac_pairs[i][1]) {
                     start = frac_pairs[i][0];
                     end = frac_pairs[i][1];
@@ -1080,28 +1087,28 @@ function Input() {
                 if (copy[cursorIndex + 3] == EMPTY_EXPONENT) {
                     copy = deleteAt(copy, cursorIndex + 3)
                 }
-            } else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+            } else if (copy[cursorIndex] == EXPONENT_CLOSE &&
                 copy[cursorIndex - 1] == EXPONENT_OPEN) {
-                    copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
-                }
-    
-            else if (start != null && start > 1 && copy[start-1] == '/') {
-                copy = insertAt(deleteAt(copy, cursorIndex),start-2, CURSOR);
+                copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
+            }
+
+            else if (start != null && start > 1 && copy[start - 1] == '/') {
+                copy = insertAt(deleteAt(copy, cursorIndex), start - 2, CURSOR);
             }
 
             else if (cursorIndex > int_pairs[1][0] && cursorIndex < int_pairs[1][1]) {
                 const lower_diff = cursorIndex - int_pairs[1][0]
 
-                if (lower_diff > int_pairs[0][1]-int_pairs[0][0]) {
+                if (lower_diff > int_pairs[0][1] - int_pairs[0][0]) {
                     copy = insertAt(copy, int_pairs[0][1], CURSOR)
-                    copy.splice(cursorIndex+1,1)
+                    copy.splice(cursorIndex + 1, 1)
                 } else {
-                    copy = insertAt(copy, int_pairs[0][0]+lower_diff, CURSOR)
-                    copy.splice(cursorIndex+1, 1)
+                    copy = insertAt(copy, int_pairs[0][0] + lower_diff, CURSOR)
+                    copy.splice(cursorIndex + 1, 1)
                 }
             } else if (cursorIndex > int_pairs[2][0] && cursorIndex < int_pairs[2][1]) {
                 copy = insertAt(copy, int_pairs[0][1], CURSOR)
-                copy.splice(cursorIndex+1,1)
+                copy.splice(cursorIndex + 1, 1)
             }
         }
 
@@ -1109,7 +1116,7 @@ function Input() {
 
             let start = null;
             let end = null;
-            for (let i=0; i< frac_pairs.length; i++) {
+            for (let i = 0; i < frac_pairs.length; i++) {
                 if (cursorIndex > frac_pairs[i][0] && cursorIndex < frac_pairs[i][1]) {
                     start = frac_pairs[i][0];
                     end = frac_pairs[i][1];
@@ -1123,33 +1130,32 @@ function Input() {
                 if (copy[cursorIndex + 1] == EXPONENT_CLOSE) {
                     copy = insertAt(copy, cursorIndex + 1, EMPTY_EXPONENT);
                 }
-            } 
-            else if (copy[cursorIndex] == EXPONENT_CLOSE && 
+            }
+            else if (copy[cursorIndex] == EXPONENT_CLOSE &&
                 copy[cursorIndex - 2] == EMPTY_EXPONENT) {
-                    copy = deleteAt(copy, cursorIndex - 2)
-                }
-    
-            else if (start != null && copy[end+1] == '/') {
-                copy = deleteAt(insertAt(copy,end+3, CURSOR), cursorIndex)
+                copy = deleteAt(copy, cursorIndex - 2)
+            }
+
+            else if (start != null && copy[end + 1] == '/') {
+                copy = deleteAt(insertAt(copy, end + 3, CURSOR), cursorIndex)
             }
 
             else if (cursorIndex > int_pairs[0][0] && cursorIndex < int_pairs[0][1]) {
                 const upper_diff = cursorIndex - int_pairs[0][0];
-                
-                if (upper_diff > int_pairs[1][1]-int_pairs[1][0]) {
+
+                if (upper_diff > int_pairs[1][1] - int_pairs[1][0]) {
                     copy = insertAt(copy, int_pairs[1][1], CURSOR)
                     copy.splice(cursorIndex, 1)
                 } else {
-                    copy = insertAt(copy, int_pairs[1][0]+upper_diff, CURSOR)
-                    copy.splice(cursorIndex,1)
+                    copy = insertAt(copy, int_pairs[1][0] + upper_diff, CURSOR)
+                    copy.splice(cursorIndex, 1)
                 }
             } else if (cursorIndex > int_pairs[2][0] && cursorIndex < int_pairs[2][1]) {
                 copy = insertAt(copy, int_pairs[1][1], CURSOR)
-                copy.splice(cursorIndex+1,1)
+                copy.splice(cursorIndex + 1, 1)
             }
 
         }
-        console.log(frac_pairs);
         setUserInput(copy);
     };
 
@@ -1166,7 +1172,7 @@ function Input() {
 
 
         while (i < inputArr.length) {
-            
+
             const token = inputArr[i];
 
             if (token === CURSOR) {
@@ -1183,7 +1189,7 @@ function Input() {
             }
 
             else if (token === EMPTY_EXPONENT) {
-                result.push({type: 'empty_exponent'})
+                result.push({ type: 'empty_exponent' })
                 i++
             } else if (token === '^') {
                 let base = processInput(findBase([...inputArr].slice(0, i)))
@@ -1204,7 +1210,7 @@ function Input() {
             }
 
             else if (token == EMPTY_SQUARE_ROOT) {
-                result.push({type : 'empty_square_root'})
+                result.push({ type: 'empty_square_root' })
                 i++
             } else if (token === '√') {
                 let closeIndex = findMatchingSquareRootClose(inputArr, i + 1)
@@ -1222,7 +1228,7 @@ function Input() {
 
             else if (/^[a-zA-Z0-9+\-*()=]+$/i.test(token)) {
 
-                if (token === 'i' && inputArr[i+1] === 'n' && inputArr[i+2] === 't') {
+                if (token === 'i' && inputArr[i + 1] === 'n' && inputArr[i + 2] === 't') {
                     let [temp, i_temp] = processIntegral(inputArr, int_pairs, i);
                     result.push(temp);
                     i = i_temp;
@@ -1251,13 +1257,13 @@ function Input() {
         return result;
     }
 
-    
+
     function displayText(nodeList) {
         return nodeList.map((node, index) => {
             switch (node.type) {
                 case 'text':
                     return (<span key={index}>{node.value}</span>);
-                
+
                 case 'exponent':
                     return (
                         <span key={index}>
@@ -1270,17 +1276,17 @@ function Input() {
 
                 case 'square-root':
                     return (
-                        <span key={index} className = "square-root">
-                        <span>√</span>
-                        <span>(</span>
-                        <span className='radicand'>{displayText(node.value)}</span>
-                        <span>)</span>
-                    </span>
+                        <span key={index} className="square-root">
+                            <span>√</span>
+                            <span>(</span>
+                            <span className='radicand'>{displayText(node.value)}</span>
+                            <span>)</span>
+                        </span>
                     )
 
                 case 'empty_square_root':
                     return (
-                        <span key={index} className="empty-square-root"/>
+                        <span key={index} className="empty-square-root" />
                     );
 
                 case 'fraction':
@@ -1290,12 +1296,12 @@ function Input() {
                         <span className="denominator">{displayText(node.denominator)}</span>
                     </span>
                     );
-                
+
                 case 'integral':
                     return (<span className='integral' key={index}>
                         <span className='upper-bound'>{displayText(node.upperBound)}</span>
                         <span className='integral-sign'>
-                        <big>∫</big>
+                            <big>∫</big>
                         </span>
                         <span className='integral-value'>{displayText(node.value)}</span>
                         <span>dx</span>

@@ -1,6 +1,6 @@
 // GraphCanvas.jsx
 import React, { useRef, useEffect, useState } from 'react';
-import { drawGrid, drawAxis, drawGraph, drawLabel } from '../utils/canvasDraw';
+import { drawGrid, drawAxis, drawGraph, drawLabel, isValidEquation } from '../utils/canvasDraw';
 import PlusLogo from '../assets/plus.svg';
 import MinusLogo from '../assets/minus.svg';
 import HomeLogo from '../assets/home.svg';
@@ -44,7 +44,7 @@ function computeFunctionY(equation, x) {
     }
 }
 
-export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equation}) {
+export default function GraphCanvas({ equation, graphWidth, graphHeight }) {
     const canvasRef = useRef(null);
     const isDragging = useRef(false);
     // Default states
@@ -67,28 +67,31 @@ export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equ
         const xValue = (mx - origin.x) / scale;
 
         for (let i = 0; i < equationArray.length; i++) {
-            const eq = equationArray[i];
-            const rhs = eq.split('=')[1].trim();
-            const yFunction = new Function('x', `return ${rhs}`);
+            const eq = equationArray[i].expression;
+            if (isValidEquation(eq)) {
 
-            let yVal;
-            try {
-                yVal = yFunction(xValue);
-                if (!Number.isFinite(yVal)) {
+                const rhs = eq.split('=')[1].trim();
+                const yFunction = new Function('x', `return ${rhs}`);
+
+                let yVal;
+                try {
+                    yVal = yFunction(xValue);
+                    if (!Number.isFinite(yVal)) {
+                        continue;
+                    }
+                } catch {
                     continue;
                 }
-            } catch {
-                continue;
-            }
 
-            // Convert that yVal to canvas Y
-            const graphCanvasY = origin.y - yVal * scale;
-            // The actual distance from mouse to that curve
-            const dist = Math.abs(my - graphCanvasY);
+                // Convert that yVal to canvas Y
+                const graphCanvasY = origin.y - yVal * scale;
+                // The actual distance from mouse to that curve
+                const dist = Math.abs(my - graphCanvasY);
 
-            if (dist < minDist) {
-                minDist = dist;
-                selectedEq = eq;
+                if (dist < minDist) {
+                    minDist = dist;
+                    selectedEq = eq;
+                }
             }
         }
 
@@ -165,7 +168,6 @@ export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equ
         drawAxis(ctx, origin, graphWidth, graphHeight);
         drawLabel(ctx, origin, graphWidth, graphHeight, scale);
         drawGraph(ctx, origin, graphWidth, scale, equation);
-
         // ----- Draw Marker if Active -----
         if (marker.active) {
             const markerCanvasX = origin.x + marker.x * scale;
@@ -218,7 +220,7 @@ export default function GraphCanvas({graphWidth, graphEquation, graphHeight, equ
 
             ctx.restore(); // restore shadow settings, fill style, etc.
         }
-    }, [graphWidth, graphEquation, graphHeight, equation, origin, scale, marker]);
+    }, [graphWidth, graphHeight, equation, origin, scale, marker]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
