@@ -10,7 +10,6 @@ const MainPage = () => {
     const [graphHeight, setGraphHeight] = useState(window.innerHeight);
     const [equation, setEquation] = useState([{ expression: "", color: "black"}]);
     const [inputWidth, setInputWidth] = useState(window.innerWidth * 0.30);
-    const [inputValue, setInputValues] = useState([{index: 1, value: ""}]);
 
     const sidebarRef = useRef(null);
     const resizerRef = useRef(null);
@@ -83,7 +82,7 @@ const MainPage = () => {
         <div className='graph-layout'>
             {!hidden && (
                 <div className='input-section' ref={sidebarRef} style={{ width: inputWidth }}>
-                    <InputList setEquation={setEquation} equation={equation} hidden={hidden} setHidden={setHidden} />
+                    <InputList setEquation={setEquation} equation={equation} isHidden={isHidden}/>
                     <div className="resizer" ref={resizerRef} onMouseDown={handleMouseDown} />
                 </div>
             )}
