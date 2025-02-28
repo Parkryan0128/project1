@@ -4,23 +4,22 @@ import DoubleLeftIcon from '../assets/double_left.png';
 import RemoveIcon from '../assets/x.png';
 import './InputList.css'
 
-function InputList({ hidden, setHidden, onInputChange }) {
-    const [rows, setRows] = useState([{index: 1, value: ""}]);
+function InputList({ isHidden, onInputChange, inputValue}) {
 
     const addRows = () => {
-        const newIndex = rows.length + 1;
-        setRows([...rows, {index: newIndex, value: ""}]);
+        const newIndex = inputValue.length + 1;
+        const updatedRows = [...inputValue, {index: newIndex, value: ""}];
+        onInputChange(updatedRows);
     };
 
     const removeRows = (index) => {
-        let updatedRows = rows.filter(row => row.index !== index);
+        let updatedRows = inputValue.filter(row => row.index !== index);
         updatedRows = updateIndexNumber(updatedRows);
 
         if (updatedRows.length === 0) {
             updatedRows = [{index: 1, value: ""}];
         }
         
-        setRows(updatedRows);
         onInputChange(updatedRows);
     };
 
@@ -32,18 +31,16 @@ function InputList({ hidden, setHidden, onInputChange }) {
     };
 
     const handleInputChange = (index, newValue) => {
-        const updatedRows = rows.map(row =>
+        const updatedRows = inputValue.map(row =>
             row.index === index ? {...row, value: newValue} : row
         );
-        
-        setRows(updatedRows);
 
         if (onInputChange) {
             onInputChange(updatedRows);
         }
     };
-
-    const generateInputRows = rows.map((row) => {
+    
+    const generateInputRows = inputValue.map((row) => {
         return (
             <div className='input-list__row' key={row.index}>
                 <div className='input-list__index'>{row.index}</div>
@@ -65,7 +62,7 @@ function InputList({ hidden, setHidden, onInputChange }) {
     });
 
     const prepareSingleInputRow = () => {
-        const lastIndex = rows.length + 1;
+        const lastIndex = inputValue.length + 1;
 
         return (
             <div className='input-list__row' key={lastIndex}>
@@ -74,36 +71,27 @@ function InputList({ hidden, setHidden, onInputChange }) {
                     <input
                         type='text'
                         className='input-list__field'
-                        placeholder='Add a new row'
                     />   
                 </div>
             </div>)
     }
 
-    const isHidden = () => {
-        setHidden(true)
-    }
-
     return (
         <div className='input-list'>    
-            <div className={hidden ? 'input-list__row--hidden' : 'input-list__row--display'}>
-                <div className='input-list__main-container'>
-                    <div className='input-list__container'> 
-                        <div className='input-list__tool-bar'>
-                            <button className='input-list__btn' onClick={addRows}>
-                                <img src={PlusIcon} alt="Add Row" style={{ width: '50%', height: '50%' }} draggable="false"/>
-                            </button>
-                            <button className='input-list__btn' onClick={isHidden}>
-                                <img src={DoubleLeftIcon} alt="Hide Menu Bar" style={{ width: '50%', height: '50%' }} draggable="false"/>
-                            </button>
-                        </div>
-                    </div>
-
-                    {generateInputRows}
-                    {prepareSingleInputRow()}
-
+            <div className='input-list__container'> 
+                <div className='input-list__tool-bar'>
+                    <button className='input-list__btn' onClick={addRows}>
+                        <img src={PlusIcon} alt="Add Row" style={{ width: '50%', height: '50%' }} draggable="false"/>
+                    </button>
+                    <button className='input-list__btn' onClick={isHidden}>
+                        <img src={DoubleLeftIcon} alt="Hide Menu Bar" style={{ width: '50%', height: '50%' }} draggable="false"/>
+                    </button>
                 </div>
             </div>
+
+            {generateInputRows}
+            {prepareSingleInputRow()}
+
         </div>
     );
 }

@@ -8,9 +8,10 @@ const MainPage = () => {
     const [hidden, setHidden] = useState(false);
     const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.70);
     const [graphHeight, setGraphHeight] = useState(window.innerHeight);
-    const [inputValue, setInputValues] = useState([]);
+    // const [inputValue, setInputValues] = useState([]);
     const [equation, setEquation] = useState([]);
     const [inputWidth, setInputWidth] = useState(window.innerWidth * 0.30);
+    const [inputValue, setInputValues] = useState([{index: 1, value: ""}]);
 
     const sidebarRef = useRef(null);
     const resizerRef = useRef(null);
@@ -66,9 +67,11 @@ const MainPage = () => {
         if (hidden) {
             setInputWidth(0);
             setGraphWidth(window.innerWidth);
+            setGraphHeight(window.innerHeight);
         } else {
             setInputWidth(window.innerWidth * 0.30);
             setGraphWidth(window.innerWidth * 0.70);
+            setGraphHeight(window.innerHeight);
         }
     }, [hidden]);
 
@@ -140,12 +143,15 @@ const MainPage = () => {
         }
     };
 
+    const isHidden = () => {
+        setHidden(true);
+    }
 
     return (
         <div className='graph-layout'>
             {!hidden && (
                 <div className='input-section' ref={sidebarRef} style={{ width: inputWidth }}>
-                    <InputList hidden={hidden} setHidden={setHidden} setGraphWidth={setGraphWidth} onInputChange={handleInputChange} inputValue={inputValue}/>
+                    <InputList  isHidden={isHidden} onInputChange={handleInputChange} inputValue={inputValue}/>
                     <div className="resizer" ref={resizerRef} onMouseDown={handleMouseDown} />
                 </div>
             )}
