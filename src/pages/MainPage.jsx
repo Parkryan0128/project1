@@ -8,10 +8,9 @@ const MainPage = () => {
     const [hidden, setHidden] = useState(false);
     const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.70);
     const [graphHeight, setGraphHeight] = useState(window.innerHeight);
-
     const [equation, setEquation] = useState([{ expression: "", color: "black"}]);
-
     const [inputWidth, setInputWidth] = useState(window.innerWidth * 0.30);
+    const [inputValue, setInputValues] = useState([{index: 1, value: ""}]);
 
     const sidebarRef = useRef(null);
     const resizerRef = useRef(null);
@@ -23,41 +22,17 @@ const MainPage = () => {
         if (hidden) {
             setInputWidth(0);
             setGraphWidth(window.innerWidth);
+            setGraphHeight(window.innerHeight);
         } else {
             setInputWidth(window.innerWidth * 0.30);
             setGraphWidth(window.innerWidth * 0.70);
+            setGraphHeight(window.innerHeight);
         }
     }, [hidden]);
 
-    // handles input changes and updates the equation state dynamically
-    // const handleInputChange = (rows) => {
-    //     setInputValues(rows); // update inputValue state
-
-    //     // update equation array immediately
-    //     const newEquations = rows.map((row) => {
-    //         const input = row.value.replace(/\s+/g, ''); // remove extra spaces
-
-    //         // check if the input is just y (invalid)
-    //         if (input === 'y') {
-    //             console.log("Invalid input:", input);
-    //             return null; // skip this equation
-    //         }
-
-    //         if (isValidEquation(input)) {
-    //             let formattedEquation = input;
-    //             if (!input.includes('=')) {
-    //                 formattedEquation = `y=${input}`; // Format as y = expression if no =
-    //             }
-    //             return formattedEquation;
-    //         } else {
-    //             return null; // skip invalid equations
-    //         }
-    //     });
-
-    //     // filter out null entries (invalid or skipped equations)
-    //     const filteredEquations = newEquations.filter(eq => eq !== null);
-    //     // setEquation(filteredEquations);
-    // };
+    useEffect(() => {
+        setGraphWidth(window.innerWidth - inputWidth);
+    }, [inputWidth]);
 
     const handleMouseDown = (e) => {
         e.preventDefault();
@@ -97,6 +72,12 @@ const MainPage = () => {
         }
     };
 
+    const isHidden = () => {
+        setInputWidth(0); // Shrink sidebar width first
+        setTimeout(() => {
+            setHidden(true);
+        }, 300);
+    }
 
     return (
         <div className='graph-layout'>

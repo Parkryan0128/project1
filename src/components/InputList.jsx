@@ -28,36 +28,27 @@ function InputList({ hidden, setHidden, equation, setEquation }) {
                     <input
                         type='text'
                         className='input-list__field'
-                        placeholder='Add a new row'
                     />   
                 </div>
             </div>)
     }
 
-    const isHidden = () => {
-        setHidden(true)
-    }
-
     return (
         <div className='input-list'>    
-            <div className={hidden ? 'input-list__row--hidden' : 'input-list__row--display'}>
-                <div className='input-list__main-container'>
-                    <div className='input-list__container'> 
-                        <div className='input-list__tool-bar'>
-                            <button className='input-list__btn' onClick={addRows}>
-                                <img src={PlusIcon} alt="Add Row" style={{ width: '50%', height: '50%' }} draggable="false"/>
-                            </button>
-                            <button className='input-list__btn' onClick={isHidden}>
-                                <img src={DoubleLeftIcon} alt="Hide Menu Bar" style={{ width: '50%', height: '50%' }} draggable="false"/>
-                            </button>
-                        </div>
-                    </div>
-
-                    {generateInputRows}
-                    {prepareSingleInputRow()}
-
+            <div className='input-list__container'> 
+                <div className='input-list__tool-bar'>
+                    <button className='input-list__btn' onClick={addRows}>
+                        <img src={PlusIcon} alt="Add Row" style={{ width: '50%', height: '50%' }} draggable="false"/>
+                    </button>
+                    <button className='input-list__btn' onClick={isHidden}>
+                        <img src={DoubleLeftIcon} alt="Hide Menu Bar" style={{ width: '50%', height: '50%' }} draggable="false"/>
+                    </button>
                 </div>
             </div>
+
+            {generateInputRows}
+            {prepareSingleInputRow()}
+
         </div>
     );
 }

@@ -61,6 +61,12 @@ export default function GraphCanvas({ equation, graphWidth, graphHeight }) {
     });
     const [isMarkerDragging, setIsMarkerDragging] = useState(false);
 
+    // recenter our graph
+    useEffect(() => {
+        const newOrigin = { x: graphWidth / 2, y: graphHeight / 2};
+        setOrigin(newOrigin);
+    }, [graphWidth, graphHeight]);
+
     function isMouseNearGraph(equationArray, mx, my, origin, scale, threshold) {
         let minDist = threshold;       // track minimal distance found
         let selectedEq = null;        // track which equation is closest

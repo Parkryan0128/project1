@@ -1,10 +1,5 @@
 .input-list {
     background-color: white;
-    border: none;
-}
-
-.input-list__main-container {
-    border: 1px solid #6f6b6b;
 }
 
 .input-list__container {
@@ -38,16 +33,9 @@
     display: flex;
     width: 100%;
     align-items: center;
-    background-color: #e2dddd;
-    border-top: 1px solid #6f6b6b;
-}
-
-.input-list__row--hidden {
-    display: none;
-}
-
-.input-list__row--display {
-    display: block;
+    background-color: transparent;
+    border: 1px solid #6f6b6b;
+    border-bottom: none;
 }
 
 .input-list__index {
@@ -66,6 +54,7 @@
     display: flex;
     align-items: center;
     flex: 1;
+    border-bottom: none;
 }
 
 .input-list__field {
