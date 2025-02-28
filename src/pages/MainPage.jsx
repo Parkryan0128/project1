@@ -75,6 +75,10 @@ const MainPage = () => {
         }
     }, [hidden]);
 
+    useEffect(() => {
+        setGraphWidth(window.innerWidth - inputWidth);
+    }, [inputWidth]);
+
     // handles input changes and updates the equation state dynamically
     const handleInputChange = (rows) => {
         setInputValues(rows); // update inputValue state
@@ -144,7 +148,10 @@ const MainPage = () => {
     };
 
     const isHidden = () => {
-        setHidden(true);
+        setInputWidth(0); // Shrink sidebar width first
+        setTimeout(() => {
+            setHidden(true);
+        }, 300);
     }
 
     return (

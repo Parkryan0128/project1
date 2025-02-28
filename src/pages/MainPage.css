@@ -15,6 +15,7 @@ body, html {
     position: relative;
     overflow-y: auto;
     overflow-x: hidden;
+    transition: width 0.3s ease; /* Smooth transition for sliding */
 }
 
 .resizer {
@@ -40,7 +41,6 @@ body, html {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: width 0.3s ease;
 }
 
 /* Add a wrapper for the GraphCanvas to center it */
