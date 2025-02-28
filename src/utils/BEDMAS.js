@@ -324,7 +324,6 @@ function infixToPostfix(infix) {
 // returns expression as a string
 function makeExpression(arr) {
     let res = '';
-    // let temp = groupNums(groupWords(arr));
     let temp = handleMiJuckBoon(arr);
 
     console.log(temp)
@@ -376,6 +375,7 @@ export function returnOutput(arr) {
     function containsX(arr) {
         return arr.some(element => element.includes('x'));
     }
+
     let temp = handleMiJuckBoon([...arr]);
 
     if (containsX(temp)) {
