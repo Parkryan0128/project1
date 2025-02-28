@@ -210,6 +210,8 @@ function groupWords(input) {
     let result = [];
     // Temporary variable to collect letters
     let temp = "";
+    console.log("passed to groupWords: ")
+    console.log(input)
     const openingBrackets = [
         "_EXPONENT_OPEN_", "_FRACTION_OPEN_", "_SQUARE_ROOT_OPEN_", 
         "_LOG_OPEN_", "_SQUARE_ROOT_OPEN_", "_LN_OPEN_",
@@ -231,34 +233,28 @@ function groupWords(input) {
 
 
     let arr = [...input]
+    console.log("check")
 
     for (let i = 0; i < arr.length; i++) {
         // Check if the current element is a letter and add to temp
-        if (/[a-zA-Z]/.test(arr[i])) {
+        if (/[a-wA-WzZ]/.test(arr[i])) {
             temp += arr[i];
-            
+            console.log("check2")
+            console.log(temp)
             // if temp is a constant (e.g. pi or e), add to result
             if (isConstant(temp)) {
                 result.push(temp);
                 temp = '';
-            }
-            
-            if (operator.includes(temp)) {
+            } else if (operator.includes(temp)) {
                 result.push(temp);
                 temp = '';
-            }
-
-            if (openingBrackets.includes(temp)) {
+            } else if (openingBrackets.includes(temp)) {
                 result.push("(");
                 temp = '';
-            }
-
-            if (closingBrackets.includes(temp)) {
+            } else if (closingBrackets.includes(temp)) {
                 result.push(")");
                 temp = '';
-            }
-
-            if (temp == 'cursor') {
+            } else if (temp == 'cursor') {
                 temp = '';
             }
         } else {
@@ -272,6 +268,7 @@ function groupWords(input) {
         }
     }
 
+    console.log("result: " + result)
     return groupNums(result);
 }
 
@@ -325,7 +322,10 @@ function infixToPostfix(infix) {
 function makeExpression(arr) {
     let res = '';
     // let temp = handleMiJuckBoon(arr);
+    console.log(arr)
     let temp = groupWords(arr);
+
+    console.log(temp)
 
     for (let i = 0; i < temp.length; i++) {
         if (temp[i] == '^') {
@@ -334,6 +334,8 @@ function makeExpression(arr) {
             res += temp[i];
         }
     }
+
+    console.log(res)
 
     return res;
 }
@@ -377,7 +379,10 @@ export function returnOutput(arr) {
 
     let temp = handleMiJuckBoon([...arr]);
 
+    // console.log(temp)
+
     if (containsX(temp)) {
+        console.log(makeExpression(temp))
         return makeExpression(arr);
     }
     
@@ -398,6 +403,8 @@ export function returnOutput(arr) {
 // console.log(evaluateExpression(["2", "*", "s", "i", "n", "(", "c", "o", "s", "(", "3", ")", "+", "1", ")", "+", "5"]))
 // console.log(applyOperator('cos', 3))
 // console.log(Math.cos(3))
+
+// console.log(returnOutput(["x", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]))
 
 // test 2
 // const statement = ['s','q','r','t','4','+','3', '*', 's', 'i', 'n','(','p', 'i', ')']
@@ -602,7 +609,7 @@ export function returnOutput(arr) {
 // console.log(groupWords(everythingArray))
 // console.log(infixToPostfix(everythingArray))
 // console.log(evaluateExpression(everythingArray))
-// console.log(returnOutput(everythingArray))
+// console.log("this is output: " + returnOutput(everythingArray))
 
 // console.log(precedence('pi'))
 // console.log(returnOutput([
