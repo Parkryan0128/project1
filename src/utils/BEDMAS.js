@@ -32,7 +32,9 @@ function isFunction(input) {
 // helper function to return the precedence of a given operator
 function precedence(operator) {
     if (operator == '+' || operator == '-') return 1
-    if (operator == '*' || operator == '/' || operator == '^' || isFunction(operator)) return 2
+    if (operator == '*' || operator == '/') return 2
+    if (operator == '^') return 3
+    if (isFunction(operator)) return 4
     return 0
 }
 
@@ -61,7 +63,7 @@ function applyOperator(operator, a, b=NaN) {
         case 'log': return Math.log10(a);
         case 'ln': return Math.log(a);
 
-        case 'int': return ;
+        // case 'int': return ;
     }
 }
 
@@ -81,6 +83,7 @@ function convertConstant(constant) {
     }
 }
 
+// helper function to group separated numbers to a single string
 function groupNums(arr) {
     let result = [];
     let temp = '';
@@ -102,6 +105,7 @@ function groupNums(arr) {
     return result;
 }
 
+// helper to handle JuckBoon. result is numerical string
 function handleJuckBoon(arr) {
     let max = '';
     let min = '';
@@ -133,22 +137,26 @@ function handleJuckBoon(arr) {
 
     const res = Integral.integral(value, min, max, 50000)
     const roundedRes = parseFloat(res.toFixed(4))
-
-
     return roundedRes.toString();
 }
 
-function handleMiBoon(arr) {
-    // f ' ( x )
-    // f ' ( 2 )
-    let eq = functions.get(arr[0]);
-    if (isNumber(arr[3])) {
-        return Derivative.derivative(eq, arr[3]).toString();
+// helper to handle MiBoon. result is either numerical value or expression containing x
+function handleMiBoon(func, derivCount, inTermsOf) {
+    let res;
+    if (isNumber(inTermsOf) && derivCount == 1) {
+        res = Derivative.derivative(func, inTermsOf).toString();
     } else {
-        return Derivative.derivative(eq).toString();
+        res = Derivative.derivative(func).toString();
+    }
+
+    if (derivCount == 1) {
+        return res;
+    } else {
+        return handleMiBoon(res, derivCount - 1, inTermsOf);
     }
 }
 
+// helper to check if arr contains any MiJuckBoon, and handles
 function handleMiJuckBoon(arr) {
     let res = []
 
@@ -157,7 +165,7 @@ function handleMiJuckBoon(arr) {
             arr[i + 1] == 'n' &&
             arr[i + 2] == 't') {
                 // case JuckBoon
-                let juckBoonRes = handleJuckBoon(arr.slice(i));
+                let juckBoonRes = handleJuckBoon([...arr].slice(i));
                 res.push(juckBoonRes);
 
                 while (i < arr.length && arr[i] !== "_INT_VALUE_BRACKET_CLOSE_") {
@@ -165,10 +173,29 @@ function handleMiJuckBoon(arr) {
                 }
         } else if (arr[i] == '\'') {
             res.pop();
-            let miBoonRes = handleMiBoon(arr.splice(i - 1))
+
+            let x = i - 1;
+            let temp = [];
+
+            while (arr[x] != ')') {
+                temp.push(arr[x]);
+                x++;
+            }
+
+            let func = functions.get(temp[0]);
+            let derivCount = 0;
+            let inTermsOf = temp[temp.length - 1];
+
+            for (let j = 0; j < temp.length; j++) {
+                if (temp[j] == '\'') derivCount++;
+            }
+
+            let miBoonRes = handleMiBoon(func, derivCount, inTermsOf);
+            // console.log('below is miBoonRes')
+            // console.log(miBoonRes)
 
             res.push(miBoonRes);
-            i += 3;
+            i += temp.length - 1;
         } else {
             res.push(arr[i]);
         }
@@ -279,7 +306,7 @@ function infixToPostfix(infix) {
         // if the precedence of the first item in the stack is greater than
         // the precedence of str, then pop from the stack and enqueue to the queue
         } else {
-            while (!stack.isEmpty() && precedence(stack.peek()) > precedence(groupedStr[i])) {
+            while (!stack.isEmpty() && precedence(stack.peek()) >= precedence(groupedStr[i])) {
                 queue.enqueue(stack.pop())
             }
             stack.push(groupedStr[i])
@@ -297,7 +324,6 @@ function infixToPostfix(infix) {
 // returns expression as a string
 function makeExpression(arr) {
     let res = '';
-    // let temp = groupNums(groupWords(arr));
     let temp = handleMiJuckBoon(arr);
 
     console.log(temp)
@@ -358,6 +384,8 @@ export function returnOutput(arr) {
     
     return evaluateExpression(arr);
 }
+
+// test suite
 
 
 // 1. Take in an array of letters ex) '3x+2' = ['3','x','+','2']
@@ -436,7 +464,11 @@ export function returnOutput(arr) {
 //     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
 //     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
 //     '_INT_VALUE_BRACKET_OPEN_', 'x', 'cursor', '_INT_VALUE_BRACKET_CLOSE_',
-//     '+', 'f', '\'', '(', 'x', ')', '*', '2'
+//     '+', 'f', '\'', '(', 
+//     'x', 
+//     // '2',
+//     ')', '*', '2'
+
 // ]
 
 // console.log(handleMiJuckBoon(miJuckBoonArray))
@@ -444,3 +476,145 @@ export function returnOutput(arr) {
 // console.log(handleMiJuckBoon(miJuckBoonArray))
 // console.log(makeExpression(miJuckBoonArray))
 // console.log(returnOutput(miJuckBoonArray))
+
+
+// test everything
+
+// const everythingArray = [
+//     'i', 'n', 't', 
+//     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+//     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
+//     '_INT_VALUE_BRACKET_OPEN_', 'x', '_INT_VALUE_BRACKET_CLOSE_',
+//     '+', 
+//     'f', '\'', '(', '2', ')',
+//     '*', 
+//     's', 'i', 'n', '(', 'x', ')', 
+//     '/', 
+//     'c', 'o', 's', '(', 'x', ')', 
+//     '-', 
+//     'l', 'o', 'g', '(', 'x', ')', 
+//     '+', 
+//     'l', 'n', '(', 'x', ')', 
+//     '*', 
+//     'e', '^', 'x', 
+//     '+', 
+//     'p', 'i', 
+//     '-', 
+//     'e',
+//     '+',
+//     't', 'a', 'n', '(', 'x', ')',
+//     '-',
+//     'a', 'r', 'c', 's', 'i', 'n', '(', 'x', ')',
+//     '+',
+//     'a', 'r', 'c', 'c', 'o', 's', '(', 'x', ')',
+//     '-',
+//     'a', 'r', 'c', 't', 'a', 'n', '(', 'x', ')',
+//     '+',
+//     'c', 's', 'c', '(', 'x', ')',
+//     '-',
+//     's', 'e', 'c', '(', 'x', ')',
+//     '+',
+//     'c', 'o', 't', '(', 'x', ')',
+//     '+',
+//     '√', '(', 'x', ')'
+// ];
+
+// const everythingArrayOnlyNums = [
+//     'i', 'n', 't', 
+//     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+//     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
+//     '_INT_VALUE_BRACKET_OPEN_', '2', '_INT_VALUE_BRACKET_CLOSE_', 
+//     '+', 
+//     'f', '\'', '(', '2', ')',
+//     '*', 
+//     's', 'i', 'n', '(', '1', ')', 
+//     '/', 
+//     'c', 'o', 's', '(', '1', ')', 
+//     '-', 
+//     'l', 'o', 'g', '(', '10', ')', 
+//     '+', 
+//     'l', 'n', '(', '2', ')', 
+//     '*', 
+//     'e', '^', '2', 
+//     '+', 
+//     'p', 'i', 
+//     '-', 
+//     'e',
+//     '+',
+//     't', 'a', 'n', '(', '1', ')',
+//     '-',
+//     'a', 'r', 'c', 's', 'i', 'n', '(', '0.5', ')',
+//     '+',
+//     'a', 'r', 'c', 'c', 'o', 's', '(', '0.5', ')',
+//     '-',
+//     'a', 'r', 'c', 't', 'a', 'n', '(', '1', ')',
+//     '+',
+//     'c', 's', 'c', '(', '1', ')',
+//     '-',
+//     's', 'e', 'c', '(', '1', ')',
+//     '+',
+//     'c', 'o', 't', '(', '1', ')',
+//     '+',
+//     '√', '(', '4', ')'
+// ];
+
+// const everythingArray = [
+//     'i', 'n', 't', 
+//     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+//     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
+//     '_INT_VALUE_BRACKET_OPEN_', 'x', '_INT_VALUE_BRACKET_CLOSE_',
+//     '+', 
+//     'f', '\'', '(', '2', ')',
+//     '*', 
+//     's', 'i', 'n', '(', '1', ')', 
+//     '/', 
+//     'c', 'o', 's', '(', '1', ')', 
+//     '-', 
+//     'l', 'o', 'g', "_LOG_OPEN_", '10', "_LOG_CLOSE_", 
+//     '^', 
+//     "_EXPONENT_OPEN_",
+//     'l', 'n', "_LN_OPEN_", '2', "_LN_CLOSE_", 
+//     "_EXPONENT_CLOSE_",
+//     '*', 
+//     'e', '^', "_EXPONENT_OPEN_", '2', "_EXPONENT_CLOSE_",
+//     '+', 
+//     'p', 'i', 
+//     '-', 
+//     'e',
+//     '+',
+//     't', 'a', 'n', '(', '1', ')',
+//     '-',
+//     'a', 'r', 'c', 's', 'i', 'n', '(', '0.5', ')',
+//     '+',
+//     'a', 'r', 'c', 'c', 'o', 's', '(', '0.5', ')',
+//     '-',
+//     'a', 'r', 'c', 't', 'a', 'n', '(', '1', ')',
+//     '+',
+//     'c', 's', 'c', '(', '1', ')',
+//     '-',
+//     's', 'e', 'c', '(', '1', ')',
+//     '+',
+//     'c', 'o', 't', '(', '1', ')',
+//     '+',
+//     '√', '(', '4', ')'
+// ];
+
+// console.log(groupWords(everythingArray))
+// console.log(infixToPostfix(everythingArray))
+// console.log(evaluateExpression(everythingArray))
+// console.log(returnOutput(everythingArray))
+
+// console.log(precedence('pi'))
+// console.log(returnOutput([
+//     'p','i',
+//     '-',
+//     'e'
+// ]))
+
+// console.log(returnOutput([
+//     'f', 
+//     '\'',
+//     '\'', 
+//     '\'', '(', 'x', ')', 
+//     '+', 'p', 'i'
+// ]))
