@@ -2,7 +2,12 @@ import { Stack } from './stack.js'
 import { Queue } from './queue.js'
 
 import * as math from './calculateExpression.js'
+import * as Integral from './Integral.js'
+import * as Derivative from './Derivative.js'
 
+let functions = new Map();
+
+functions.set('f', 'x^2'); // pre-defined function
 
 // helper function to determine if a given string
 // is an operand or a number
@@ -13,7 +18,11 @@ function isNumber(str) {
 // helper function to determine if a given string
 // is a mathematical fucntion
 function isFunction(input) {
-    const mathFunctions = new Set(['sin', 'cos', 'tan', '√', 'log', 'ln'])
+    const mathFunctions = new Set([
+        'sin', 'cos', 'tan', 
+        'arcsin', 'arccos', 'arctan',
+        'csc', 'sec', 'cot',
+        '√', 'log', 'ln'])
 
     const normalizedInput = input.toLowerCase()
 
@@ -36,12 +45,23 @@ function applyOperator(operator, a, b=NaN) {
         case '/': return math.divide(a,b);
         case '^': return math.exp(a,b);
         case '√': return Math.sqrt(a);
+
         case 'sin': return Math.sin(a);
         case 'cos': return Math.cos(a);
         case 'tan': return Math.tan(a);
+        case 'arcsin': return Math.asin(a);
+        case 'arccos': return Math.acos(a);
+        case 'arctan': return Math.atan(a);
+        case 'csc': return 1 / Math.sin(a);
+        case 'sec': return 1 / Math.cos(a);
+        case 'cot': return 1 / Math.tan(a);
+
         case 'abs': return Math.abs(a);
+
         case 'log': return Math.log10(a);
         case 'ln': return Math.log(a);
+
+        case 'int': return ;
     }
 }
 
@@ -63,7 +83,7 @@ function convertConstant(constant) {
 
 function groupNums(arr) {
     let result = [];
-    let temp = "";
+    let temp = '';
 
     for (let i = 0; i < arr.length; i++) {
         if (isNumber(arr[i])) {
@@ -77,9 +97,85 @@ function groupNums(arr) {
         }
     }
 
+    if (temp) result.push(temp);
+
     return result;
 }
 
+function handleJuckBoon(arr) {
+    let max = '';
+    let min = '';
+    let value = '';
+    let i = 0;
+
+    while (i < arr.length) {
+        if (arr[i] === "_INT_UPPER_BRACKET_OPEN_") {
+            i++;
+            while (i < arr.length && arr[i] !== "_INT_UPPER_BRACKET_CLOSE_") {
+                if (arr[i] != 'cursor') max += arr[i];
+                i++;
+            }
+        } else if (arr[i] === "_INT_LOWER_BRACKET_OPEN_") {
+            i++;
+            while (i < arr.length && arr[i] !== "_INT_LOWER_BRACKET_CLOSE_") {
+                if (arr[i] != 'cursor') min += arr[i];
+                i++;
+            }
+        } else if (arr[i] === "_INT_VALUE_BRACKET_OPEN_") {
+            i++;
+            while (i < arr.length && arr[i] !== "_INT_VALUE_BRACKET_CLOSE_") {
+                if (arr[i] != 'cursor') value += arr[i];
+                i++;
+            }
+        }
+        i++;
+    }
+
+    const res = Integral.integral(value, min, max, 50000)
+    const roundedRes = parseFloat(res.toFixed(4))
+
+
+    return roundedRes.toString();
+}
+
+function handleMiBoon(arr) {
+    // f ' ( x )
+    // f ' ( 2 )
+    let eq = functions.get(arr[0]);
+    if (isNumber(arr[3])) {
+        return Derivative.derivative(eq, arr[3]).toString();
+    } else {
+        return Derivative.derivative(eq).toString();
+    }
+}
+
+function handleMiJuckBoon(arr) {
+    let res = []
+
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i] == 'i' &&
+            arr[i + 1] == 'n' &&
+            arr[i + 2] == 't') {
+                // case JuckBoon
+                let juckBoonRes = handleJuckBoon(arr.slice(i));
+                res.push(juckBoonRes);
+
+                while (i < arr.length && arr[i] !== "_INT_VALUE_BRACKET_CLOSE_") {
+                    i++;
+                }
+        } else if (arr[i] == '\'') {
+            res.pop();
+            let miBoonRes = handleMiBoon(arr.splice(i - 1))
+
+            res.push(miBoonRes);
+            i += 3;
+        } else {
+            res.push(arr[i]);
+        }
+    }
+    
+    return res;
+}
 
 // helper function: inputs an array with single letter/number, and
 // outputs an array with grouped words (e.g. sqrt, sin, cos, etc)
@@ -87,14 +183,32 @@ function groupWords(input) {
     let result = [];
     // Temporary variable to collect letters
     let temp = "";
-    const openingBrackets = ["_EXPONENT_OPEN_", "_FRACTION_OPEN_", "_SQUARE_ROOT_OPEN_", "_LOG_OPEN_", "_SQUARE_ROOT_OPEN_", "_LN_OPEN_"]
-    const closingBrackets = ["_EXPONENT_CLOSE_", "_FRACTION_CLOSE_", "_SQUARE_ROOT_CLOSE_", "_LOG_CLOSE_", "_SQUARE_ROOT_CLOSE_", "_LN_CLOSE_"]
-    const operator = ['cos', 'sin', 'tan', 'log', 'ln', '+', '-', '*', '/', '√']
+    const openingBrackets = [
+        "_EXPONENT_OPEN_", "_FRACTION_OPEN_", "_SQUARE_ROOT_OPEN_", 
+        "_LOG_OPEN_", "_SQUARE_ROOT_OPEN_", "_LN_OPEN_",
+        // "_INT_UPPER_BRACKET_OPEN_", "_INT_LOWER_BRACKET_OPEN_", "_INT_VALUE_BRACKET_OPEN_"
+    ]
+    const closingBrackets = [
+        "_EXPONENT_CLOSE_", "_FRACTION_CLOSE_", "_SQUARE_ROOT_CLOSE_", 
+        "_LOG_CLOSE_", "_SQUARE_ROOT_CLOSE_", "_LN_CLOSE_",
+        // "_INT_UPPER_BRACKET_CLOSE_", "_INT_LOWER_BRACKET_CLOSE_", "_INT_VALUE_BRACKET_CLOSE_"
+    ]
+    const operator = [
+        'cos', 'sin', 'tan', 
+        'arcsin', 'arccos', 'arctan',
+        'csc', 'sec', 'cot',
+        'log', 'ln', 
+        // 'int',
+        '+', '-', '*', '/', '√'
+    ]
 
-    for (let i = 0; i < input.length; i++) {
+    let arr = handleMiJuckBoon(input)
+    // let arr = [...input]
+
+    for (let i = 0; i < arr.length; i++) {
         // Check if the current element is a letter and add to temp
-        if (/[a-zA-Z]/.test(input[i])) {
-            temp += input[i];
+        if (/[a-zA-Z]/.test(arr[i])) {
+            temp += arr[i];
             
             // if temp is a constant (e.g. pi or e), add to result
             if (isConstant(temp)) {
@@ -127,29 +241,18 @@ function groupWords(input) {
                 temp = ""; 
             }
             // Push non-letter characters as-is
-            result.push(input[i]); 
+            result.push(arr[i]); 
         }
     }
 
     return groupNums(result);
 }
 
-export function makeExpression(arr) {
-    let res = '';
-    let temp = groupNums(groupWords(arr));
-
-    for (let i = 0; i < temp.length; i++) {
-        res += temp[i];
-    }
-
-    return res;
-}
-
 // converts a given infix to postfix expression
-export function infixToPostfix(str) {
+function infixToPostfix(infix) {
     let stack = new Stack()
     let queue = new Queue()
-    let groupedStr = groupWords(str)
+    let groupedStr = groupWords(infix)
 
     for (let i=0; i<groupedStr.length; i++) {
 
@@ -180,7 +283,7 @@ export function infixToPostfix(str) {
                 queue.enqueue(stack.pop())
             }
             stack.push(groupedStr[i])
-        } 
+        }
     }
     
     // enqueue all the items in the stack
@@ -191,11 +294,33 @@ export function infixToPostfix(str) {
     return queue.getItems()
 }
 
+// returns expression as a string
+function makeExpression(arr) {
+    let res = '';
+    // let temp = groupNums(groupWords(arr));
+    let temp = handleMiJuckBoon(arr);
+
+    console.log(temp)
+
+    for (let i = 0; i < temp.length; i++) {
+        if (temp[i] == '^') {
+            res += '**'
+        } else {
+            res += temp[i];
+        }
+    }
+
+    return res;
+}
 
 // evaluates the given expression in an array
-export function evaluateExpression(expression) {
+function evaluateExpression(expression) {
     let stack = new Stack()
     let postfix = infixToPostfix(expression)
+
+    if (postfix.includes('x')) {
+        return expression;
+    }
 
     for (let i = 0; i < postfix.length; i++) {
 
@@ -218,6 +343,20 @@ export function evaluateExpression(expression) {
         }
     }
     return stack.pop()
+}
+
+export function returnOutput(arr) {
+    function containsX(arr) {
+        return arr.some(element => element.includes('x'));
+    }
+
+    let temp = handleMiJuckBoon([...arr]);
+
+    if (containsX(temp)) {
+        return makeExpression(arr);
+    }
+    
+    return evaluateExpression(arr);
 }
 
 
@@ -243,6 +382,7 @@ export function evaluateExpression(expression) {
 // test Exponents
 // const exponentsArray = ["1", "2", "+", "4", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]
 // console.log(groupWords(exponentsArray))
+// console.log(makeExpression(exponentsArray))
 // console.log(infixToPostfix(exponentsArray))
 // console.log(evaluateExpression(exponentsArray))
 
@@ -263,7 +403,44 @@ export function evaluateExpression(expression) {
 
 //test ln
 // const lnArray = ['l', 'n', '_LN_OPEN_', 'e', '_LN_CLOSE_']
+// console.log(returnOutput(lnArray))
 // console.log(groupWords(lnArray))
 // console.log(makeExpression(lnArray))
 // console.log(infixToPostfix(lnArray))
 // console.log(evaluateExpression(lnArray))
+
+//test trig
+
+// const trigArray = [
+//     's', 'i', 'n', '3', '+',
+//     'c', 'o', 's', '2', '+',
+//     't', 'a', 'n', '5', '+', 
+//     'a', 'r', 'c', 's', 'i', 'n', '0.5', '+', 
+//     'a', 'r', 'c', 'c', 'o', 's', '0.5', '+', 
+//     'a', 'r', 'c', 't', 'a', 'n', '2', '+',
+//     'c', 's', 'c', '3', '+',
+//     's', 'e', 'c', '4', '+', 
+//     'c', 'o', 't', '3'
+// ]
+// console.log(groupWords(trigArray))
+// console.log(makeExpression(trigArray))
+// console.log(infixToPostfix(trigArray))
+// console.log(evaluateExpression(trigArray))
+// console.log(returnOutput(trigArray))
+
+// test integral
+
+// const miJuckBoonArray = [
+//     '3', '+',
+//     'i', 'n', 't', 
+//     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+//     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
+//     '_INT_VALUE_BRACKET_OPEN_', 'x', 'cursor', '_INT_VALUE_BRACKET_CLOSE_',
+//     '+', 'f', '\'', '(', 'x', ')', '*', '2'
+// ]
+
+// console.log(handleMiJuckBoon(miJuckBoonArray))
+// console.log(evaluateExpression(miJuckBoonArray))
+// console.log(handleMiJuckBoon(miJuckBoonArray))
+// console.log(makeExpression(miJuckBoonArray))
+// console.log(returnOutput(miJuckBoonArray))
