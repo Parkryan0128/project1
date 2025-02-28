@@ -407,12 +407,12 @@ export function returnOutput(arr) {
 // console.log(evaluteExpression(statement))
 
 // test Exponents
-const exponentsArray = ["1", "2", "+", "x", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]
+// const exponentsArray = ["1", "2", "+", "x", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]
 // console.log(groupWords(exponentsArray))
 // console.log(makeExpression(exponentsArray))
 // console.log(infixToPostfix(exponentsArray))
 // console.log(evaluateExpression(exponentsArray))
-console.log(returnOutput(exponentsArray))
+// console.log(returnOutput(exponentsArray))
 
 // test Log
 // const logArray = ["l","o","g","_LOG_OPEN_", "1", "2", "^", "_EXPONENT_OPEN_", "2", "cursor", "_EXPONENT_CLOSE_", "+", "pi", "_LOG_CLOSE_"]
