@@ -229,8 +229,8 @@ function groupWords(input) {
         '+', '-', '*', '/', '√'
     ]
 
-    let arr = handleMiJuckBoon(input)
-    // let arr = [...input]
+
+    let arr = [...input]
 
     for (let i = 0; i < arr.length; i++) {
         // Check if the current element is a letter and add to temp
@@ -324,9 +324,8 @@ function infixToPostfix(infix) {
 // returns expression as a string
 function makeExpression(arr) {
     let res = '';
-    let temp = handleMiJuckBoon(arr);
-
-    console.log(temp)
+    // let temp = handleMiJuckBoon(arr);
+    let temp = groupWords(arr);
 
     for (let i = 0; i < temp.length; i++) {
         if (temp[i] == '^') {
@@ -408,11 +407,12 @@ export function returnOutput(arr) {
 // console.log(evaluteExpression(statement))
 
 // test Exponents
-// const exponentsArray = ["1", "2", "+", "4", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]
+// const exponentsArray = ["1", "2", "+", "x", "^", "_EXPONENT_OPEN_", "1", "6", "/", "8", "cursor", "_EXPONENT_CLOSE_"]
 // console.log(groupWords(exponentsArray))
 // console.log(makeExpression(exponentsArray))
 // console.log(infixToPostfix(exponentsArray))
 // console.log(evaluateExpression(exponentsArray))
+// console.log(returnOutput(exponentsArray))
 
 // test Log
 // const logArray = ["l","o","g","_LOG_OPEN_", "1", "2", "^", "_EXPONENT_OPEN_", "2", "cursor", "_EXPONENT_CLOSE_", "+", "pi", "_LOG_CLOSE_"]
