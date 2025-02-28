@@ -5,7 +5,7 @@ import RemoveIcon from '../assets/x.png';
 import Input from '../components/Input.jsx'
 import './InputList.css'
 
-function InputList({ hidden, setHidden, equation, setEquation }) {
+function InputList({ equation, setEquation, isHidden }) {
 
     const addRows = () => {
         setEquation([...equation, {expression: "", color: "black"}]);
