@@ -33,58 +33,75 @@
     background: none;
   }
 
-  /* .integral {
-    display: inline-block;
-    align-items: center;
-    margin: 0 5px;
-    font-size: 1em;
-  } */
 
   .integral {
     display: inline-flex;
-    /* flex-direction: column; */
     align-items: center;
-    margin: 0 8px;
+    /* margin: 0 8px; */
+    gap: 6px;
     font-size: 1em;
     position: relative;
   }
 
-  .integral-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
 
-.upper-bound, .lower-bound {
-  font-size: 0.8em;
-  min-width: 20px;
-  text-align: center;
-  display: inline-block;
-}
-  
 .integral-sign {
   font-size: 2em;
   font-weight: bold;
   line-height: 1;
-  display: inline-block;
-  justify-content: center;
+  /* display: inline-block;
+  position: relative;
+  justify-content: center; */
 }
 
-.integral-container {
-  /* display: flex; */
+.bounds-group {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
   align-items: center;
+  min-width: max-content;
+  position: relative;
+  /* white-space: nowrap; */
+}
+
+
+.upper-bound {
+  font-size: 0.8em;
+  /* position: absolute; */
+  /* left: 1.75em; */
+  transform: translateY(-5px);
+  position: relative;
+  /* top: -0.7em; */
+}
+
+.lower-bound {
+  font-size: 0.8em;
+  /* position: absolute; */
+  /* left: 1.75em; */
+  position: relative;
+  /* bottom: -0.5em; */
+  transform: translateY(10px);
+}
+
+.value-group {
+  /* padding-left: 10px;
+  display: inline-flex;
+  align-items: center; */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: fit-content;
+  margin-left: 5px;
 }
 
 .integral-value {
-  margin-left: 4px;
-  display: inline-flex;
-  align-items: center;
+  /* display: flex; */
+  /* align-items: center; */
+  font-size: 0.8em;
 }
 
 .dx {
-  margin-left: 8px;
-  font-style: italic;
-  vertical-align: middle;
+  gap: 2px;
+  font-size: 1em;
 }
 
   .log {

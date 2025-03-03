@@ -746,124 +746,6 @@ function Input() {
                     setUserInput(copy);
             }
 
-            // else if (prevChar === UPPER_OPEN) {
-
-            //     let upperStart = cursorIndex - 1;
-            //     let upperEnd;
-            //     let lowerStart;
-            //     let lowerEnd;
-            //     let valueStart;
-            //     let valueEnd;
-
-
-            //     pairs.forEach((item) => {
-            //         if (item[0] === upperStart) {
-            //             upperEnd = item[1]
-            //             lowerStart = item[1] + 1
-            //         }
-            //     })
-
-            //     pairs.forEach((item) => {
-            //         if (item[0] === lowerStart) {
-            //             lowerEnd = item[1];
-            //             valueStart = item[1] + 1;
-            //         }
-            //     })
-
-            //     pairs.forEach((item) => {
-            //         if (item[0] === valueStart) {
-            //             valueEnd = item[1];
-            //         }
-            //     })
-
-            //     copy.splice(cursorIndex-4, 3)
-            //     copy = deleteAt(copy, upperStart-3)
-            //     copy = deleteAt(copy, upperEnd-4)
-            //     copy = deleteAt(copy, lowerStart-5)
-            //     copy = deleteAt(copy, lowerEnd-6)
-            //     copy = deleteAt(copy, valueStart-7)
-            //     copy = deleteAt(copy, valueEnd-8)
-
-            //     setUserInput(copy)
-            // } 
-            // else if (prevChar === LOWER_OPEN) {
-            //     let upperStart;
-            //     let upperEnd;
-            //     let lowerStart = cursorIndex - 1;
-            //     let lowerEnd;
-            //     let valueStart;
-            //     let valueEnd;
-
-            //     pairs.forEach((item) => {
-            //         if (item[0] === lowerStart) {
-            //             lowerEnd = item[1]
-            //             valueStart = item[1] + 1
-            //             upperEnd = item[0] - 1
-            //         }
-            //     })
-
-            //     pairs.forEach((item) => {
-            //         if (item[0] === valueStart) {
-            //             valueEnd = item[1];
-            //         }
-            //     })
-
-            //     pairs.forEach((item) => {
-            //         if (item[1] === upperEnd) {
-            //             upperStart = item[0];
-            //         }
-            //     })
-
-            //     copy.splice(cursorIndex-6, 3)
-            //     copy = deleteAt(copy, upperStart-3)
-            //     copy = deleteAt(copy, upperEnd-4)
-            //     copy = deleteAt(copy, lowerStart-5)
-            //     copy = deleteAt(copy, lowerEnd-6)
-            //     copy = deleteAt(copy, valueStart-7)
-            //     copy = deleteAt(copy, valueEnd-8)
-
-            //     setUserInput(copy)
-
-            // }
-            // else if (prevChar === VALUE_OPEN &&
-            //     cursorIndex+1 < copy.length-1) {
-            //     let upperStart;
-            //     let upperEnd;
-            //     let lowerStart;
-            //     let lowerEnd;
-            //     let valueStart = cursorIndex - 1;
-            //     let valueEnd;
-
-            //     pairs.forEach((item) => {
-            //         if (item[0] === valueStart) {
-            //             valueEnd = item[1]
-            //             lowerEnd = item[0] - 1
-            //         }
-            //     })
-
-            //     pairs.forEach((item) => {
-            //         if (item[1] === lowerEnd) {
-            //             lowerStart = item[0];
-            //             upperEnd = item[0] - 1;
-            //         }
-            //     })
-
-            //     pairs.forEach((item) => {
-            //         if (item[1] === upperEnd) {
-            //             upperStart = item[0];
-            //         }
-            //     })
-
-            //     copy.splice(cursorIndex-8, 3)
-            //     copy = deleteAt(copy, upperStart-3)
-            //     copy = deleteAt(copy, upperEnd-4)
-            //     copy = deleteAt(copy, lowerStart-5)
-            //     copy = deleteAt(copy, lowerEnd-6)
-            //     copy = deleteAt(copy, valueStart-7)
-            //     copy = deleteAt(copy, valueEnd-8)
-
-            //     setUserInput(copy)
-            // }
             // when backspace is pressed in value and it has no numbers in it,
             // then we move the cursor to the upperbound
             else if (prevChar === VALUE_OPEN) {
@@ -1296,12 +1178,12 @@ function Input() {
                 
                 case 'integral':
                     return (<span className='integral' key={index}>
-                        <span className='integral-group'>
+                        <span className='integral-sign'><big>∫</big></span>
+                        <span className='bounds-group'>
                             <span className='upper-bound'>{displayText(node.upperBound)}</span>
-                            <span className='integral-sign'><big>∫</big></span>
                             <span className='lower-bound'>{displayText(node.lowerBound)}</span>
                         </span>
-                        <span className='integral-container'>
+                        <span className='value-group'>
                             <span className='integral-value'>{displayText(node.value)}</span>
                             <span className='dx'>dx</span>
                         </span>
