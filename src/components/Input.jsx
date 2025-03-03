@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import './Input.css'
+import { processInput } from '../utils/processInput.js';
+import { handleIntegral, deleteIntegral } from '../utils/mathUtils/IntegralHelper.js';
+import { handleExponents, findMatchingExponentClose,  } from '../utils/mathUtils/ExponentHelper.js';
+import { handleFraction, deleteFraction,  } from '../utils/mathUtils/FractionHelper.js';
+import { findMatchingSquareRootClose, handleSqrtPressed, isSqrtPressed } from '../utils/mathUtils/SquareRootHelper.js';
+import { handleLogarithm  } from '../utils/mathUtils/LogarithmHelper.js';
 
 const CURSOR = 'cursor';
 
@@ -32,7 +38,62 @@ const SQUARE_ROOT_OPEN = "_SQUARE_ROOT_OPEN_";
 const SQUARE_ROOT_CLOSE = "_SQUARE_ROOT_CLOSE_";
 const EMPTY_SQUARE_ROOT = '_EMPTY_SQUARE_ROOT_'
 
+export function insertAt(arr, index, item) {
+    /*
+    Input:
+    - arr: Arry of inputs
+    - index: Index of where the item is inserted
+    - item: Item to insert
 
+    Output:
+    An updated array of inputs, with the item inserted at index
+    */
+
+    const copy = [...arr];
+    copy.splice(index, 0, item);
+    return copy;
+}
+
+export function swapItems(arr, i, j) {
+    /*
+    Input:
+    - arr: Array of inputs
+    - i: Index of an item to where the item is swapped
+    - j: Index of an item of where the item is swapped
+
+    Ouput:
+    An updated array of inputs, with the items are swapped
+    */
+
+
+    const copy = [...arr];
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+    return copy;
+}
+
+// Delete item at given index
+export function deleteAt(arr, index) {
+    const copy = [...arr];
+    copy.splice(index, 1);
+    return copy;
+}
+
+export function findParenPairs(str, type) {
+    const stack = [];
+    const pairs = [];
+
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        if (char.endsWith("OPEN_") && char.startsWith(type)) {
+            stack.push(i);
+        } else if (char.endsWith("CLOSE_") && char.startsWith(type)) { 
+            const openIndex = stack.pop();
+            pairs.push([openIndex, i]);
+        }
+    }
+
+    return pairs;
+}
 /*----------------------------Functions----------------------*/
 
 function Input() {
@@ -52,547 +113,6 @@ function Input() {
             console.log(processInput(userInput));
         }, [userInput]);
 
-    /*----------------------------Helper Functions----------------------*/
-
-    function insertAt(arr, index, item) {
-        /*
-        Input:
-        - arr: Arry of inputs
-        - index: Index of where the item is inserted
-        - item: Item to insert
-
-        Output:
-        An updated array of inputs, with the item inserted at index
-        */
-
-        const copy = [...arr];
-        copy.splice(index, 0, item);
-        return copy;
-    }
-
-    function swapItems(arr, i, j) {
-        /*
-        Input:
-        - arr: Array of inputs
-        - i: Index of an item to where the item is swapped
-        - j: Index of an item of where the item is swapped
-
-        Ouput:
-        An updated array of inputs, with the items are swapped
-        */
-
-
-        const copy = [...arr];
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-        return copy;
-    }
-
-    // Delete item at given index
-    function deleteAt(arr, index) {
-        const copy = [...arr];
-        copy.splice(index, 1);
-        return copy;
-    }
-
-    // finds all the parenthesis pairs and returns array
-    // e.g. [[0, 2],[3, 4]] => 0 and 2 are pairs, 3 and 4 are pairs
-    function findParenPairs(str, type) {
-        const stack = [];
-        const pairs = [];
-
-        for (let i = 0; i < str.length; i++) {
-            const char = str[i];
-            if (char.endsWith("OPEN_") && char.startsWith(type)) {
-                stack.push(i);
-            } else if (char.endsWith("CLOSE_") && char.startsWith(type)) { 
-                const openIndex = stack.pop();
-                pairs.push([openIndex, i]);
-            }
-        }
-
-        return pairs;
-    }
-
-    /*----------------------Handling Exponents--------------------*/
-
-    function handleExponents(arr, cursorIndex) {
-
-        /*
-        Handles when '^' is pressed
-
-        Input: 
-        - arr: Array of inputs
-        - cursorIndex: Index of the cursor
-
-        Output:
-        An updated array of inputs with the exponent components added to it
-        */
-
-
-        // if userInput only contains cursor, no action
-        // if (arr.length <= 1) return arr;
-
-        // if '^' was pressed right in front of another ^, move cursor to right
-        if (arr[cursorIndex+1] === '^') {
-            arr = swapItems(arr, cursorIndex, cursorIndex+1);
-            arr = swapItems(arr, cursorIndex+1, cursorIndex+2);
-
-            if (arr[cursorIndex+3] === EMPTY_EXPONENT) {
-                arr = deleteAt(arr, cursorIndex+3);
-            }
-
-            return arr;
-        }
-
-        // otherwise, insert '^', EXPONENT_OPEN and EXPONENT_CLOSE
-        arr = insertAt(arr, cursorIndex, '^')
-        arr = insertAt(arr, cursorIndex + 1, EXPONENT_OPEN)
-        arr = insertAt(arr, cursorIndex + 3, EXPONENT_CLOSE)
-
-        return arr;
-    }
-
-    function findBase(array) {
-        let temp = [...array]
-        let i = temp.length - 1
-        let res = []
-        const limit = ['+', '-', '*', '(', ')', 
-            // FRACTION_OPEN, FRACTION_CLOSE, 
-            UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE, 
-            EXPONENT_OPEN, EXPONENT_CLOSE, 
-            LOG_OPEN, LOG_CLOSE];
-
-        if (temp[i] == ')') {
-            while (i >= 0 && temp[i] != '(') {
-                const next = temp[i]
-                // res = next + res
-                res.splice(0, 0, next)
-                i--
-            }
-            // res = '(' + res;
-            res.splice(0, 0, "(");
-        } else {
-            // the second condition was temp[i] != ')'
-            while (i >= 0 && !limit.includes(temp[i]) && temp[i] != EXPONENT_CLOSE) {
-                const next = temp[i]
-                // res = next + res
-                res.splice(0, 0, next)
-                i--
-            }
-        }
-        return res
-    }
-
-    function findChildren(array) {
-        let copy = [...array];
-        let res = [];
-        let i = 1;
-        let count = 1;
-
-        res.push(copy[0])
-
-        while (count > 0) {
-            let curr = copy[i]
-            if (curr === EXPONENT_OPEN) {
-                count++;
-            }
-            else if (curr === EXPONENT_CLOSE) {
-                count--;
-            }
-            res.push(curr)
-            i++
-        }
-
-        return res;
-    }
-
-    function findMatchingExponentClose(array, openIndex) {
-        let openBrackets = 1;
-        let index = openIndex + 1;
-    
-        while (index < array.length && openBrackets > 0) {
-            if (array[index] === EXPONENT_OPEN) {
-                openBrackets++;
-            } else if (array[index] === EXPONENT_CLOSE) {
-                openBrackets--;
-            }
-            index++;
-        }
-    
-        return openBrackets === 0 ? index - 1 : -1;
-    }
-
-    /*----------------------Handling Fraction--------------------*/
-
-    function handleFraction(arr, cursorIndex) {
-
-        /*
-        Handles when '/' is pressed
-
-        Input: 
-        - arr: Array of inputs
-        - cursorIndex: index of the cursor
-
-        Output:
-        An updated array of inputs with the fraction components added to it
-        */
-
-        const limit = ['+', '-', '*', '(', ')', 
-            FRACTION_OPEN, FRACTION_CLOSE, 
-            UPPER_OPEN, UPPER_CLOSE, LOWER_OPEN, LOWER_CLOSE, VALUE_OPEN, VALUE_CLOSE, 
-            EXPONENT_OPEN, EXPONENT_CLOSE, 
-            LOG_OPEN, LOG_CLOSE];
-
-        // if userInput only contains cursor, no action
-        if (arr.length === 1) {
-            arr = insertAt(arr, cursorIndex, FRACTION_OPEN);
-            arr = insertAt(arr, cursorIndex + 2, FRACTION_CLOSE);
-            arr = insertAt(arr, cursorIndex + 3, '/');
-            arr = insertAt(arr, cursorIndex + 4, FRACTION_OPEN);
-            arr = insertAt(arr, cursorIndex + 5, FRACTION_CLOSE);
-            return arr;
-        }
-
-        // may need refactoring
-        let i = cursorIndex;
-        while (i >= 0 && !limit.includes(arr[i])) {
-            i--;
-        }
-        arr = insertAt(arr, i + 1, FRACTION_OPEN);
-        arr = insertAt(arr, cursorIndex + 1, FRACTION_CLOSE);
-        arr = insertAt(arr, cursorIndex + 2, '/');
-        arr = insertAt(arr, cursorIndex + 3, FRACTION_OPEN);
-        arr = insertAt(arr, cursorIndex + 5, FRACTION_CLOSE);
-
-        return arr;
-    }
-
-    function processFraction(inputArr, pairs, i) {
-        let endIndex;
-        pairs.forEach(([openIdx, closeIdx]) => {
-            if (openIdx === i) {
-                endIndex = closeIdx;
-            }
-        });
-
-        // value of numerator
-        const numeratorTokens = inputArr.slice(i + 1, endIndex);
-
-        // The next token after endIndex is '/', so the denominator starts 2 indices after endIndex
-        const secondChunkStart = endIndex + 2;
-
-        // Find the close pair for the denominator
-        let denomCloseIndex;
-        pairs.forEach(([openIdx, closeIdx]) => {
-            if (openIdx === secondChunkStart) {
-                denomCloseIndex = closeIdx;
-            }
-        });
-
-        // value of the denominator
-        const denominatorTokens = inputArr.slice(secondChunkStart + 1, denomCloseIndex);
-
-        // Recursively parse the numerator & denominator
-        return [{
-            type: 'fraction',
-            numerator: processInput(numeratorTokens),
-            denominator: processInput(denominatorTokens),
-        }, denomCloseIndex + 1];
-
-        // // Move i to the end of the denominator
-        // i = denomCloseIndex + 1;
-    }
-
-    // Removes fraction based on the case
-    function deleteFraction(arr, i) {
-        const pairs = findParenPairs(arr, "_FRACTION");
-
-        // If there's a slash immediately before i, that implies this FRACTION_OPEN
-        // is for the denominator. We have to remove the entire fraction from that side.
-        if (i > 0 && arr[i - 1] === '/') {
-            const numerEnd = i - 2;
-            let numerStart;
-            let denomEnd;
-
-            pairs.forEach(([openIdx, closeIdx]) => {
-                if (openIdx === i) {
-                    denomEnd = closeIdx;
-                }
-                if (closeIdx === numerEnd) {
-                    numerStart = openIdx;
-                }
-            });
-
-            let updated = [...arr];
-            updated = deleteAt(updated, denomEnd);     // FRACTION_CLOSE of denominator
-            updated = deleteAt(updated, i);           // FRACTION_OPEN of denominator
-            updated = deleteAt(updated, i - 1);       // slash
-            updated = deleteAt(updated, numerEnd);    // FRACTION_CLOSE of numerator
-            updated = deleteAt(updated, numerStart);  // FRACTION_OPEN of numerator
-            return updated;
-        }
-        else {
-            // Otherwise, i is for the numerator. We need to remove
-            // the denominator part as well.
-            let numerEnd;
-            let denomStart;
-            let denomEnd;
-
-            pairs.forEach(([openIdx, closeIdx]) => {
-                if (openIdx === i) {
-                    numerEnd = closeIdx;
-                    denomStart = closeIdx + 2; // skip slash, skip next element
-                }
-            });
-
-            pairs.forEach(([openIdx, closeIdx]) => {
-                if (openIdx === denomStart) {
-                    denomEnd = closeIdx;
-                }
-            });
-
-            let updated = [...arr];
-            updated = deleteAt(updated, denomEnd); // FRACTION_CLOSE of denominator
-            updated = deleteAt(updated, denomStart); // FRACTION_OPEN of denominator
-            updated = deleteAt(updated, numerEnd + 1); // slash
-            updated = deleteAt(updated, numerEnd); // FRACTION_CLOSE of numerator
-            updated = deleteAt(updated, i); // FRACTION_OPEN of numerator
-            return updated;
-        }
-    }    
-
-    /*----------------------Handling Integral--------------------*/
-
-    function handleIntegral(arr, cursorIndex) {
-        arr = insertAt(arr, cursorIndex+1, UPPER_OPEN);
-        arr = insertAt(arr, cursorIndex+2, CURSOR);
-        arr = insertAt(arr, cursorIndex+3, UPPER_CLOSE);
-        arr = insertAt(arr, cursorIndex+4, LOWER_OPEN);
-        arr = insertAt(arr, cursorIndex+5, LOWER_CLOSE);
-        arr = insertAt(arr, cursorIndex+6, VALUE_OPEN);
-        arr = insertAt(arr, cursorIndex+7, VALUE_CLOSE);
-        arr.splice(cursorIndex+8, 1);
-
-        return arr;
-    }
-
-    function processIntegral(inputArr, pairs, i) {
-        let end;
-        pairs.forEach((item) => {
-            if (item[0] == i + 3) {
-                end = item[1]
-            }
-        })
-
-        const upper = inputArr.slice(i+4, end)
-        i = end + 1
-
-        pairs.forEach((item) => {
-            if (item[0] == i) {
-                end = item[1]
-            }
-        })
-
-        const lower = inputArr.slice(i+1, end)
-        i = end + 1
-
-        pairs.forEach((item) => {
-            if (item[0] == i) {
-                end = item[1]
-            }
-        })
-
-        const value = inputArr.slice(i+1, end)
-    
-
-        return [{
-            type: 'integral',
-            value: processInput(value),
-            upperBound: processInput(upper),
-            lowerBound: processInput(lower)
-        }, end+1];
-    }
-
-    function deleteIntegral(inputArr, pairs, cursorIndex, upper_start, lower_start, value_start) {
-        let upperStart = upper_start;
-        let upperEnd;
-        let lowerStart = lower_start;
-        let lowerEnd;
-        let valueStart = value_start;
-        let valueEnd;
-
-        if (upperStart !== undefined) {
-            pairs.forEach((item) => {
-                if (item[0] === upperStart) {
-                    upperEnd = item[1]
-                    lowerStart = item[1] + 1
-                }
-            })
-
-            pairs.forEach((item) => {
-                if (item[0] === lowerStart) {
-                    lowerEnd = item[1];
-                    valueStart = item[1] + 1;
-                }
-            })
-
-            pairs.forEach((item) => {
-                if (item[0] === valueStart) {
-                    valueEnd = item[1];
-                }
-            })
-
-            // inputArr.splice(cursorIndex-4, 3)
-            inputArr.splice(upperStart-3, 3)
-            inputArr = deleteAt(inputArr, upperStart-3)
-            inputArr = deleteAt(inputArr, upperEnd-4)
-            inputArr = deleteAt(inputArr, lowerStart-5)
-            inputArr = deleteAt(inputArr, lowerEnd-6)
-            inputArr = deleteAt(inputArr, valueStart-7)
-            inputArr = deleteAt(inputArr, valueEnd-8)
-
-            return inputArr;
-
-        } else if (lowerStart !== undefined) {
-            pairs.forEach((item) => {
-                if (item[0] === lowerStart) {
-                    lowerEnd = item[1]
-                    valueStart = item[1] + 1
-                    upperEnd = item[0] - 1
-                }
-            })
-
-            pairs.forEach((item) => {
-                if (item[0] === valueStart) {
-                    valueEnd = item[1];
-                }
-            })
-
-            pairs.forEach((item) => {
-                if (item[1] === upperEnd) {
-                    upperStart = item[0];
-                }
-            })
-
-            // inputArr.splice(cursorIndex-6, 3)
-            inputArr.splice(upperStart-3, 3)
-            inputArr = deleteAt(inputArr, upperStart-3)
-            inputArr = deleteAt(inputArr, upperEnd-4)
-            inputArr = deleteAt(inputArr, lowerStart-5)
-            inputArr = deleteAt(inputArr, lowerEnd-6)
-            inputArr = deleteAt(inputArr, valueStart-7)
-            inputArr = deleteAt(inputArr, valueEnd-8)
-
-            return inputArr;
-        } else if (valueStart !== null && cursorIndex+1) {
-            pairs.forEach((item) => {
-                if (item[0] === valueStart) {
-                    valueEnd = item[1]
-                    lowerEnd = item[0] - 1
-                }
-            })
-
-            pairs.forEach((item) => {
-                if (item[1] === lowerEnd) {
-                    lowerStart = item[0];
-                    upperEnd = item[0] - 1;
-                }
-            })
-
-            pairs.forEach((item) => {
-                if (item[1] === upperEnd) {
-                    upperStart = item[0];
-                }
-            })
-
-            // inputArr.splice(cursorIndex-8, 3)
-            inputArr.splice(upperStart-3, 3)
-            inputArr = deleteAt(inputArr, upperStart-3)
-            inputArr = deleteAt(inputArr, upperEnd-4)
-            inputArr = deleteAt(inputArr, lowerStart-5)
-            inputArr = deleteAt(inputArr, lowerEnd-6)
-            inputArr = deleteAt(inputArr, valueStart-7)
-            inputArr = deleteAt(inputArr, valueEnd-8)
-
-            return inputArr;
-        }
-    }
-
-    /*----------------------Handling Logarithm--------------------*/
-    
-    function handleLogarithm(arr, cursorIndex) {
-        arr = insertAt(arr, cursorIndex+1, LOG_OPEN);
-        arr = insertAt(arr, cursorIndex+2, CURSOR)
-        arr = insertAt(arr, cursorIndex+3, LOG_CLOSE);
-        arr.splice(cursorIndex+4, 1);
-
-        return arr;
-    }
-
-    function processLogarithm(inputArr, pairs, i) {
-        let endIndex;
-        pairs.forEach(([openIdx, closeIdx]) => {
-            if (openIdx === i) {
-                endIndex = closeIdx;
-            }
-        });
-
-        const logContent = inputArr.slice(i + 1, endIndex);
-
-        return [{
-            type: 'log',
-            value: processInput(logContent),
-        }, endIndex+1];
-    }
-
-    /*----------------------Handling Square Root--------------------*/
-
-    function findMatchingSquareRootClose(array, openIndex) {
-        let openBrackets = 1;
-        let index = openIndex + 1;
-    
-        while (index < array.length && openBrackets > 0) {
-            if (array[index] === SQUARE_ROOT_OPEN) {
-                openBrackets++;
-            } else if (array[index] === SQUARE_ROOT_CLOSE) {
-                openBrackets--;
-            }
-            index++;
-        }
-    
-        return openBrackets === 0 ? index - 1 : -1;
-    }
-
-    function isSqrtPressed(arr, cursorIndex) {
-        let i = cursorIndex;
-        return arr[i - 3] == 's' && arr[i - 2] == 'q' && arr[i - 1] == 'r'
-    }
-
-    function handleSqrtPressed(arr, cursorIndex) {
-        arr = deleteAt(arr, cursorIndex - 3);
-        arr = deleteAt(arr, cursorIndex - 3);
-        arr = deleteAt(arr, cursorIndex - 3);
-        arr = insertAt(arr, cursorIndex - 3, '√');
-        arr = insertAt(arr, cursorIndex - 2, SQUARE_ROOT_OPEN);
-        arr = insertAt(arr, cursorIndex, SQUARE_ROOT_CLOSE);
-        return arr;
-    }
-
-    function findRadicand(arr) {
-        let res = []
-        let closeIndex = findMatchingSquareRootClose(arr, 0)
-
-        for (let i = 1; i < closeIndex; i++) {
-            res.push(arr[i])
-        }
-
-        if (res.length == 1 && res[0] == 'cursor') {
-            res.push(EMPTY_SQUARE_ROOT)
-        }
-
-        return res;
-    }
-
 
     function handleKeyPressed(e) {
         e.preventDefault();
@@ -600,7 +120,6 @@ function Input() {
         const key = e.key;
         let copy = [...userInput];
         let cursorIndex = copy.indexOf(CURSOR);
-        // const pairs = findParenPairs(copy);
 
         const int_pairs = findParenPairs(copy, "_INT")
         const frac_pairs = findParenPairs(copy, "_FRACTION")
@@ -1034,104 +553,6 @@ function Input() {
         console.log(frac_pairs);
         setUserInput(copy);
     };
-
-    function processInput(inputArr) {
-        const result = [];
-        let i = 0;
-        // const pairs = findParenPairs(inputArr);
-
-        const int_pairs = findParenPairs(inputArr, "_INT")
-        const frac_pairs = findParenPairs(inputArr, "_FRACTION")
-        const log_pairs = findParenPairs(inputArr, "_LOG")
-
-
-
-
-        while (i < inputArr.length) {
-            
-            const token = inputArr[i];
-
-            if (token === CURSOR) {
-                result.push({
-                    type: 'cursor',
-                });
-                i++;
-            }
-
-            else if (token === FRACTION_OPEN) {
-                let [temp, i_temp] = processFraction(inputArr, frac_pairs, i);
-                result.push(temp);
-                i = i_temp;
-            }
-
-            else if (token === EMPTY_EXPONENT) {
-                result.push({type: 'empty_exponent'})
-                i++
-            } else if (token === '^') {
-                let base = processInput(findBase([...inputArr].slice(0, i)))
-                let children_0 = processInput(findChildren([...inputArr].slice(i + 1)))
-
-
-                result.splice(result.length - base.length, base.length)
-
-                result.push({
-                    type: 'exponent',
-                    value: base,
-                    children: children_0
-                })
-
-                i += findChildren([...inputArr].slice(i + 1)).length;
-                // console.log(base)
-                // console.log(children_0)
-            }
-
-            else if (token == EMPTY_SQUARE_ROOT) {
-                result.push({type : 'empty_square_root'})
-                i++
-            } else if (token === '√') {
-                let closeIndex = findMatchingSquareRootClose(inputArr, i + 1)
-                let jumpIndex = closeIndex - i;
-
-                let radicand = processInput(findRadicand([...inputArr].slice(i + 1)))
-
-                result.push({
-                    type: 'square-root',
-                    value: radicand
-                })
-
-                i = i + jumpIndex + 1;
-            }
-
-            else if (/^[a-zA-Z0-9+\-*()=]+$/i.test(token)) {
-
-                if (token === 'i' && inputArr[i+1] === 'n' && inputArr[i+2] === 't') {
-                    let [temp, i_temp] = processIntegral(inputArr, int_pairs, i);
-                    result.push(temp);
-                    i = i_temp;
-                }
-
-                else if (token === LOG_OPEN) {
-                    let [temp, i_temp] = processLogarithm(inputArr, log_pairs, i);
-                    result.push(temp);
-                    i = i_temp;
-                }
-
-                else {
-                    result.push({
-                        type: 'text',
-                        value: token
-                    });
-                    i++;
-                }
-            }
-
-            else {
-                i++;
-            }
-        }
-
-        return result;
-    }
 
     
     function displayText(nodeList) {
