@@ -4,6 +4,8 @@ import { Queue } from './queue.js'
 import * as math from './calculateExpression.js'
 import * as Integral from './Integral.js'
 import * as Derivative from './Derivative.js'
+import { sqrt } from 'mathjs'
+import { searchForWorkspaceRoot } from 'vite'
 
 let functions = new Map();
 
@@ -81,28 +83,6 @@ function convertConstant(constant) {
         case 'pi': return Math.PI;
         case 'e': return Math.E;
     }
-}
-
-// helper function to group separated numbers to a single string
-function groupNums(arr) {
-    let result = [];
-    let temp = '';
-
-    for (let i = 0; i < arr.length; i++) {
-        if (isNumber(arr[i])) {
-            temp += arr[i];
-        } else {
-            if (temp) {
-                result.push(temp);
-                temp = ""; 
-            }
-            result.push(arr[i]); 
-        }
-    }
-
-    if (temp) result.push(temp);
-
-    return result;
 }
 
 // helper to handle JuckBoon. result is numerical string
@@ -191,8 +171,6 @@ function handleMiJuckBoon(arr) {
             }
 
             let miBoonRes = handleMiBoon(func, derivCount, inTermsOf);
-            // console.log('below is miBoonRes')
-            // console.log(miBoonRes)
 
             res.push(miBoonRes);
             i += temp.length - 1;
@@ -204,43 +182,56 @@ function handleMiJuckBoon(arr) {
     return res;
 }
 
+// helper function to group separated numbers to a single string
+function groupNums(arr) {
+    let result = [];
+    let temp = '';
+
+    for (let i = 0; i < arr.length; i++) {
+        if (isNumber(arr[i])) {
+            temp += arr[i];
+        } else {
+            if (temp) {
+                result.push(temp);
+                temp = ""; 
+            }
+            result.push(arr[i]); 
+        }
+    }
+
+    if (temp) result.push(temp);
+
+    return result;
+}
+
 // helper function: inputs an array with single letter/number, and
 // outputs an array with grouped words (e.g. sqrt, sin, cos, etc)
 function groupWords(input) {
     let result = [];
     // Temporary variable to collect letters
-    let temp = "";
-    console.log("passed to groupWords: ")
-    console.log(input)
+    let temp = ""
+    let arr = [...input]
+
     const openingBrackets = [
         "_EXPONENT_OPEN_", "_FRACTION_OPEN_", "_SQUARE_ROOT_OPEN_", 
         "_LOG_OPEN_", "_SQUARE_ROOT_OPEN_", "_LN_OPEN_",
-        // "_INT_UPPER_BRACKET_OPEN_", "_INT_LOWER_BRACKET_OPEN_", "_INT_VALUE_BRACKET_OPEN_"
     ]
     const closingBrackets = [
         "_EXPONENT_CLOSE_", "_FRACTION_CLOSE_", "_SQUARE_ROOT_CLOSE_", 
         "_LOG_CLOSE_", "_SQUARE_ROOT_CLOSE_", "_LN_CLOSE_",
-        // "_INT_UPPER_BRACKET_CLOSE_", "_INT_LOWER_BRACKET_CLOSE_", "_INT_VALUE_BRACKET_CLOSE_"
     ]
     const operator = [
         'cos', 'sin', 'tan', 
         'arcsin', 'arccos', 'arctan',
         'csc', 'sec', 'cot',
         'log', 'ln', 
-        // 'int',
         '+', '-', '*', '/', '√'
     ]
-
-
-    let arr = [...input]
-    console.log("check")
 
     for (let i = 0; i < arr.length; i++) {
         // Check if the current element is a letter and add to temp
         if (/[a-wA-WzZ]/.test(arr[i])) {
             temp += arr[i];
-            console.log("check2")
-            console.log(temp)
             // if temp is a constant (e.g. pi or e), add to result
             if (isConstant(temp)) {
                 result.push(temp);
@@ -268,7 +259,6 @@ function groupWords(input) {
         }
     }
 
-    console.log("result: " + result)
     return groupNums(result);
 }
 
@@ -276,7 +266,7 @@ function groupWords(input) {
 function infixToPostfix(infix) {
     let stack = new Stack()
     let queue = new Queue()
-    let groupedStr = groupWords(infix)
+    let groupedStr = [...infix];
 
     for (let i=0; i<groupedStr.length; i++) {
 
@@ -321,21 +311,64 @@ function infixToPostfix(infix) {
 // returns expression as a string
 function makeExpression(arr) {
     let res = '';
-    // let temp = handleMiJuckBoon(arr);
-    console.log(arr)
-    let temp = groupWords(arr);
-
-    console.log(temp)
+    let temp = [...arr];
 
     for (let i = 0; i < temp.length; i++) {
-        if (temp[i] == '^') {
-            res += '**'
-        } else {
-            res += temp[i];
+        let curr = temp[i]
+        switch (curr) {
+            case '^':
+                res += '**'
+                break;
+            case '√':
+                res += 'Math.sqrt'
+                break;
+            case 'sin':
+                res += 'Math.sin'
+                break;
+            case 'cos':
+                res += 'Math.cos'
+                break;
+            case 'tan':
+                res += 'Math.tan'
+                break;
+            case 'arcsin':
+                res += 'arcsin'
+                break;
+            case 'arccos':
+                res += 'Math.acos'
+                break;
+            case 'arctan':
+                res += 'Math.atan'
+                break;
+            case 'sinh':
+                res += 'Math.sinh'
+                break;
+            case 'cosh':
+                res += 'Math.cosh'
+                break;
+            case 'tanh':
+                res += 'Math.tanh'
+                break;
+            case 'csc':
+                res += '1/Math.sin'
+                break;
+            case 'sec':
+                res += '1/Math.cos'
+                break;
+            case 'cot':
+                res += '1/Math.tan'
+                break;
+            case 'log':
+                res += 'Math.log'
+                break;
+            case 'ln':
+                res += 'Math.log'
+                break;
+            default:
+                res += curr
+                break;
         }
     }
-
-    console.log(res)
 
     return res;
 }
@@ -377,17 +410,39 @@ export function returnOutput(arr) {
         return arr.some(element => element.includes('x'));
     }
 
-    let temp = handleMiJuckBoon([...arr]);
+    let after_MJB_handle = handleMiJuckBoon([...arr]);
+    let after_gw = groupWords(after_MJB_handle);
 
-    // console.log(temp)
+    console.log(after_gw);
 
-    if (containsX(temp)) {
-        console.log(makeExpression(temp))
-        return makeExpression(arr);
+    if (containsX(after_MJB_handle)) {
+        return makeExpression(after_gw);
     }
     
-    return evaluateExpression(arr);
+    return evaluateExpression(after_gw);
 }
+
+// test suite 
+
+// test handleMiJuckBoon
+// const intArray = [
+//     'i', 'n', 't', 
+//     '_INT_UPPER_BRACKET_OPEN_', '3', '_INT_UPPER_BRACKET_CLOSE_', 
+//     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_',
+//     '_INT_VALUE_BRACKET_OPEN_', 'x', '_INT_VALUE_BRACKET_CLOSE_'
+// ]
+
+// const derivArray = [
+//     'f',
+//     // '\'',
+//     '\'', 
+//     '\'', '(', 'x', ')'
+// ]
+
+// console.log("handleJuckBoon result: " + handleJuckBoon(intArray))
+// console.log("handleMiJuckBoon result: " + handleMiJuckBoon(intArray))
+// console.log("handleMiJuckBoon result: " + handleMiJuckBoon(derivArray))
+// console.log("returnOutput result: " + returnOutput(intArray))
 
 // test suite
 
@@ -428,13 +483,14 @@ export function returnOutput(arr) {
 // console.log(evaluateExpression(logArray))
 
 // test sqrt
-// const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '2', '^', "_EXPONENT_OPEN_", "2", "_EXPONENT_CLOSE_", '+', '3', '4', '*', '√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_', '_SQUARE_ROOT_CLOSE_', 'cursor']
+// const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', 'x', '^', "_EXPONENT_OPEN_", "2", "_EXPONENT_CLOSE_", '+', '3', '4', '*', '√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_', '_SQUARE_ROOT_CLOSE_', 'cursor']
 // const sqrtArray = ['√', '_SQUARE_ROOT_OPEN_', '4', '_SQUARE_ROOT_CLOSE_']
 
 // console.log(groupWords(sqrtArray))
 // console.log(makeExpression(sqrtArray))
 // console.log(infixToPostfix(sqrtArray))
 // console.log(evaluateExpression(sqrtArray))
+// console.log(returnOutput(sqrtArray))
 
 //test ln
 // const lnArray = ['l', 'n', '_LN_OPEN_', 'e', '_LN_CLOSE_']
@@ -457,6 +513,19 @@ export function returnOutput(arr) {
 //     's', 'e', 'c', '4', '+', 
 //     'c', 'o', 't', '3'
 // ]
+
+// const trigArray = [
+//     's', 'i', 'n', 'x', '+',
+//     'c', 'o', 's', 'x', '+',
+//     't', 'a', 'n', 'x', '+', 
+//     'a', 'r', 'c', 's', 'i', 'n', 'x', '+', 
+//     'a', 'r', 'c', 'c', 'o', 's', 'x', '+', 
+//     'a', 'r', 'c', 't', 'a', 'n', 'x', '+',
+//     'c', 's', 'c', 'x', '+',
+//     's', 'e', 'c', 'x', '+', 
+//     'c', 'o', 't', 'x'
+// ]
+
 // console.log(groupWords(trigArray))
 // console.log(makeExpression(trigArray))
 // console.log(infixToPostfix(trigArray))
@@ -571,7 +640,7 @@ export function returnOutput(arr) {
 //     '_INT_LOWER_BRACKET_OPEN_', '1', '_INT_LOWER_BRACKET_CLOSE_', 
 //     '_INT_VALUE_BRACKET_OPEN_', 'x', '_INT_VALUE_BRACKET_CLOSE_',
 //     '+', 
-//     'f', '\'', '(', '2', ')',
+//     'f', '\'', '(', 'x', ')',
 //     '*', 
 //     's', 'i', 'n', '(', '1', ')', 
 //     '/', 
@@ -609,7 +678,8 @@ export function returnOutput(arr) {
 // console.log(groupWords(everythingArray))
 // console.log(infixToPostfix(everythingArray))
 // console.log(evaluateExpression(everythingArray))
-// console.log("this is output: " + returnOutput(everythingArray))
+// console.log("this is output with only nums: " + returnOutput(everythingArrayOnlyNums))
+// console.log("this is output with x: " + returnOutput(everythingArray))
 
 // console.log(precedence('pi'))
 // console.log(returnOutput([
