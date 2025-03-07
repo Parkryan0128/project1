@@ -13,6 +13,7 @@ const fraction_ending = "_FRACTION";
 const log_ending = "_LOG";
 
 const CURSOR = 'cursor';
+const EMPTY_SPACE = '_EMPTY_SPACE_';
 
 // Exponent constants
 const EXPONENT_OPEN = "_EXPONENT_OPEN_";
@@ -148,33 +149,34 @@ export function processInput(inputArr) {
     const result = [];
     let i = 0;
 
-    const int_pairs = findParenPairs(inputArr, int_ending)
-    const frac_pairs = findParenPairs(inputArr, fraction_ending)
-    const log_pairs = findParenPairs(inputArr, log_ending)
+    const int_pairs = findParenPairs(inputArr, int_ending);
+    const frac_pairs = findParenPairs(inputArr, fraction_ending);
+    const log_pairs = findParenPairs(inputArr, log_ending);
 
     const handlers = {
-        [CURSOR]: (idx) => processCursorWrapper(idx),
-        [FRACTION_OPEN]: (arr, idx) => processFractionWrapper(arr, frac_pairs, idx),
-        [EMPTY_EXPONENT]: (idx) => processEmptyExponent(idx),
+        [CURSOR]: (arr, idx) => processCursor(idx),
+        [FRACTION_OPEN]: (arr, idx) => processFraction(arr, frac_pairs, idx),
+        [EMPTY_SPACE]: (arr, idx) => processEmptySpace(idx),                                 // changed from empty_exponent
         ['^']: (arr, idx) => processExponentWrapper(arr, idx),
-        [EMPTY_SQUARE_ROOT]: (idx) => processEmptySquareRoot(idx),
+        // [EMPTY_SQUARE_ROOT]: (arr, idx) => processEmptySquareRoot(idx),
         ['√']: (arr, idx) => processSquareRootWrapper(arr, idx),
-        [LOG_OPEN]: (arr, idx) => processLogarithmWrapper(arr, log_pairs, idx)
+        [LOG_OPEN]: (arr, idx) => processLogarithm(arr, log_pairs, idx)
     };
 
     while (i < inputArr.length) {
         const token = inputArr[i];
 
         if (handlers[token]) {
-            let temp, i_temp;
-            ({ temp, i_temp } = handlers[token](inputArr, i));
 
+            let [temp, i_temp] = handlers[token](inputArr, i);
+            
             if (token === '^') {
                 const base = temp.value
                 result.splice(result.length - base.length, base.length)
             }
             result.push(temp);
             i = i_temp;
+            console.log(i)
         } else if (/^[a-zA-Z0-9+\-*()=]+$/i.test(token)) {
             if (token === 'i' && inputArr[i+1] === 'n' && inputArr[i+2] === 't') {
                 let [temp, i_temp] = processIntegral(inputArr, int_pairs, i);
@@ -195,15 +197,8 @@ export function processInput(inputArr) {
 
 /*--------------HELPER FUNCTIONS--------------------------------*/
 
-function processCursorWrapper(idx) {
-    return { temp: { type: 'cursor'}, i_temp: idx+1}
-}
-function processFractionWrapper(arr, pairs, i) {
-    let [temp, i_temp] = processFraction(arr, pairs, i);
-    return { temp, i_temp }
-}
-function processEmptyExponent(idx)  {
-    return { temp: {type: 'empty_exponent'}, i_temp: idx+1}
+function processCursor(idx) {
+    return [{type: 'cursor'}, idx+1]
 }
 function processExponentWrapper(arr, i) {
     let base = processInput(findBase([...arr].slice(0, i)));
@@ -214,10 +209,10 @@ function processExponentWrapper(arr, i) {
         value: base,
         children: children_0
     }
-    return { temp: exponentNode, i_temp: i + findChildren([...arr].slice(i+1)).length }
+    return [exponentNode, i + findChildren([...arr].slice(i+1)).length]
 }
-function processEmptySquareRoot(idx) {
-    return { temp: {type: 'empty_square_root'}, i_temp: idx+1 };
+function processEmptySpace(idx) {
+    return [{type: 'empty_space'}, idx+1]
 }
 function processSquareRootWrapper(arr, i) {
     let closeIndex = findMatchingSquareRootClose(arr, i + 1);
@@ -225,10 +220,5 @@ function processSquareRootWrapper(arr, i) {
 
     let radicand = processInput(findRadicand([...arr].slice(i + 1)));
 
-
-    return { temp: {type: 'square-root', value: radicand}, i_temp: i + jumpIndex + 1}
-}
-function processLogarithmWrapper(arr, pairs, i) {
-    let [temp, i_temp] = processLogarithm(arr, pairs, i);
-    return {temp, i_temp}
+    return [{type: 'square-root', value: radicand}, i + jumpIndex + 1]
 }

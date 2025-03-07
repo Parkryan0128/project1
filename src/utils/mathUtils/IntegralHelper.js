@@ -3,6 +3,7 @@ import { processInput } from "../processInput.js"
 
 // Constants
 const CURSOR = 'cursor';
+const EMPTY_SPACE = '_EMPTY_SPACE_'
 const UPPER_OPEN = '_INT_UPPER_BRACKET_OPEN_';
 const UPPER_CLOSE = '_INT_UPPER_BRACKET_CLOSE_';
 const LOWER_OPEN = '_INT_LOWER_BRACKET_OPEN_';
@@ -15,10 +16,12 @@ const VALUE_CLOSE = '_INT_VALUE_BRACKET_CLOSE_';
         arr = insertAt(arr, cursorIndex+2, CURSOR);
         arr = insertAt(arr, cursorIndex+3, UPPER_CLOSE);
         arr = insertAt(arr, cursorIndex+4, LOWER_OPEN);
-        arr = insertAt(arr, cursorIndex+5, LOWER_CLOSE);
-        arr = insertAt(arr, cursorIndex+6, VALUE_OPEN);
-        arr = insertAt(arr, cursorIndex+7, VALUE_CLOSE);
-        arr.splice(cursorIndex+8, 1);
+        arr = insertAt(arr, cursorIndex+5, EMPTY_SPACE);
+        arr = insertAt(arr, cursorIndex+6, LOWER_CLOSE);
+        arr = insertAt(arr, cursorIndex+7, VALUE_OPEN);
+        arr = insertAt(arr, cursorIndex+8, EMPTY_SPACE);
+        arr = insertAt(arr, cursorIndex+9, VALUE_CLOSE);
+        arr.splice(cursorIndex+10, 1);
 
         return arr;
     }
@@ -89,7 +92,6 @@ const VALUE_CLOSE = '_INT_VALUE_BRACKET_CLOSE_';
                 }
             })
 
-            // inputArr.splice(cursorIndex-4, 3)
             inputArr.splice(upperStart-3, 3)
             inputArr = deleteAt(inputArr, upperStart-3)
             inputArr = deleteAt(inputArr, upperEnd-4)
@@ -121,7 +123,6 @@ const VALUE_CLOSE = '_INT_VALUE_BRACKET_CLOSE_';
                 }
             })
 
-            // inputArr.splice(cursorIndex-6, 3)
             inputArr.splice(upperStart-3, 3)
             inputArr = deleteAt(inputArr, upperStart-3)
             inputArr = deleteAt(inputArr, upperEnd-4)
@@ -152,7 +153,6 @@ const VALUE_CLOSE = '_INT_VALUE_BRACKET_CLOSE_';
                 }
             })
 
-            // inputArr.splice(cursorIndex-8, 3)
             inputArr.splice(upperStart-3, 3)
             inputArr = deleteAt(inputArr, upperStart-3)
             inputArr = deleteAt(inputArr, upperEnd-4)

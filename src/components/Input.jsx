@@ -6,13 +6,15 @@ import { handleExponents, findMatchingExponentClose,  } from '../utils/mathUtils
 import { handleFraction, deleteFraction,  } from '../utils/mathUtils/FractionHelper.js';
 import { findMatchingSquareRootClose, handleSqrtPressed, isSqrtPressed } from '../utils/mathUtils/SquareRootHelper.js';
 import { handleLogarithm  } from '../utils/mathUtils/LogarithmHelper.js';
+import { displayText } from '../utils/displayText.jsx';
 
 const CURSOR = 'cursor';
+const EMPTY_SPACE = '_EMPTY_SPACE_'
 
 // Exponent constants
 const EXPONENT_OPEN = "_EXPONENT_OPEN_";
 const EXPONENT_CLOSE = "_EXPONENT_CLOSE_";
-const EMPTY_EXPONENT = '_EMPTY__EXPONENT_';
+// const EMPTY_EXPONENT = '_EMPTY__EXPONENT_';
 
 // Fraction constants
 
@@ -36,7 +38,7 @@ const LOG_CLOSE = '_LOG_CLOSE_';
 // Square root constants
 const SQUARE_ROOT_OPEN = "_SQUARE_ROOT_OPEN_";
 const SQUARE_ROOT_CLOSE = "_SQUARE_ROOT_CLOSE_";
-const EMPTY_SQUARE_ROOT = '_EMPTY_SQUARE_ROOT_'
+// const EMPTY_SQUARE_ROOT = '_EMPTY_SQUARE_ROOT_'
 
 export function insertAt(arr, index, item) {
     /*
@@ -94,7 +96,12 @@ export function findParenPairs(str, type) {
 
     return pairs;
 }
-/*----------------------------Functions----------------------*/
+
+
+
+
+
+/*----------------------------START----------------------*/
 
 function Input() {
     // useStates
@@ -229,7 +236,7 @@ function Input() {
                 setUserInput(copy);
             } else if (prevChar === EXPONENT_CLOSE) {
                 copy = swapItems(copy, cursorIndex, cursorIndex - 1);
-                if (copy[cursorIndex - 2] == EMPTY_EXPONENT) {
+                if (copy[cursorIndex - 2] == EMPTY_SPACE) {                                 // changed from empty_exponent
                     copy = deleteAt(copy, cursorIndex - 2)
                 }
 
@@ -245,7 +252,7 @@ function Input() {
                 copy = deleteAt(copy, closingIndex - 2)
             } else if (prevChar == SQUARE_ROOT_CLOSE) {
                 copy = swapItems(copy, cursorIndex, cursorIndex - 1);
-                if (copy[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
+                if (copy[cursorIndex - 2] == EMPTY_SPACE) {                     // changed from empty_square_root
                     copy = deleteAt(copy, cursorIndex)
                     copy = deleteAt(copy, cursorIndex - 4)
                     copy = deleteAt(copy, cursorIndex - 4)
@@ -349,40 +356,70 @@ function Input() {
             else if (copy[cursorIndex + 1] == '^') {
                 copy = swapItems(copy, cursorIndex, cursorIndex + 1);
                 copy = swapItems(copy, cursorIndex + 1, cursorIndex + 2);
-                if (copy[cursorIndex + 3] == EMPTY_EXPONENT) {
+                if (copy[cursorIndex + 3] == EMPTY_SPACE) {                                         // changed from empty_exponent
                     copy = deleteAt(copy, cursorIndex + 3)
                 }
-            } else if (copy[cursorIndex] == EXPONENT_CLOSE && 
-                copy[cursorIndex - 1] == EXPONENT_OPEN) {
-                    copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
-                }
+            } 
+            // else if (copy[cursorIndex + 1] == EXPONENT_CLOSE && 
+            //     copy[cursorIndex - 1] == EXPONENT_OPEN) {
+            //         copy = insertAt(copy, cursorIndex, EMPTY_SPACE)                         // changed from empty_exponent
+            // } 
+            else if (copy[cursorIndex+1] === EXPONENT_CLOSE &&
+                copy[cursorIndex-1] === EXPONENT_OPEN) {
+                    copy = deleteAt(insertAt(copy, cursorIndex+2, CURSOR), cursorIndex)
+                    copy = insertAt(copy, cursorIndex, EMPTY_SPACE)
+            }
 
             // square root logic
             else if (copy[cursorIndex + 1] == '√') {
                 copy = swapItems(copy, cursorIndex, cursorIndex + 1);
                 copy = swapItems(copy, cursorIndex + 1, cursorIndex + 2);
-                if (copy[cursorIndex + 3] == EMPTY_SQUARE_ROOT) {
+                if (copy[cursorIndex + 3] == EMPTY_SPACE) {                                 // changed from empty_square_root
                     copy = deleteAt(copy, cursorIndex + 3)
                 }
             } else if (copy[cursorIndex] == SQUARE_ROOT_CLOSE && 
                 copy[cursorIndex - 1] == SQUARE_ROOT_OPEN) {
-                    copy = insertAt(copy, cursorIndex, EMPTY_SQUARE_ROOT) 
+                    copy = insertAt(copy, cursorIndex, EMPTY_SPACE)                         // changed from empty_square_root 
                 }
 
             // integral logic
             else if (copy[cursorIndex+1] === 'i' && copy[cursorIndex+2] === 'n' && copy[cursorIndex+3] === 't') {
-                copy = insertAt(copy, cursorIndex+5, CURSOR)
-                copy.splice(cursorIndex, 1)
-                setUserInput(copy)
-            } else if (copy[cursorIndex+1] ===UPPER_CLOSE) {
-                copy = insertAt(copy, cursorIndex+3, CURSOR)
-                copy.splice(cursorIndex, 1)
-                setUserInput(copy)
+                if (copy[cursorIndex+5] === EMPTY_SPACE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex+5), cursorIndex+5, CURSOR)
+                    copy = deleteAt(copy, cursorIndex)
+                } else {
+                    copy = deleteAt(insertAt(copy, cursorIndex+5, CURSOR), cursorIndex)
+                }
+            } else if (copy[cursorIndex+1] === UPPER_CLOSE) {
+                if (copy[cursorIndex-1] === UPPER_OPEN) {
+                    copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                    copy = insertAt(copy, cursorIndex+3, CURSOR)
+                    if (copy[cursorIndex+4] === EMPTY_SPACE) {copy=deleteAt(copy, cursorIndex+4)};
+                } else if (copy[cursorIndex+3] === EMPTY_SPACE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex+3), cursorIndex+3, CURSOR)
+                    copy = deleteAt(copy, cursorIndex)
+                } else {
+                    copy = deleteAt(insertAt(copy, cursorIndex+3, CURSOR), cursorIndex)
+                }
             } else if (copy[cursorIndex+1] === LOWER_CLOSE) {
-                copy = insertAt(copy, cursorIndex+3, CURSOR)
-                copy.splice(cursorIndex,1)
-                setUserInput(copy)
-            } 
+                if (copy[cursorIndex-1] === LOWER_OPEN) {
+                    copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                    copy = insertAt(copy, cursorIndex+3, CURSOR);
+                    if (copy[cursorIndex+4] === EMPTY_SPACE) {copy = deleteAt(copy, cursorIndex+4)}
+                } else if (copy[cursorIndex+3] === EMPTY_SPACE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex+3), cursorIndex+3, CURSOR)
+                    copy = deleteAt(copy, cursorIndex)
+                } else {
+                    copy = deleteAt(insertAt(copy, cursorIndex+3, CURSOR), cursorIndex)
+                }
+            } else if (copy[cursorIndex+1] === VALUE_CLOSE) {
+                if (copy[cursorIndex-1] === VALUE_OPEN) {
+                    copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                    copy = insertAt(copy, cursorIndex+2, CURSOR)
+                } else {
+                    copy = deleteAt(insertAt(copy, cursorIndex+2, CURSOR), cursorIndex)
+                }
+            }
 
             // logarithm logic
             else if ((copy[cursorIndex+1] === LOG_OPEN || copy[cursorIndex+1] === LOG_CLOSE)) {
@@ -393,7 +430,6 @@ function Input() {
             
             else {
                 copy = swapItems(copy, cursorIndex, cursorIndex+1)
-                setUserInput(copy)
             }
         }
 
@@ -419,47 +455,63 @@ function Input() {
                 copy = swapItems(copy, cursorIndex, cursorIndex - 1);
                 copy = swapItems(copy, cursorIndex - 1, cursorIndex - 2);
                 if (copy[cursorIndex + 1] == EXPONENT_CLOSE) {
-                    copy = insertAt(copy, cursorIndex + 1, EMPTY_EXPONENT);
+                    copy = insertAt(copy, cursorIndex + 1, EMPTY_SPACE);
                 }
             } 
-            else if (copy[cursorIndex] == EXPONENT_CLOSE && 
-                copy[cursorIndex - 2] == EMPTY_EXPONENT) {
-                    copy = deleteAt(copy, cursorIndex - 2)
-                }
+            else if (copy[cursorIndex-1] == EXPONENT_CLOSE && 
+                copy[cursorIndex - 2] == EMPTY_SPACE) {                                     //changed from empty_exponent                                              // changed from empty_exponent
+                    copy = insertAt(deleteAt(deleteAt(copy, cursorIndex), cursorIndex-2), cursorIndex-2, CURSOR)
+            } 
 
             // square root logic
             else if (prevChar == SQUARE_ROOT_OPEN) {
                 copy = swapItems(copy, cursorIndex, cursorIndex - 1);
                 copy = swapItems(copy, cursorIndex - 1, cursorIndex - 2);
                 if (copy[cursorIndex + 1] == SQUARE_ROOT_CLOSE) {
-                    copy = insertAt(copy, cursorIndex + 1, EMPTY_SQUARE_ROOT);
+                    copy = insertAt(copy, cursorIndex + 1, EMPTY_SPACE);                    // changed from empty_square_root
                 }
             } else if (copy[cursorIndex] == SQUARE_ROOT_CLOSE && 
-                copy[cursorIndex - 2] == EMPTY_SQUARE_ROOT) {
+                copy[cursorIndex - 2] == EMPTY_SPACE) {                             // changed from empty_square_root
                     arr = deleteAt(arr, cursorIndex - 2)
                 }
 
             // integral logic
             else if (copy[cursorIndex-1] === UPPER_OPEN) {
-                copy = insertAt(copy, cursorIndex-4, CURSOR)
-                cursorIndex = copy.lastIndexOf(CURSOR)
-                copy.splice(cursorIndex, 1)
-                setUserInput(copy)
+                if (copy[cursorIndex+1] === UPPER_CLOSE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                    copy = insertAt(copy, cursorIndex-4, CURSOR)
+                } else {
+                    copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex-4, CURSOR)
+                }
             } else if (copy[cursorIndex-1] === LOWER_OPEN) {
-                copy = insertAt(copy, cursorIndex-2, CURSOR)
-                cursorIndex = copy.lastIndexOf(CURSOR)
-                copy.splice(cursorIndex, 1)
-                setUserInput(copy)
+                if (copy[cursorIndex+1] === LOWER_CLOSE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                    copy = insertAt(copy, cursorIndex-3, CURSOR)
+                    if (copy[cursorIndex-2] === EMPTY_SPACE) {copy = deleteAt(copy, cursorIndex-2)}
+                } else if (copy[cursorIndex-3] === EMPTY_SPACE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex-3), cursorIndex-3, CURSOR)
+                    copy = deleteAt(copy, cursorIndex)
+                }
             } else if (copy[cursorIndex-1] === VALUE_OPEN) {
-                copy = insertAt(copy, cursorIndex-2, CURSOR)
-                cursorIndex = copy.lastIndexOf(CURSOR)
-                copy.splice(cursorIndex, 1)
-                setUserInput(copy)
+                if (copy[cursorIndex+1] === VALUE_CLOSE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                    copy = insertAt(copy, cursorIndex-3, CURSOR)
+                    if (copy[cursorIndex-2] === EMPTY_SPACE) {copy = deleteAt(copy, cursorIndex-2)}
+                } else if (copy[cursorIndex-3] === EMPTY_SPACE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex-3), cursorIndex-3, CURSOR)
+                    copy = deleteAt(copy, cursorIndex)
+                }
+            } else if (copy[cursorIndex-1] === VALUE_CLOSE) {
+                if (copy[cursorIndex-2] === EMPTY_SPACE) {
+                    copy = insertAt(deleteAt(copy, cursorIndex-2), cursorIndex-2, CURSOR)
+                    copy = deleteAt(copy, cursorIndex)
+                } else {
+                    copy = swapItems(copy, cursorIndex-1, cursorIndex)
+                }
             }
 
             else {
                 copy = swapItems(copy, cursorIndex-1, cursorIndex)
-                setUserInput(copy);
             }
         }
         
@@ -478,16 +530,22 @@ function Input() {
             if (copy[cursorIndex + 1] == '^') {
                 copy = swapItems(copy, cursorIndex, cursorIndex + 1);
                 copy = swapItems(copy, cursorIndex + 1, cursorIndex + 2);
-                if (copy[cursorIndex + 3] == EMPTY_EXPONENT) {
+                if (copy[cursorIndex + 3] == EMPTY_SPACE) {                                         // changed from empty_exponent
                     copy = deleteAt(copy, cursorIndex + 3)
                 }
             } else if (copy[cursorIndex] == EXPONENT_CLOSE && 
                 copy[cursorIndex - 1] == EXPONENT_OPEN) {
-                    copy = insertAt(copy, cursorIndex, EMPTY_EXPONENT)
+                    copy = insertAt(copy, cursorIndex, EMPTY_SPACE)                                     //changed empty_exponent
                 }
     
             else if (start != null && start > 1 && copy[start-1] == '/') {
                 copy = insertAt(deleteAt(copy, cursorIndex),start-2, CURSOR);
+            }
+
+            else if (copy[cursorIndex-1] === LOWER_OPEN && copy[cursorIndex+1] === LOWER_CLOSE) {
+                copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                copy = insertAt(copy, cursorIndex-3, CURSOR)
+                if (copy[cursorIndex-2] === EMPTY_SPACE) {copy = deleteAt(copy, cursorIndex-2)}
             }
 
             else if (cursorIndex > int_pairs[1][0] && cursorIndex < int_pairs[1][1]) {
@@ -500,7 +558,15 @@ function Input() {
                     copy = insertAt(copy, int_pairs[0][0]+lower_diff, CURSOR)
                     copy.splice(cursorIndex+1, 1)
                 }
-            } else if (cursorIndex > int_pairs[2][0] && cursorIndex < int_pairs[2][1]) {
+            } 
+
+            else if (copy[cursorIndex-1] === VALUE_OPEN && copy[cursorIndex+1] === VALUE_CLOSE) {
+                copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                copy = insertAt(copy, int_pairs[0][1], CURSOR)
+                if (copy[int_pairs[0][1]-1] === EMPTY_SPACE) {copy = deleteAt(copy, int_pairs[0][1]-1)}
+            }
+            
+            else if (cursorIndex > int_pairs[2][0] && cursorIndex < int_pairs[2][1]) {
                 copy = insertAt(copy, int_pairs[0][1], CURSOR)
                 copy.splice(cursorIndex+1,1)
             }
@@ -522,16 +588,22 @@ function Input() {
                 copy = swapItems(copy, cursorIndex, cursorIndex - 1);
                 copy = swapItems(copy, cursorIndex - 1, cursorIndex - 2);
                 if (copy[cursorIndex + 1] == EXPONENT_CLOSE) {
-                    copy = insertAt(copy, cursorIndex + 1, EMPTY_EXPONENT);
+                    copy = insertAt(copy, cursorIndex + 1, EMPTY_SPACE);                                    // changed from empty_exponent
                 }
             } 
             else if (copy[cursorIndex] == EXPONENT_CLOSE && 
-                copy[cursorIndex - 2] == EMPTY_EXPONENT) {
+                copy[cursorIndex - 2] == EMPTY_SPACE) {                                         // changed from empty_exponent
                     copy = deleteAt(copy, cursorIndex - 2)
                 }
     
             else if (start != null && copy[end+1] == '/') {
                 copy = deleteAt(insertAt(copy,end+3, CURSOR), cursorIndex)
+            }
+
+            else if (copy[cursorIndex-1] === UPPER_OPEN && copy[cursorIndex+1] === UPPER_CLOSE) {
+                copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                copy = insertAt(copy, cursorIndex+3, CURSOR)
+                if (copy[cursorIndex+4] === EMPTY_SPACE) {copy = deleteAt(copy, cursorIndex+4)}
             }
 
             else if (cursorIndex > int_pairs[0][0] && cursorIndex < int_pairs[0][1]) {
@@ -544,89 +616,22 @@ function Input() {
                     copy = insertAt(copy, int_pairs[1][0]+upper_diff, CURSOR)
                     copy.splice(cursorIndex,1)
                 }
-            } else if (cursorIndex > int_pairs[2][0] && cursorIndex < int_pairs[2][1]) {
+            } 
+            
+            else if (copy[cursorIndex-1] === VALUE_OPEN && copy[cursorIndex+1] === VALUE_CLOSE) {
+                copy = insertAt(deleteAt(copy, cursorIndex), cursorIndex, EMPTY_SPACE)
+                copy = insertAt(copy, int_pairs[1][1], CURSOR)
+                if (copy[int_pairs[1][1]-1] === EMPTY_SPACE) {copy = deleteAt(copy, int_pairs[1][1]-1)}
+            }
+            else if (cursorIndex > int_pairs[2][0] && cursorIndex < int_pairs[2][1]) {
                 copy = insertAt(copy, int_pairs[1][1], CURSOR)
                 copy.splice(cursorIndex+1,1)
             }
 
         }
-        console.log(frac_pairs);
         setUserInput(copy);
     };
 
-    
-    function displayText(nodeList) {
-        return nodeList.map((node, index) => {
-            switch (node.type) {
-                case 'text':
-                    return (<span key={index}>{node.value}</span>);
-                
-                case 'exponent':
-                    return (
-                        <span key={index}>
-                            <span>{displayText(node.value)}</span>
-                            <sup>
-                                <span>{displayText(node.children)}</span>
-                            </sup>
-                        </span>
-                    );
-
-                case 'empty_exponent':
-                    return (<span key={index} className="empty-exponent"/>)
-
-                case 'square-root':
-                    return (
-                        <span key={index} className = "square-root">
-                        <span>√</span>
-                        <span>(</span>
-                        <span className='radicand'>{displayText(node.value)}</span>
-                        <span>)</span>
-                    </span>
-                    )
-
-                case 'empty_square_root':
-                    return (
-                        <span key={index} className="empty-square-root"/>
-                    );
-
-                case 'fraction':
-                    return (<span className="fraction" key={index}>
-                        <span className="numerator">{displayText(node.numerator)}</span>
-                        <span className="fraction-bar" />
-                        <span className="denominator">{displayText(node.denominator)}</span>
-                    </span>
-                    );
-                
-                case 'integral':
-                    return (<span className='integral' key={index}>
-                        <span className='integral-sign'><big>∫</big></span>
-                        <span className='bounds-group'>
-                            <span className='upper-bound'>{displayText(node.upperBound)}</span>
-                            <span className='lower-bound'>{displayText(node.lowerBound)}</span>
-                        </span>
-                        <span className='value-group'>
-                            <span className='integral-value'>{displayText(node.value)}</span>
-                            <span className='dx'>dx</span>
-                        </span>
-                    </span>);
-
-                case 'log':
-                    return (<span className="log" key={index}>
-                        <span className="log-content">{displayText(node.value)}</span>
-                    </span>
-                    );
-
-                case 'cursor':
-                    return (<span key={index} className="blink-cursor">
-                        |
-                    </span>
-                    );
-
-                default:
-                    return null;
-            }
-        });
-    }
 
     return (
         <div
